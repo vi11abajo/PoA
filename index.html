@@ -354,8 +354,10 @@
         .tx-copy-container {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 10px;
             margin-top: 8px;
+            flex-wrap: wrap;
         }
 
         .copy-btn {
@@ -387,6 +389,28 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .game-over h2, .game-over p {
+                font-size: 18px;
+            }
+            
+            .blockchain-section {
+                max-width: 90vw;
+                padding: 20px;
+            }
+            
+            .tx-copy-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .tx-copy-container span {
+                word-break: break-all;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -1256,15 +1280,19 @@
                 hideLoading();
                 scoreAlreadySaved = true; // Mark as saved
                 
-                // Update UI to show score was saved
-                document.getElementById('saveScoreButton').disabled = true;
-                document.getElementById('saveScoreButton').textContent = 'Score Saved ✓';
+                // Hide the save section and show only transaction info
+                document.getElementById('saveScoreButton').style.display = 'none';
+                document.getElementById('playerName').style.display = 'none';
+                document.querySelector('#blockchainSection h3').style.display = 'none';
+                document.querySelector('#blockchainSection p').style.display = 'none';
+                
+                // Show only transaction hash with copy button
                 document.getElementById('save-status').innerHTML = `
-                    <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 14px;">
-                        ✓ Score saved successfully!<br>
-                        <div class="tx-copy-container">
-                            <small>TX: ${txHash.slice(0, 10)}...${txHash.slice(-8)}</small>
-                            <button class="copy-btn" onclick="copyToClipboard('${txHash}')" id="copyBtn-${Date.now()}">📋 Copy</button>
+                    <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 14px; text-align: center;">
+                        <h4 style="margin-bottom: 10px; color: #00ff88;">Transaction Hash:</h4>
+                        <div class="tx-copy-container" style="justify-content: center;">
+                            <span style="font-family: 'Courier New', monospace; font-size: 12px;">${txHash}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${txHash}')" style="margin-left: 10px;">📋 Copy</button>
                         </div>
                     </div>
                 `;
