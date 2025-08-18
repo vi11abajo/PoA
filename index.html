@@ -763,6 +763,18 @@
                 
                 // Back tentacles
                 ctx.beginPath();
+                // Inner tentacle glow
+                ctx.strokeStyle = '#66ffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX - 12, centerY + 8);
+                ctx.lineTo(centerX - 18, centerY + 25);
+                ctx.moveTo(centerX + 12, centerY + 8);
+                ctx.lineTo(centerX + 18, centerY + 25);
+                ctx.moveTo(centerX - 20, centerY + 5);
+                ctx.lineTo(centerX - 28, centerY + 22);
+                ctx.moveTo(centerX + 20, centerY + 5);
+                ctx.lineTo(centerX + 28, centerY + 22);
                 ctx.moveTo(centerX - 8, centerY + 10);
                 ctx.lineTo(centerX - 10, centerY + 28);
                 ctx.moveTo(centerX + 8, centerY + 10);
@@ -1036,27 +1048,4 @@
 
     </script>
 </body>
-</html>.lineTo(centerX - 10, centerY + 28);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(centerX + 8, centerY + 10);
-                ctx.lineTo(centerX + 10, centerY + 28);
-                ctx.stroke();
-                
-                ctx.shadowBlur = 0;
-                
-                // Inner tentacle glow
-                ctx.strokeStyle = '#66ffff';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(centerX - 12, centerY + 8);
-                ctx.lineTo(centerX - 18, centerY + 25);
-                ctx.moveTo(centerX + 12, centerY + 8);
-                ctx.lineTo(centerX + 18, centerY + 25);
-                ctx.moveTo(centerX - 20, centerY + 5);
-                ctx.lineTo(centerX - 28, centerY + 22);
-                ctx.moveTo(centerX + 20, centerY + 5);
-                ctx.lineTo(centerX + 28, centerY + 22);
-                ctx.moveTo(centerX - 8, centerY + 10);
-                ctx
+</html>
