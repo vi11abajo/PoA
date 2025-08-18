@@ -1,4 +1,9 @@
-<!DOCTYPE html>
+// Initialize config info on page load
+        window.addEventListener('load', () => {
+            // Apply configuration on load
+            applyGameConfig();
+            console.log('🎮 Game initialized with config:', GAME_CONFIG);
+        });<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -498,13 +503,30 @@
     
     <!-- Wallet Connector Module -->
     <script src="wallet-connector.js"></script>
+    
+    <!-- Game Configuration -->
+    <script src="game-config.js"></script>
 
     <!-- Game Logic -->
     <script>
+        // Применение конфигурации к игровым переменным
+        function applyGameConfig() {
+            // Пересчитываем базовые параметры с учетом конфигурации
+            player.speed = (6 * GAME_CONFIG.PLAYER_SPEED) / 100;
+            invaderSpeed = (1 * GAME_CONFIG.CRAB_SPEED) / 100;
+            lives = GAME_CONFIG.PLAYER_LIVES;
+            
+            // Обновляем размеры поля крабов
+            invaderRows = GAME_CONFIG.INVADERS_ROWS;
+            invaderCols = GAME_CONFIG.INVADERS_COLS;
+            
+            console.log('🎮 Game config applied:', GAME_CONFIG);
+        }
+
         // Game variables
         let gameState = 'start';
         let score = 0;
-        let lives = 3;
+        let lives = GAME_CONFIG.PLAYER_LIVES;
         let level = 1;
         let gameSpeed = 1;
         let hasPaidFee = false;
@@ -599,19 +621,19 @@
         let particles = [];
         let ripples = [];
 
-        // Crab settings
-        const invaderRows = 5;
-        const invaderCols = 10;
+        // Crab settings (теперь используют конфигурацию)
+        let invaderRows = GAME_CONFIG.INVADERS_ROWS;
+        let invaderCols = GAME_CONFIG.INVADERS_COLS;
         const invaderWidth = 35;
         const invaderHeight = 30;
-        let invaderSpeed = 1;
+        let invaderSpeed = (1 * GAME_CONFIG.CRAB_SPEED) / 100;
         let invaderDirection = 1;
         let invaderDropDistance = 25;
 
         // Controls
         const keys = {};
         let lastShotTime = 0;
-        const shotCooldown = 300;
+        const shotCooldown = (300 * 100) / GAME_CONFIG.PLAYER_FIRE_RATE; // Применяем конфиг
 
         // Keyboard events
         document.addEventListener('keydown', (e) => {
@@ -669,15 +691,41 @@
         // Create ink bullet
         function createBullet() {
             const now = Date.now();
-            if (now - lastShotTime > shotCooldown) {
-                bullets.push({
-                    x: player.x + player.width / 2 - 3,
-                    y: player.y,
-                    width: 6,
-                    height: 15,
-                    speed: 8,
-                    trail: []
-                });
+            const actualCooldown = (300 * 100) / GAME_CONFIG.PLAYER_FIRE_RATE;
+            
+            if (now - lastShotTime > actualCooldown) {
+                const bulletSpeed = (8 * GAME_CONFIG.PLAYER_BULLET_SPEED) / 100;
+                
+                if (GAME_CONFIG.DOUBLE_SHOT) {
+                    // Двойная стрельба
+                    bullets.push({
+                        x: player.x + player.width / 2 - 8,
+                        y: player.y,
+                        width: 6,
+                        height: 15,
+                        speed: bulletSpeed,
+                        trail: []
+                    });
+                    bullets.push({
+                        x: player.x + player.width / 2 + 2,
+                        y: player.y,
+                        width: 6,
+                        height: 15,
+                        speed: bulletSpeed,
+                        trail: []
+                    });
+                } else {
+                    // Обычная стрельба
+                    bullets.push({
+                        x: player.x + player.width / 2 - 3,
+                        y: player.y,
+                        width: 6,
+                        height: 15,
+                        speed: bulletSpeed,
+                        trail: []
+                    });
+                }
+                
                 lastShotTime = now;
                 createRipple(player.x + player.width / 2, player.y);
             }
@@ -685,13 +733,16 @@
 
         // Create crab bubble
         function createInvaderBullet(invader) {
-            if (Math.random() < 0.0008 * level) {
+            const fireRate = (0.0008 * level * GAME_CONFIG.CRAB_FIRE_RATE) / 100;
+            const bulletSpeed = (2.5 * GAME_CONFIG.CRAB_BULLET_SPEED) / 100;
+            
+            if (Math.random() < fireRate) {
                 invaderBullets.push({
                     x: invader.x + invader.width / 2 - 4,
                     y: invader.y + invader.height,
                     width: 8,
                     height: 8,
-                    speed: 2.5,
+                    speed: bulletSpeed,
                     wobble: 0
                 });
             }
@@ -699,7 +750,9 @@
 
         // Create explosion particles
         function createExplosion(x, y, color, isOctopus = false) {
-            const particleCount = isOctopus ? 15 : 12;
+            const baseParticleCount = isOctopus ? 15 : 12;
+            const particleCount = Math.round((baseParticleCount * GAME_CONFIG.PARTICLE_COUNT) / 100);
+            
             for (let i = 0; i < particleCount; i++) {
                 particles.push({
                     x: x,
@@ -743,19 +796,20 @@
 
         // Update bullets
         function updateBullets(deltaTime) {
-            const bulletSpeed = 8 * deltaTime;
+            const playerBulletSpeed = (8 * GAME_CONFIG.PLAYER_BULLET_SPEED * deltaTime) / 100;
+            const crabBulletSpeed = (2.5 * GAME_CONFIG.CRAB_BULLET_SPEED * deltaTime) / 100;
             
             bullets = bullets.filter(bullet => {
-                bullet.y -= bulletSpeed;
+                bullet.y -= playerBulletSpeed;
                 bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
                 if (bullet.trail.length > 8) bullet.trail.shift();
                 return bullet.y > -bullet.height;
             });
 
-            const invaderBulletSpeed = 2.5 * deltaTime;
+            const wobbleSpeed = (0.2 * GAME_CONFIG.ANIMATION_SPEED * deltaTime) / 100;
             invaderBullets = invaderBullets.filter(bullet => {
-                bullet.y += invaderBulletSpeed;
-                bullet.wobble += 0.2 * deltaTime;
+                bullet.y += crabBulletSpeed;
+                bullet.wobble += wobbleSpeed;
                 bullet.x += Math.sin(bullet.wobble) * 0.5 * deltaTime;
                 return bullet.y < canvas.height;
             });
@@ -767,7 +821,8 @@
             let aliveInvaders = invaders.filter(inv => inv.alive);
 
             const speedMultiplier = 1 + (50 - aliveInvaders.length) * 0.025;
-            const currentSpeed = invaderSpeed * speedMultiplier * gameSpeed * deltaTime;
+            const difficultyMultiplier = (GAME_CONFIG.LEVEL_DIFFICULTY * GAME_CONFIG.CRAB_SPEED) / 10000;
+            const currentSpeed = invaderSpeed * speedMultiplier * gameSpeed * deltaTime * difficultyMultiplier;
 
             for (let invader of aliveInvaders) {
                 if ((invader.x <= 0 && invaderDirection === -1) || 
@@ -786,11 +841,12 @@
                 }
             }
 
+            const animSpeed = (GAME_CONFIG.ANIMATION_SPEED * deltaTime) / 100;
             for (let invader of invaders) {
                 if (invader.alive) {
                     invader.x += currentSpeed * invaderDirection;
-                    invader.animFrame += 0.08 * deltaTime;
-                    invader.clawOffset += 0.12 * deltaTime;
+                    invader.animFrame += 0.08 * animSpeed;
+                    invader.clawOffset += 0.12 * animSpeed;
                     createInvaderBullet(invader);
                 }
             }
@@ -826,6 +882,8 @@
         function checkCollisions() {
             // Ink bullets vs crabs
             for (let i = bullets.length - 1; i >= 0; i--) {
+                let bulletDestroyed = false;
+                
                 for (let j = invaders.length - 1; j >= 0; j--) {
                     if (invaders[j].alive && 
                         bullets[i].x < invaders[j].x + invaders[j].width &&
@@ -840,29 +898,52 @@
                         createRipple(invaders[j].x + invaders[j].width/2, 
                                    invaders[j].y + invaders[j].height/2);
                         
-                        let points = {
+                        let basePoints = {
                             'violet': 100,
                             'red': 80,
                             'yellow': 60,
                             'blue': 40,
                             'green': 20
                         }[invaders[j].type];
+                        
+                        // Применяем множитель очков
+                        let points = Math.round((basePoints * GAME_CONFIG.SCORE_MULTIPLIER) / 100);
                         score += points;
                         
                         invaders[j].alive = false;
-                        bullets.splice(i, 1);
-                        break;
+                        
+                        // Если не включено пробивание пуль, удаляем пулю
+                        if (!GAME_CONFIG.BULLET_PENETRATION) {
+                            bullets.splice(i, 1);
+                            bulletDestroyed = true;
+                            break;
+                        }
                     }
                 }
+                
+                if (bulletDestroyed) break;
             }
 
             // Crab bubbles vs octopus
             for (let i = invaderBullets.length - 1; i >= 0; i--) {
+                let bulletHit = false;
+                
+                // Проверка на попадание в игрока
                 if (invaderBullets[i].x < player.x + player.width &&
                     invaderBullets[i].x + invaderBullets[i].width > player.x &&
                     invaderBullets[i].y < player.y + player.height &&
                     invaderBullets[i].y + invaderBullets[i].height > player.y) {
                     
+                    bulletHit = true;
+                }
+                
+                // Если включен режим щита, проверяем блокировку
+                if (bulletHit && GAME_CONFIG.SHIELD_MODE && keys['Space']) {
+                    // Игрок блокирует пулю
+                    createExplosion(invaderBullets[i].x, invaderBullets[i].y, '#00ddff');
+                    invaderBullets.splice(i, 1);
+                } else if (bulletHit) {
+                    // Обычное попадание
                     createExplosion(player.x + player.width/2, player.y + player.height/2, 
                                   '#6666ff', true);
                     invaderBullets.splice(i, 1);
@@ -1205,8 +1286,9 @@
                 let aliveInvaders = invaders.filter(inv => inv.alive);
                 if (aliveInvaders.length === 0) {
                     level++;
-                    gameSpeed += 0.2;
-                    invaderSpeed += 0.5;
+                    const waveSpeedIncrease = (GAME_CONFIG.WAVE_SPEED_INCREASE / 100);
+                    gameSpeed += waveSpeedIncrease;
+                    invaderSpeed += 0.5 * (GAME_CONFIG.CRAB_SPEED / 100);
                     createInvaders();
                     bullets = [];
                     invaderBullets = [];
