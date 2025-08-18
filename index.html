@@ -302,6 +302,26 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Leaderboard button styles */
+        .leaderboard-button {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        /* Save status styles */
+        #save-status .success-message {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -342,6 +362,7 @@
                 <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
                 <br>
                 <button onclick="saveScoreToBlockchain()" id="saveScoreButton">Save Score to Blockchain</button>
+                <div id="save-status"></div>
                 <div id="leaderboard-container"></div>
             </div>
             
@@ -369,6 +390,7 @@
         let level = 1;
         let gameSpeed = 1;
         let hasPaidFee = false;
+        let scoreAlreadySaved = false; // Новая переменная для отслеживания сохранения
 
         // Load game images
         const octopusImage = new Image();
@@ -1068,8 +1090,9 @@
         // Start game function with blockchain integration
         async function startGame() {
             try {
-                // Reset fee payment status
+                // Reset fee payment status and score save status
                 hasPaidFee = false;
+                scoreAlreadySaved = false;
                 
                 // Check if wallet is connected and handle payment
                 if (walletConnector.connected) {
@@ -1140,6 +1163,11 @@
                 alert('Game fee was not paid. Cannot save score to blockchain.');
                 return;
             }
+            
+            if (scoreAlreadySaved) {
+                alert('You have already saved your score for this game!');
+                return;
+            }
 
             try {
                 showLoading('Saving score to blockchain...');
@@ -1147,7 +1175,17 @@
                 const txHash = await walletConnector.saveScore(score, playerName);
                 
                 hideLoading();
-                alert('Score saved to blockchain successfully!\nTransaction: ' + txHash);
+                scoreAlreadySaved = true; // Mark as saved
+                
+                // Update UI to show score was saved
+                document.getElementById('saveScoreButton').disabled = true;
+                document.getElementById('saveScoreButton').textContent = 'Score Saved ✓';
+                document.getElementById('save-status').innerHTML = `
+                    <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 14px;">
+                        ✓ Score saved successfully!<br>
+                        <small>TX: ${txHash.slice(0, 10)}...${txHash.slice(-8)}</small>
+                    </div>
+                `;
                 
                 // Reload leaderboard
                 await loadLeaderboard();
@@ -1159,10 +1197,10 @@
             }
         }
 
-        // Load leaderboard
+        // Load leaderboard (only top 3 for game over screen)
         async function loadLeaderboard() {
             try {
-                const topScores = await walletConnector.getTopScores(10);
+                const topScores = await walletConnector.getTopScores(3); // Only top 3
                 const container = document.getElementById('leaderboard-container');
                 
                 if (topScores.length === 0) {
@@ -1170,14 +1208,20 @@
                     return;
                 }
 
-                let html = '<h4 style="color: #00ddff; margin-bottom: 10px;">🏆 Top 10 Scores</h4><ol>';
+                let html = '<h4 style="color: #00ddff; margin-bottom: 10px;">🏆 Top 3 Players</h4>';
+                html += '<div style="font-size: 12px; margin-bottom: 10px;"><strong>Name</strong> | <strong>Address</strong> | <strong>Score</strong></div>';
+                
                 topScores.forEach((record, index) => {
-                    const date = new Date(record.timestamp * 1000).toLocaleDateString();
-                    const truncatedAddress = record.player.slice(0, 6) + '...' + record.player.slice(-4);
-                    html += `<li><strong>${record.playerName}</strong>: ${record.score} points<br>
-                             <small style="opacity: 0.7;">${truncatedAddress} • ${date}</small></li>`;
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const medal = medals[index] || '🏅';
+                    const maskedAddress = maskAddress(record.player);
+                    
+                    html += `<div style="margin: 8px 0; padding: 8px; background: rgba(0, 221, 255, 0.1); border-radius: 5px; border-left: 3px solid #00ddff; font-size: 12px;">
+                        ${medal} <strong>${record.playerName}</strong> | ${maskedAddress} | <strong>${record.score}</strong>
+                    </div>`;
                 });
-                html += '</ol>';
+                
+                html += '<div style="text-align: center; margin-top: 15px;"><button onclick="openLeaderboard()" style="padding: 8px 16px; font-size: 12px; background: rgba(0, 221, 255, 0.2); color: #00ddff; border: 1px solid #00ddff; border-radius: 5px; cursor: pointer;">View Full Leaderboard</button></div>';
                 
                 container.innerHTML = html;
                 
@@ -1186,12 +1230,24 @@
             }
         }
 
+        // Mask wallet address
+        function maskAddress(address) {
+            if (!address || address.length < 10) return address;
+            return `${address.slice(0, 6)}***${address.slice(-6)}`;
+        }
+
+        // Open full leaderboard page
+        function openLeaderboard() {
+            window.open('leaderboard.html', '_blank');
+        }
+
         // Restart game function
         function restartGame() {
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'block';
             gameState = 'start';
             hasPaidFee = false; // Reset fee payment status
+            scoreAlreadySaved = false; // Reset score save status
             walletConnector.hasPaidFee = false; // Reset wallet connector state too
         }
 
