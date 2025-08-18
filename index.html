@@ -508,7 +508,18 @@
         let level = 1;
         let gameSpeed = 1;
         let hasPaidFee = false;
-        let scoreAlreadySaved = false; // Новая переменная для отслеживания сохранения
+        let scoreAlreadySaved = false;
+
+        // FPS-independent timing variables
+        let lastTime = 0;
+        const targetFPS = 60;
+        const frameTime = 1000 / targetFPS; // 16.67ms per frame
+        let deltaTime = 0;
+        
+        // FPS counter for debugging
+        let fpsCounter = 0;
+        let fpsTime = 0;
+        let currentFPS = 0; // Новая переменная для отслеживания сохранения
 
         // Load game images
         const octopusImage = new Image();
@@ -716,12 +727,14 @@
         }
 
         // Update player
-        function updatePlayer() {
+        function updatePlayer(deltaTime) {
+            const moveSpeed = player.speed * deltaTime;
+            
             if (keys['ArrowLeft'] && player.x > 0) {
-                player.x -= player.speed;
+                player.x -= moveSpeed;
             }
             if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
-                player.x += player.speed;
+                player.x += moveSpeed;
             }
             if (keys['Space']) {
                 createBullet();
@@ -729,29 +742,32 @@
         }
 
         // Update bullets
-        function updateBullets() {
+        function updateBullets(deltaTime) {
+            const bulletSpeed = 8 * deltaTime;
+            
             bullets = bullets.filter(bullet => {
-                bullet.y -= bullet.speed;
+                bullet.y -= bulletSpeed;
                 bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
                 if (bullet.trail.length > 8) bullet.trail.shift();
                 return bullet.y > -bullet.height;
             });
 
+            const invaderBulletSpeed = 2.5 * deltaTime;
             invaderBullets = invaderBullets.filter(bullet => {
-                bullet.y += bullet.speed;
-                bullet.wobble += 0.2;
-                bullet.x += Math.sin(bullet.wobble) * 0.5;
+                bullet.y += invaderBulletSpeed;
+                bullet.wobble += 0.2 * deltaTime;
+                bullet.x += Math.sin(bullet.wobble) * 0.5 * deltaTime;
                 return bullet.y < canvas.height;
             });
         }
 
         // Update crabs
-        function updateInvaders() {
+        function updateInvaders(deltaTime) {
             let shouldDrop = false;
             let aliveInvaders = invaders.filter(inv => inv.alive);
 
             const speedMultiplier = 1 + (50 - aliveInvaders.length) * 0.025;
-            const currentSpeed = invaderSpeed * speedMultiplier * gameSpeed;
+            const currentSpeed = invaderSpeed * speedMultiplier * gameSpeed * deltaTime;
 
             for (let invader of aliveInvaders) {
                 if ((invader.x <= 0 && invaderDirection === -1) || 
@@ -773,8 +789,8 @@
             for (let invader of invaders) {
                 if (invader.alive) {
                     invader.x += currentSpeed * invaderDirection;
-                    invader.animFrame += 0.08;
-                    invader.clawOffset += 0.12;
+                    invader.animFrame += 0.08 * deltaTime;
+                    invader.clawOffset += 0.12 * deltaTime;
                     createInvaderBullet(invader);
                 }
             }
@@ -788,18 +804,20 @@
         }
 
         // Update particles and effects
-        function updateParticles() {
+        function updateParticles(deltaTime) {
+            const particleSpeed = deltaTime;
+            
             particles = particles.filter(particle => {
-                particle.x += particle.vx;
-                particle.y += particle.vy;
-                particle.vy += 0.2;
-                particle.life--;
+                particle.x += particle.vx * particleSpeed;
+                particle.y += particle.vy * particleSpeed;
+                particle.vy += 0.2 * particleSpeed;
+                particle.life -= particleSpeed;
                 return particle.life > 0;
             });
 
             ripples = ripples.filter(ripple => {
                 ripple.size = (ripple.maxSize * (30 - ripple.life)) / 30;
-                ripple.life--;
+                ripple.life -= particleSpeed;
                 return ripple.life > 0;
             });
         }
@@ -1155,13 +1173,33 @@
             }
         }
 
-        // Main game loop
-        function gameLoop() {
+        // Main game loop with FPS independence
+        function gameLoop(currentTime) {
+            // Calculate delta time
+            if (lastTime === 0) lastTime = currentTime;
+            const rawDeltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            // Normalize delta time to 60 FPS equivalent
+            deltaTime = rawDeltaTime / frameTime;
+            
+            // Cap delta time to prevent huge jumps (e.g., when tab was inactive)
+            if (deltaTime > 3) deltaTime = 3;
+            
+            // FPS calculation for debugging
+            fpsCounter++;
+            fpsTime += rawDeltaTime;
+            if (fpsTime >= 1000) {
+                currentFPS = Math.round((fpsCounter * 1000) / fpsTime);
+                fpsCounter = 0;
+                fpsTime = 0;
+            }
+            
             if (gameState === 'playing') {
-                updatePlayer();
-                updateBullets();
-                updateInvaders();
-                updateParticles();
+                updatePlayer(deltaTime);
+                updateBullets(deltaTime);
+                updateInvaders(deltaTime);
+                updateParticles(deltaTime);
                 checkCollisions();
 
                 let aliveInvaders = invaders.filter(inv => inv.alive);
@@ -1177,6 +1215,7 @@
                 document.getElementById('score').textContent = score;
                 document.getElementById('lives').textContent = lives;
                 document.getElementById('level').textContent = level;
+                document.getElementById('fps').textContent = currentFPS;
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1267,7 +1306,7 @@
             document.getElementById('startScreen').style.display = 'none';
             document.getElementById('gameOver').style.display = 'none';
             
-            gameLoop();
+            gameLoop(0);
         }
 
         // Save score to blockchain
