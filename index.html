@@ -1181,7 +1181,6 @@
                     showLoading('Processing payment...');
                     await walletConnector.payGameFee();
                     hasPaidFee = true;
-                    // Also update the wallet connector's state
                     walletConnector.hasPaidFee = true;
                     hideLoading();
                 } else {
