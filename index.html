@@ -1166,55 +1166,63 @@
                 hasPaidFee = false;
                 scoreAlreadySaved = false;
                 
-                // Check if wallet is connected and handle payment
-                if (walletConnector.connected) {
-                    const shouldPayFee = await walletConnector.showGameStartModal();
-                    
-                    if (shouldPayFee) {
-                        showLoading('Processing payment...');
-                        await walletConnector.payGameFee();
-                        hasPaidFee = true;
-                        // Also update the wallet connector's state
-                        walletConnector.hasPaidFee = true;
-                        hideLoading();
-                    } else {
-                        hasPaidFee = false;
-                        walletConnector.hasPaidFee = false;
-                    }
+                // Check if wallet is connected, if not - show wallet modal
+                if (!walletConnector.connected) {
+                    console.log('Wallet not connected, showing wallet modal...');
+                    window.pendingGameStart = true; // Флаг ожидания подключения кошелька
+                    walletConnector.showWalletModal();
+                    return; // Don't start game yet, wait for wallet connection
+                }
+                
+                // Wallet is connected, proceed with game start
+                const shouldPayFee = await walletConnector.showGameStartModal();
+                
+                if (shouldPayFee) {
+                    showLoading('Processing payment...');
+                    await walletConnector.payGameFee();
+                    hasPaidFee = true;
+                    // Also update the wallet connector's state
+                    walletConnector.hasPaidFee = true;
+                    hideLoading();
                 } else {
-                    // Playing offline - no blockchain features
                     hasPaidFee = false;
                     walletConnector.hasPaidFee = false;
                 }
                 
                 // Start the actual game
-                gameState = 'playing';
-                score = 0;
-                lives = 3;
-                level = 1;
-                gameSpeed = 1;
-                invaderSpeed = 1;
-                
-                bullets = [];
-                invaderBullets = [];
-                particles = [];
-                ripples = [];
-                
-                player.x = canvas.width / 2 - 30;
-                player.y = canvas.height - 80;
-                
-                createInvaders();
-                
-                document.getElementById('startScreen').style.display = 'none';
-                document.getElementById('gameOver').style.display = 'none';
-                
-                gameLoop();
+                actuallyStartGame();
                 
             } catch (error) {
                 hideLoading();
                 console.error('Error starting game:', error);
                 alert('Error starting game: ' + error.message);
             }
+        }
+
+        // Actually start the game (separated logic)
+        function actuallyStartGame() {
+            // Start the actual game
+            gameState = 'playing';
+            score = 0;
+            lives = 3;
+            level = 1;
+            gameSpeed = 1;
+            invaderSpeed = 1;
+            
+            bullets = [];
+            invaderBullets = [];
+            particles = [];
+            ripples = [];
+            
+            player.x = canvas.width / 2 - 30;
+            player.y = canvas.height - 80;
+            
+            createInvaders();
+            
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameOver').style.display = 'none';
+            
+            gameLoop();
         }
 
         // Save score to blockchain
