@@ -248,7 +248,7 @@
             border-radius: 10px;
             border: 1px solid rgba(0, 221, 255, 0.3);
             display: none;
-            max-width: 500px; /* Увеличиваем ширину */
+            max-width: 600px; /* Увеличиваем ширину еще больше */
             width: 100%;
             margin-left: auto;
             margin-right: auto;
@@ -257,6 +257,13 @@
         .blockchain-section h3 {
             margin-bottom: 15px;
             color: #00ddff;
+            white-space: nowrap; /* Заголовок в одну строку */
+        }
+
+        .blockchain-section p {
+            white-space: nowrap; /* Описание в одну строку */
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .blockchain-section input {
@@ -389,7 +396,7 @@
     </div>
     
     <div class="main-leaderboard-button">
-        <button onclick="showLeaderboard()" style="padding: 10px 20px; font-size: 14px; margin: 0;">
+        <button onclick="console.log('Main leaderboard button clicked'); showLeaderboard();" style="padding: 10px 20px; font-size: 14px; margin: 0;">
             🏆 Leaderboard
         </button>
     </div>
@@ -1311,6 +1318,22 @@
 
         // Show leaderboard on same page
         async function showLeaderboard() {
+            // Проверяем, инициализирован ли walletConnector
+            if (!walletConnector || !walletConnector.web3) {
+                // Инициализируем walletConnector для чтения данных
+                try {
+                    walletConnector.web3 = new Web3(walletConnector.config.RPC_URL);
+                    walletConnector.contract = new walletConnector.web3.eth.Contract(
+                        walletConnector.contractABI, 
+                        walletConnector.config.CONTRACT_ADDRESS
+                    );
+                } catch (error) {
+                    console.error('Failed to initialize for leaderboard:', error);
+                    alert('Failed to connect to blockchain. Please try again.');
+                    return;
+                }
+            }
+            
             // Hide game container
             document.getElementById('gameContainer').style.display = 'none';
             document.querySelector('.controls').style.display = 'none';
@@ -1388,6 +1411,11 @@
                 document.getElementById('leaderboard-error').style.display = 'none';
                 document.getElementById('leaderboard-table').style.display = 'none';
                 
+                // Убеждаемся что контракт инициализирован
+                if (!walletConnector.contract) {
+                    throw new Error('Contract not initialized');
+                }
+                
                 // Load stats
                 try {
                     const stats = await walletConnector.contract.methods.getGameStats().call();
@@ -1410,10 +1438,16 @@
                     document.getElementById('leaderboard-stats').innerHTML = '<div style="background: rgba(0, 221, 255, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 1px solid rgba(0, 221, 255, 0.3);"><h3 style="color: #00ddff; margin-bottom: 10px; font-size: 14px;">Stats unavailable</h3><div style="font-size: 24px; font-weight: bold; color: #00ff88;">-</div></div>';
                 }
                 
-                // Load top 100 scores
-                const topScores = await walletConnector.getTopScores(100);
+                // Load top 100 scores - используем прямой вызов контракта
+                const topScores = await walletConnector.contract.methods.getTopScores(100).call();
+                const processedScores = topScores.map(score => ({
+                    player: score.player,
+                    score: parseInt(score.score),
+                    timestamp: parseInt(score.timestamp),
+                    playerName: score.playerName
+                }));
                 
-                if (topScores.length === 0) {
+                if (processedScores.length === 0) {
                     document.getElementById('leaderboard-loading').style.display = 'none';
                     document.getElementById('leaderboard-error').innerHTML = '<p>No scores recorded yet. Be the first to play!</p>';
                     document.getElementById('leaderboard-error').style.display = 'block';
@@ -1424,7 +1458,7 @@
                 const tbody = document.getElementById('leaderboard-table-body');
                 tbody.innerHTML = '';
                 
-                topScores.forEach((record, index) => {
+                processedScores.forEach((record, index) => {
                     const rank = index + 1;
                     const medals = ['🥇', '🥈', '🥉'];
                     const medal = rank <= 3 ? medals[rank - 1] : '';
@@ -1447,7 +1481,7 @@
                         </td>
                         <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #66ccff;">${escapeHtml(record.playerName)}</td>
                         <td style="padding: 12px 15px; font-size: 12px; font-family: 'Courier New', monospace; color: #aaccff;">${maskedAddress}</td>
-                        <td style="padding: 12px 15px; font-size: 16px; text-align: right; font-weight: bold; color: #00ff88;">${parseInt(record.score).toLocaleString()}</td>
+                        <td style="padding: 12px 15px; font-size: 16px; text-align: right; font-weight: bold; color: #00ff88;">${record.score.toLocaleString()}</td>
                     `;
                     
                     tbody.appendChild(row);
