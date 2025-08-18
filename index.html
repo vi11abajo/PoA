@@ -396,7 +396,7 @@
     </div>
     
     <div class="main-leaderboard-button">
-        <button onclick="console.log('Main leaderboard button clicked'); showLeaderboard();" style="padding: 10px 20px; font-size: 14px; margin: 0;">
+        <button onclick="window.location.href='leaderboard.html';" style="padding: 10px 20px; font-size: 14px; margin: 0;">
             🏆 Leaderboard
         </button>
     </div>
@@ -1296,7 +1296,7 @@
                     </div>`;
                 });
                 
-                html += '<div style="text-align: center; margin-top: 15px;"><button onclick="showLeaderboard()" style="padding: 8px 16px; font-size: 12px; background: rgba(0, 221, 255, 0.2); color: #00ddff; border: 1px solid #00ddff; border-radius: 5px; cursor: pointer;">View Full Leaderboard</button></div>';
+                html += '<div style="text-align: center; margin-top: 15px;"><button onclick="window.location.href=\'leaderboard.html\';" style="padding: 8px 16px; font-size: 12px; background: rgba(0, 221, 255, 0.2); color: #00ddff; border: 1px solid #00ddff; border-radius: 5px; cursor: pointer;">View Full Leaderboard</button></div>';
                 
                 container.innerHTML = html;
                 
@@ -1314,188 +1314,6 @@
         // Open full leaderboard page
         function openLeaderboard() {
             window.open('leaderboard.html', '_blank');
-        }
-
-        // Show leaderboard on same page
-        async function showLeaderboard() {
-            // Проверяем, инициализирован ли walletConnector
-            if (!walletConnector || !walletConnector.web3) {
-                // Инициализируем walletConnector для чтения данных
-                try {
-                    walletConnector.web3 = new Web3(walletConnector.config.RPC_URL);
-                    walletConnector.contract = new walletConnector.web3.eth.Contract(
-                        walletConnector.contractABI, 
-                        walletConnector.config.CONTRACT_ADDRESS
-                    );
-                } catch (error) {
-                    console.error('Failed to initialize for leaderboard:', error);
-                    alert('Failed to connect to blockchain. Please try again.');
-                    return;
-                }
-            }
-            
-            // Hide game container
-            document.getElementById('gameContainer').style.display = 'none';
-            document.querySelector('.controls').style.display = 'none';
-            document.querySelector('.pharos-logo').style.display = 'none';
-            document.querySelector('.main-leaderboard-button').style.display = 'none';
-            
-            // Show leaderboard container
-            const leaderboardContainer = document.getElementById('leaderboardContainer');
-            leaderboardContainer.style.display = 'block';
-            
-            // Load leaderboard content
-            leaderboardContainer.innerHTML = `
-                <div style="max-width: 1200px; margin: 0 auto; background: linear-gradient(135deg, rgba(0, 17, 34, 0.9) 0%, rgba(0, 51, 102, 0.8) 50%, rgba(0, 102, 170, 0.7) 100%); border: 3px solid #00ddff; border-radius: 20px; box-shadow: 0 0 40px rgba(0, 221, 255, 0.6), inset 0 0 20px rgba(0, 221, 255, 0.1); backdrop-filter: blur(10px); overflow: hidden;">
-                    <div style="background: rgba(0, 17, 34, 0.8); padding: 30px; text-align: center; border-bottom: 2px solid rgba(0, 221, 255, 0.3);">
-                        <h1 style="font-size: 36px; margin-bottom: 10px; text-shadow: 0 0 30px rgba(0, 221, 255, 1); background: linear-gradient(45deg, #00ddff, #66ccff, #00aadd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🏆 PHAROS INVADERS LEADERBOARD</h1>
-                        <p style="font-size: 16px; opacity: 0.8; margin-bottom: 20px;">Top 100 Cosmic Warriors of the Ocean Depths</p>
-                        <button onclick="hideLeaderboard()" style="background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3)); color: #00ddff; border: 2px solid #00ddff; padding: 12px 24px; font-family: 'Arial', sans-serif; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 10px; transition: all 0.3s ease; box-shadow: 0 0 20px rgba(0, 221, 255, 0.4); text-decoration: none; display: inline-block;">← Back to Game</button>
-                    </div>
-                    
-                    <div style="padding: 30px; max-height: 70vh; overflow-y: auto;">
-                        <div id="leaderboard-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                            <!-- Stats will be loaded here -->
-                        </div>
-                        
-                        <div id="leaderboard-loading" style="text-align: center; padding: 50px; font-size: 18px; color: #00ddff;">
-                            <div style="border: 3px solid rgba(0, 221, 255, 0.3); border-top: 3px solid #00ddff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-                            <p>Loading leaderboard from blockchain...</p>
-                        </div>
-                        
-                        <div id="leaderboard-error" style="display: none; text-align: center; padding: 50px; color: #ff6666; font-size: 18px;">
-                            <p>Failed to load leaderboard. Please try again later.</p>
-                            <button onclick="loadFullLeaderboard()" style="background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3)); color: #00ddff; border: 2px solid #00ddff; padding: 12px 24px; font-family: 'Arial', sans-serif; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 10px; margin-top: 20px;">Retry</button>
-                        </div>
-                        
-                        <div id="leaderboard-table" style="display: none;">
-                            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                                <thead>
-                                    <tr>
-                                        <th style="background: rgba(0, 221, 255, 0.2); color: #00ddff; padding: 15px; text-align: left; border-bottom: 2px solid rgba(0, 221, 255, 0.5); font-size: 16px; font-weight: bold; position: sticky; top: 0; z-index: 10; text-align: center; min-width: 60px;">Rank</th>
-                                        <th style="background: rgba(0, 221, 255, 0.2); color: #00ddff; padding: 15px; text-align: left; border-bottom: 2px solid rgba(0, 221, 255, 0.5); font-size: 16px; font-weight: bold; position: sticky; top: 0; z-index: 10;">Player Name</th>
-                                        <th style="background: rgba(0, 221, 255, 0.2); color: #00ddff; padding: 15px; text-align: left; border-bottom: 2px solid rgba(0, 221, 255, 0.5); font-size: 16px; font-weight: bold; position: sticky; top: 0; z-index: 10;">Wallet Address</th>
-                                        <th style="background: rgba(0, 221, 255, 0.2); color: #00ddff; padding: 15px; text-align: left; border-bottom: 2px solid rgba(0, 221, 255, 0.5); font-size: 16px; font-weight: bold; position: sticky; top: 0; z-index: 10; text-align: right;">Score</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="leaderboard-table-body">
-                                    <!-- Leaderboard data will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Load the leaderboard data
-            await loadFullLeaderboard();
-        }
-
-        // Hide leaderboard and return to game
-        function hideLeaderboard() {
-            // Show game container
-            document.getElementById('gameContainer').style.display = 'block';
-            document.querySelector('.controls').style.display = 'block';
-            document.querySelector('.pharos-logo').style.display = 'block';
-            document.querySelector('.main-leaderboard-button').style.display = 'block';
-            
-            // Hide leaderboard container
-            document.getElementById('leaderboardContainer').style.display = 'none';
-        }
-
-        // Load full leaderboard data
-        async function loadFullLeaderboard() {
-            try {
-                // Show loading
-                document.getElementById('leaderboard-loading').style.display = 'block';
-                document.getElementById('leaderboard-error').style.display = 'none';
-                document.getElementById('leaderboard-table').style.display = 'none';
-                
-                // Убеждаемся что контракт инициализирован
-                if (!walletConnector.contract) {
-                    throw new Error('Contract not initialized');
-                }
-                
-                // Load stats
-                try {
-                    const stats = await walletConnector.contract.methods.getGameStats().call();
-                    document.getElementById('leaderboard-stats').innerHTML = `
-                        <div style="background: rgba(0, 221, 255, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 1px solid rgba(0, 221, 255, 0.3);">
-                            <h3 style="color: #00ddff; margin-bottom: 10px; font-size: 14px;">Total Games Played</h3>
-                            <div style="font-size: 24px; font-weight: bold; color: #00ff88;">${stats.totalGames}</div>
-                        </div>
-                        <div style="background: rgba(0, 221, 255, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 1px solid rgba(0, 221, 255, 0.3);">
-                            <h3 style="color: #00ddff; margin-bottom: 10px; font-size: 14px;">Total Players</h3>
-                            <div style="font-size: 24px; font-weight: bold; color: #00ff88;">${stats.totalPlayers}</div>
-                        </div>
-                        <div style="background: rgba(0, 221, 255, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 1px solid rgba(0, 221, 255, 0.3);">
-                            <h3 style="color: #00ddff; margin-bottom: 10px; font-size: 14px;">Total Fees Collected</h3>
-                            <div style="font-size: 24px; font-weight: bold; color: #00ff88;">${walletConnector.web3.utils.fromWei(stats.totalFeesCollected, 'ether')} PHRS</div>
-                        </div>
-                    `;
-                } catch (error) {
-                    console.error('Failed to load stats:', error);
-                    document.getElementById('leaderboard-stats').innerHTML = '<div style="background: rgba(0, 221, 255, 0.1); padding: 20px; border-radius: 10px; text-align: center; border: 1px solid rgba(0, 221, 255, 0.3);"><h3 style="color: #00ddff; margin-bottom: 10px; font-size: 14px;">Stats unavailable</h3><div style="font-size: 24px; font-weight: bold; color: #00ff88;">-</div></div>';
-                }
-                
-                // Load top 100 scores - используем прямой вызов контракта
-                const topScores = await walletConnector.contract.methods.getTopScores(100).call();
-                const processedScores = topScores.map(score => ({
-                    player: score.player,
-                    score: parseInt(score.score),
-                    timestamp: parseInt(score.timestamp),
-                    playerName: score.playerName
-                }));
-                
-                if (processedScores.length === 0) {
-                    document.getElementById('leaderboard-loading').style.display = 'none';
-                    document.getElementById('leaderboard-error').innerHTML = '<p>No scores recorded yet. Be the first to play!</p>';
-                    document.getElementById('leaderboard-error').style.display = 'block';
-                    return;
-                }
-
-                // Build leaderboard table
-                const tbody = document.getElementById('leaderboard-table-body');
-                tbody.innerHTML = '';
-                
-                processedScores.forEach((record, index) => {
-                    const rank = index + 1;
-                    const medals = ['🥇', '🥈', '🥉'];
-                    const medal = rank <= 3 ? medals[rank - 1] : '';
-                    const maskedAddress = maskAddress(record.player);
-                    const isTop3 = rank <= 3;
-                    
-                    const row = document.createElement('tr');
-                    if (isTop3) {
-                        row.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05)) !important';
-                    }
-                    row.style.borderBottom = '1px solid rgba(0, 221, 255, 0.2)';
-                    
-                    if (index % 2 === 0) {
-                        row.style.background = 'rgba(0, 221, 255, 0.05)';
-                    }
-                    
-                    row.innerHTML = `
-                        <td style="padding: 12px 15px; font-size: 14px; text-align: center; font-weight: bold; min-width: 60px;">
-                            <span style="font-size: 18px; margin-right: 8px;">${medal}</span>${rank}
-                        </td>
-                        <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #66ccff;">${escapeHtml(record.playerName)}</td>
-                        <td style="padding: 12px 15px; font-size: 12px; font-family: 'Courier New', monospace; color: #aaccff;">${maskedAddress}</td>
-                        <td style="padding: 12px 15px; font-size: 16px; text-align: right; font-weight: bold; color: #00ff88;">${record.score.toLocaleString()}</td>
-                    `;
-                    
-                    tbody.appendChild(row);
-                });
-                
-                // Hide loading and show table
-                document.getElementById('leaderboard-loading').style.display = 'none';
-                document.getElementById('leaderboard-table').style.display = 'block';
-                
-            } catch (error) {
-                console.error('Failed to load leaderboard:', error);
-                document.getElementById('leaderboard-loading').style.display = 'none';
-                document.getElementById('leaderboard-error').style.display = 'block';
-            }
         }
 
         // Copy to clipboard function
