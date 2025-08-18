@@ -277,19 +277,79 @@
         let level = 1;
         let gameSpeed = 1;
 
-        // Load octopus image
+        // Load octopus image - multiple fallback options
         const octopusImage = new Image();
-        octopusImage.src = 'https://github.com/vi11abajo/PoA/raw/main/img/octo.png';
         let imageLoaded = false;
+        
+        // Load crab images
+        const crabImages = {
+            violet: new Image(),
+            red: new Image(),
+            yellow: new Image(),
+            blue: new Image(),
+            green: new Image()
+        };
+        
+        let crabImagesLoaded = {
+            violet: false,
+            red: false,
+            yellow: false,
+            blue: false,
+            green: false
+        };
+        
+        // Set crab image sources (using raw GitHub URLs)
+        crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
+        crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
+        crabImages.yellow.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabYellow.png';
+        crabImages.blue.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBlue.png';
+        crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabGreen.png';
+        
+        // Load events for crabs
+        Object.keys(crabImages).forEach(color => {
+            crabImages[color].onload = function() {
+                crabImagesLoaded[color] = true;
+                console.log(`${color} crab image loaded successfully!`);
+            };
+            
+            crabImages[color].onerror = function() {
+                console.log(`Failed to load ${color} crab image, using fallback`);
+                crabImagesLoaded[color] = false;
+            };
+        });
+        
+        // Try different sources for octopus
+        const imageSources = [
+            'https://i.imgur.com/8qXWOMa.png',    // Your Imgur image
+            './images/octopus.png',               // Local path fallback
+            './octopus.png',                      // Root directory fallback
+        ];
+        
+        let currentSourceIndex = 0;
+        
+        function tryLoadImage() {
+            if (currentSourceIndex < imageSources.length) {
+                octopusImage.src = imageSources[currentSourceIndex];
+                console.log(`Trying to load octopus from: ${imageSources[currentSourceIndex]}`);
+            } else {
+                console.log('All octopus sources failed, using drawn fallback');
+                imageLoaded = false;
+            }
+        }
         
         octopusImage.onload = function() {
             imageLoaded = true;
+            console.log(`Octopus image loaded successfully from: ${octopusImage.src}`);
         };
         
         octopusImage.onerror = function() {
-            console.log('Failed to load octopus image, using fallback');
-            imageLoaded = false;
+            console.log(`Failed to load from: ${imageSources[currentSourceIndex]}`);
+            currentSourceIndex++;
+            tryLoadImage();
         };
+        
+        // Start loading octopus
+        tryLoadImage();
 
         // Player octopus
         const player = {
@@ -353,10 +413,13 @@
 
             for (let row = 0; row < invaderRows; row++) {
                 for (let col = 0; col < invaderCols; col++) {
-                    let crabType = 'red';
-                    if (row < 1) crabType = 'king';
-                    else if (row < 3) crabType = 'blue';
-                    else if (row < 4) crabType = 'green';
+                    // Assign crab types by row (top to bottom)
+                    let crabType = 'green';  // default
+                    if (row === 0) crabType = 'violet';      // Top row - most valuable
+                    else if (row === 1) crabType = 'red';    // Second row
+                    else if (row === 2) crabType = 'yellow'; // Third row
+                    else if (row === 3) crabType = 'blue';   // Fourth row
+                    else if (row === 4) crabType = 'green';  // Bottom row - least valuable
                     
                     invaders.push({
                         x: startX + col * spacingX,
@@ -541,10 +604,11 @@
                                    invaders[j].y + invaders[j].height/2);
                         
                         let points = {
-                            'king': 100,
-                            'blue': 50,
-                            'green': 30,
-                            'red': 20
+                            'violet': 100,  // Top row - most valuable
+                            'red': 80,      // Second row  
+                            'yellow': 60,   // Third row
+                            'blue': 40,     // Fourth row
+                            'green': 20     // Bottom row - least valuable
                         }[invaders[j].type];
                         score += points;
                         
@@ -574,12 +638,14 @@
             }
         }
 
-        // Get crab color
+        // Get crab color (fallback colors)
         function getCrabColor(type) {
             switch(type) {
-                case 'king': return '#ff6600';
-                case 'blue': return '#0066ff';
-                case 'green': return '#00cc66';
+                case 'violet': return '#9966ff';
+                case 'red': return '#ff3333';
+                case 'yellow': return '#ffdd33';
+                case 'blue': return '#3366ff';
+                case 'green': return '#33cc66';
                 default: return '#cc3333';
             }
         }
@@ -753,7 +819,19 @@
             }
         }
 
-        // Draw crabs
+        // Get crab color (fallback colors)
+        function getCrabColor(type) {
+            switch(type) {
+                case 'violet': return '#9966ff';
+                case 'red': return '#ff3333';
+                case 'yellow': return '#ffdd33';
+                case 'blue': return '#3366ff';
+                case 'green': return '#33cc66';
+                default: return '#cc3333';
+            }
+        }
+
+        // Draw crabs with your images
         function drawInvaders() {
             for (let invader of invaders) {
                 if (invader.alive) {
@@ -761,47 +839,71 @@
                     const centerY = invader.y + invader.height / 2;
                     const bobbing = Math.sin(invader.animFrame) * 2;
                     
-                    ctx.fillStyle = getCrabColor(invader.type);
-                    
-                    // Crab body
-                    ctx.fillRect(invader.x + 5, invader.y + 8 + bobbing, invader.width - 10, invader.height - 16);
-                    
-                    // Shell
-                    ctx.beginPath();
-                    ctx.ellipse(centerX, centerY + bobbing, invader.width/2 - 5, invader.height/2 - 8, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Claws
-                    const clawOffset = Math.sin(invader.clawOffset) * 3;
-                    ctx.fillRect(invader.x - 3 + clawOffset, invader.y + 12 + bobbing, 8, 6);
-                    ctx.fillRect(invader.x + invader.width - 5 - clawOffset, invader.y + 12 + bobbing, 8, 6);
-                    
-                    // Legs
-                    ctx.strokeStyle = getCrabColor(invader.type);
-                    ctx.lineWidth = 2;
-                    for (let i = 0; i < 6; i++) {
-                        const legX = invader.x + 6 + i * 4;
-                        const legY = invader.y + invader.height - 4 + bobbing;
-                        const legBend = Math.sin(invader.animFrame + i * 0.5) * 2;
+                    // Try to draw the actual crab image
+                    if (crabImagesLoaded[invader.type] && crabImages[invader.type].complete) {
+                        // Draw your crab image
+                        ctx.save();
                         
+                        // Add slight glow effect
+                        ctx.shadowColor = getCrabColor(invader.type);
+                        ctx.shadowBlur = 5;
+                        
+                        // Draw the crab image
+                        const imageSize = 40; // Adjust size as needed
+                        ctx.drawImage(
+                            crabImages[invader.type], 
+                            centerX - imageSize/2, 
+                            centerY - imageSize/2 + bobbing, 
+                            imageSize, 
+                            imageSize
+                        );
+                        
+                        ctx.restore();
+                        
+                    } else {
+                        // Fallback: draw simple colored crab if image fails
+                        ctx.fillStyle = getCrabColor(invader.type);
+                        
+                        // Crab body
+                        ctx.fillRect(invader.x + 5, invader.y + 8 + bobbing, invader.width - 10, invader.height - 16);
+                        
+                        // Shell
                         ctx.beginPath();
-                        ctx.moveTo(legX, legY);
-                        ctx.lineTo(legX + legBend, legY + 8);
-                        ctx.stroke();
+                        ctx.ellipse(centerX, centerY + bobbing, invader.width/2 - 5, invader.height/2 - 8, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Claws
+                        const clawOffset = Math.sin(invader.clawOffset) * 3;
+                        ctx.fillRect(invader.x - 3 + clawOffset, invader.y + 12 + bobbing, 8, 6);
+                        ctx.fillRect(invader.x + invader.width - 5 - clawOffset, invader.y + 12 + bobbing, 8, 6);
+                        
+                        // Legs
+                        ctx.strokeStyle = getCrabColor(invader.type);
+                        ctx.lineWidth = 2;
+                        for (let i = 0; i < 6; i++) {
+                            const legX = invader.x + 6 + i * 4;
+                            const legY = invader.y + invader.height - 4 + bobbing;
+                            const legBend = Math.sin(invader.animFrame + i * 0.5) * 2;
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(legX, legY);
+                            ctx.lineTo(legX + legBend, legY + 8);
+                            ctx.stroke();
+                        }
+                        
+                        // Eyes
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(centerX - 4, invader.y + 6 + bobbing, 2, 0, Math.PI * 2);
+                        ctx.arc(centerX + 4, invader.y + 6 + bobbing, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(centerX - 4, invader.y + 6 + bobbing, 1, 0, Math.PI * 2);
+                        ctx.arc(centerX + 4, invader.y + 6 + bobbing, 1, 0, Math.PI * 2);
+                        ctx.fill();
                     }
-                    
-                    // Eyes
-                    ctx.fillStyle = '#ffffff';
-                    ctx.beginPath();
-                    ctx.arc(centerX - 4, invader.y + 6 + bobbing, 2, 0, Math.PI * 2);
-                    ctx.arc(centerX + 4, invader.y + 6 + bobbing, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#000000';
-                    ctx.beginPath();
-                    ctx.arc(centerX - 4, invader.y + 6 + bobbing, 1, 0, Math.PI * 2);
-                    ctx.arc(centerX + 4, invader.y + 6 + bobbing, 1, 0, Math.PI * 2);
-                    ctx.fill();
                 }
             }
         }
