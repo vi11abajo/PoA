@@ -280,8 +280,21 @@ class WalletConnector {
     
     // Скрыть модальное окно
     hideWalletModal() {
-        document.getElementById('wallet-modal').style.display = 'none';
+        const modal = document.getElementById('wallet-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
         this.clearMessage();
+        
+        // Если было ожидание начала игры и пользователь закрыл модал, предложить оффлайн режим
+        if (window.pendingGameStart) {
+            window.pendingGameStart = false;
+            setTimeout(() => {
+                if (confirm('Start game in offline mode without blockchain features?')) {
+                    window.actuallyStartGame(); // Запускаем игру напрямую в оффлайн режиме
+                }
+            }, 300);
+        }
     }
     
     // Подключение к кошельку
@@ -350,6 +363,14 @@ class WalletConnector {
             
             // Настройка слушателей событий
             this.setupEventListeners();
+            
+            // Если пользователь нажал START BATTLE и подключил кошелек, продолжаем игру
+            if (window.pendingGameStart) {
+                window.pendingGameStart = false;
+                setTimeout(() => {
+                    window.startGame();
+                }, 1000); // Небольшая задержка для показа сообщения об успехе
+            }
             
         } catch (error) {
             console.error('Connection error:', error);
