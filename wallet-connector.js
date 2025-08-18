@@ -286,14 +286,10 @@ class WalletConnector {
         }
         this.clearMessage();
         
-        // Если было ожидание начала игры и пользователь закрыл модал, предложить оффлайн режим
+        // Если было ожидание начала игры и пользователь закрыл модал, просто очищаем флаг
         if (window.pendingGameStart) {
             window.pendingGameStart = false;
-            setTimeout(() => {
-                if (confirm('Start game in offline mode without blockchain features?')) {
-                    window.actuallyStartGame(); // Запускаем игру напрямую в оффлайн режиме
-                }
-            }, 300);
+            // Не предлагаем оффлайн режим - кошелек обязателен
         }
     }
     
