@@ -1051,10 +1051,13 @@
                 document.getElementById('finalScore').textContent = score;
                 document.getElementById('gameOver').style.display = 'block';
                 
-                // Show blockchain section if wallet is connected and fee was paid
-                if (walletConnector.connected && hasPaidFee) {
+                // Show blockchain section ONLY if wallet is connected AND fee was paid
+                if (walletConnector.connected && walletConnector.hasPaidFee) {
                     document.getElementById('blockchainSection').style.display = 'block';
                     loadLeaderboard();
+                } else {
+                    // Hide blockchain section if playing offline or no fee paid
+                    document.getElementById('blockchainSection').style.display = 'none';
                 }
                 return;
             }
@@ -1065,6 +1068,9 @@
         // Start game function with blockchain integration
         async function startGame() {
             try {
+                // Reset fee payment status
+                hasPaidFee = false;
+                
                 // Check if wallet is connected and handle payment
                 if (walletConnector.connected) {
                     const shouldPayFee = await walletConnector.showGameStartModal();
@@ -1073,10 +1079,17 @@
                         showLoading('Processing payment...');
                         await walletConnector.payGameFee();
                         hasPaidFee = true;
+                        // Also update the wallet connector's state
+                        walletConnector.hasPaidFee = true;
                         hideLoading();
                     } else {
                         hasPaidFee = false;
+                        walletConnector.hasPaidFee = false;
                     }
+                } else {
+                    // Playing offline - no blockchain features
+                    hasPaidFee = false;
+                    walletConnector.hasPaidFee = false;
                 }
                 
                 // Start the actual game
@@ -1120,6 +1133,11 @@
 
             if (!walletConnector.connected) {
                 alert('Wallet not connected');
+                return;
+            }
+            
+            if (!walletConnector.hasPaidFee) {
+                alert('Game fee was not paid. Cannot save score to blockchain.');
                 return;
             }
 
@@ -1174,6 +1192,7 @@
             document.getElementById('startScreen').style.display = 'block';
             gameState = 'start';
             hasPaidFee = false; // Reset fee payment status
+            walletConnector.hasPaidFee = false; // Reset wallet connector state too
         }
 
         // Loading utilities
