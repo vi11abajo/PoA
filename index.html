@@ -1212,10 +1212,16 @@
                     invaderBullets = [];
                 }
 
-                document.getElementById('score').textContent = score;
-                document.getElementById('lives').textContent = lives;
-                document.getElementById('level').textContent = level;
-                document.getElementById('fps').textContent = currentFPS;
+                // Safe DOM updates with null checks
+                const scoreEl = document.getElementById('score');
+                const livesEl = document.getElementById('lives');
+                const levelEl = document.getElementById('level');
+                const fpsEl = document.getElementById('fps');
+                
+                if (scoreEl) scoreEl.textContent = score;
+                if (livesEl) livesEl.textContent = lives;
+                if (levelEl) levelEl.textContent = level;
+                if (fpsEl) fpsEl.textContent = currentFPS;
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1247,6 +1253,8 @@
         // Start game function with blockchain integration
         async function startGame() {
             try {
+                console.log('Starting game...');
+                
                 // Reset fee payment status and score save status
                 hasPaidFee = false;
                 scoreAlreadySaved = false;
@@ -1259,8 +1267,11 @@
                     return; // Don't start game yet, wait for wallet connection
                 }
                 
+                console.log('Wallet connected, showing game start modal...');
+                
                 // Wallet is connected, proceed with game start
                 const shouldPayFee = await walletConnector.showGameStartModal();
+                console.log('User choice - pay fee:', shouldPayFee);
                 
                 if (shouldPayFee) {
                     showLoading('Processing payment...');
@@ -1268,17 +1279,21 @@
                     hasPaidFee = true;
                     walletConnector.hasPaidFee = true;
                     hideLoading();
+                    console.log('Payment completed');
                 } else {
                     hasPaidFee = false;
                     walletConnector.hasPaidFee = false;
+                    console.log('Playing without fee');
                 }
                 
+                console.log('Starting actual game...');
                 // Start the actual game
                 actuallyStartGame();
                 
             } catch (error) {
                 hideLoading();
                 console.error('Error starting game:', error);
+                console.error('Error stack:', error.stack);
                 alert('Error starting game: ' + error.message);
             }
         }
@@ -1306,7 +1321,7 @@
             document.getElementById('startScreen').style.display = 'none';
             document.getElementById('gameOver').style.display = 'none';
             
-            gameLoop(0);
+            gameLoop(performance.now());
         }
 
         // Save score to blockchain
