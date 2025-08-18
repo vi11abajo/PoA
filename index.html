@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharos Invaders - Ocean Battle</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/favicon.png">
     <style>
         * {
             margin: 0;
@@ -24,6 +25,11 @@
             position: relative;
         }
 
+        /* Hide any overflow text */
+        html, body {
+            overflow: hidden;
+        }
+
         body::before {
             content: '';
             position: fixed;
@@ -42,11 +48,19 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #00ddff;
-            text-shadow: 0 0 20px rgba(0, 221, 255, 0.8);
             z-index: 10;
+        }
+
+        .pharos-logo img {
+            height: 40px;
+            width: auto;
+            filter: drop-shadow(0 0 15px rgba(0, 221, 255, 0.8));
+            transition: all 0.3s ease;
+        }
+
+        .pharos-logo img:hover {
+            filter: drop-shadow(0 0 25px rgba(0, 221, 255, 1));
+            transform: scale(1.05);
         }
 
         .game-container {
@@ -206,7 +220,9 @@
     </style>
 </head>
 <body>
-    <div class="pharos-logo">⚓ PHAROS NETWORK</div>
+    <div class="pharos-logo">
+        <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png" alt="Pharos Network">
+    </div>
     
     <div class="bubbles"></div>
     
