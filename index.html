@@ -244,6 +244,60 @@
     </div>
 
     <script>
+        // Load octopus and crab images first
+        const octopusImage = new Image();
+        let octopusImageLoaded = false;
+        
+        // Load crab images
+        const crabImages = {
+            violet: new Image(),
+            red: new Image(),
+            yellow: new Image(),
+            blue: new Image(),
+            green: new Image()
+        };
+        
+        let crabImagesLoaded = {
+            violet: false,
+            red: false,
+            yellow: false,
+            blue: false,
+            green: false
+        };
+        
+        // Set octopus image source
+        octopusImage.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png';
+        
+        octopusImage.onload = function() {
+            octopusImageLoaded = true;
+            console.log('octopus image loaded successfully!');
+        };
+        
+        octopusImage.onerror = function() {
+            console.log('Failed to load octopus image, using fallback');
+            octopusImageLoaded = false;
+        };
+        
+        // Set crab image sources
+        crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
+        crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
+        crabImages.yellow.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabYellow.png';
+        crabImages.blue.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBlue.png';
+        crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabGreen.png';
+        
+        // Load events for crabs
+        Object.keys(crabImages).forEach(color => {
+            crabImages[color].onload = function() {
+                crabImagesLoaded[color] = true;
+                console.log(`${color} crab image loaded successfully!`);
+            };
+            
+            crabImages[color].onerror = function() {
+                console.log(`Failed to load ${color} crab image, using fallback`);
+                crabImagesLoaded[color] = false;
+            };
+        });
+
         // Create bubbles effect
         function createBubbles() {
             const bubblesContainer = document.querySelector('.bubbles');
@@ -276,80 +330,6 @@
         let lives = 3;
         let level = 1;
         let gameSpeed = 1;
-
-        // Load octopus image - multiple fallback options
-        const octopusImage = new Image();
-        let imageLoaded = false;
-        
-        // Load crab images
-        const crabImages = {
-            violet: new Image(),
-            red: new Image(),
-            yellow: new Image(),
-            blue: new Image(),
-            green: new Image()
-        };
-        
-        let crabImagesLoaded = {
-            violet: false,
-            red: false,
-            yellow: false,
-            blue: false,
-            green: false
-        };
-        
-        // Set crab image sources (using raw GitHub URLs)
-        crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
-        crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
-        crabImages.yellow.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabYellow.png';
-        crabImages.blue.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBlue.png';
-        crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabGreen.png';
-        
-        // Load events for crabs
-        Object.keys(crabImages).forEach(color => {
-            crabImages[color].onload = function() {
-                crabImagesLoaded[color] = true;
-                console.log(`${color} crab image loaded successfully!`);
-            };
-            
-            crabImages[color].onerror = function() {
-                console.log(`Failed to load ${color} crab image, using fallback`);
-                crabImagesLoaded[color] = false;
-            };
-        });
-        
-        // Try different sources for octopus
-        const imageSources = [
-            'https://i.imgur.com/8qXWOMa.png',    // Your Imgur image
-            './images/octopus.png',               // Local path fallback
-            './octopus.png',                      // Root directory fallback
-        ];
-        
-        let currentSourceIndex = 0;
-        
-        function tryLoadImage() {
-            if (currentSourceIndex < imageSources.length) {
-                octopusImage.src = imageSources[currentSourceIndex];
-                console.log(`Trying to load octopus from: ${imageSources[currentSourceIndex]}`);
-            } else {
-                console.log('All octopus sources failed, using drawn fallback');
-                imageLoaded = false;
-            }
-        }
-        
-        octopusImage.onload = function() {
-            imageLoaded = true;
-            console.log(`Octopus image loaded successfully from: ${octopusImage.src}`);
-        };
-        
-        octopusImage.onerror = function() {
-            console.log(`Failed to load from: ${imageSources[currentSourceIndex]}`);
-            currentSourceIndex++;
-            tryLoadImage();
-        };
-        
-        // Start loading octopus
-        tryLoadImage();
 
         // Player octopus
         const player = {
@@ -506,7 +486,6 @@
             if (keys['Space']) {
                 createBullet();
             }
-            // Removed tentacle animation
         }
 
         // Update bullets
@@ -770,29 +749,6 @@
                 ctx.beginPath();
                 ctx.moveTo(centerX - 8, centerY + 10);
                 ctx.lineTo(centerX - 10, centerY + 28);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(centerX + 8, centerY + 10);
-                ctx.lineTo(centerX + 10, centerY + 28);
-                ctx.stroke();
-                
-                ctx.shadowBlur = 0;
-                
-                // Inner tentacle glow
-                ctx.strokeStyle = '#66ffff';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(centerX - 12, centerY + 8);
-                ctx.lineTo(centerX - 18, centerY + 25);
-                ctx.moveTo(centerX + 12, centerY + 8);
-                ctx.lineTo(centerX + 18, centerY + 25);
-                ctx.moveTo(centerX - 20, centerY + 5);
-                ctx.lineTo(centerX - 28, centerY + 22);
-                ctx.moveTo(centerX + 20, centerY + 5);
-                ctx.lineTo(centerX + 28, centerY + 22);
-                ctx.moveTo(centerX - 8, centerY + 10);
-                ctx.lineTo(centerX - 10, centerY + 28);
                 ctx.moveTo(centerX + 8, centerY + 10);
                 ctx.lineTo(centerX + 10, centerY + 28);
                 ctx.stroke();
@@ -816,18 +772,6 @@
                 ctx.arc(centerX - 5, centerY - 13, 1, 0, Math.PI * 2);
                 ctx.arc(centerX + 7, centerY - 13, 1, 0, Math.PI * 2);
                 ctx.fill();
-            }
-        }
-
-        // Get crab color (fallback colors)
-        function getCrabColor(type) {
-            switch(type) {
-                case 'violet': return '#9966ff';
-                case 'red': return '#ff3333';
-                case 'yellow': return '#ffdd33';
-                case 'blue': return '#3366ff';
-                case 'green': return '#33cc66';
-                default: return '#cc3333';
             }
         }
 
@@ -1071,6 +1015,32 @@
             gameState = 'start';
         }
 
+        // Initialize game
+        document.getElementById('startScreen').style.display = 'block';
+
     </script>
 </body>
-</html>
+</html>.lineTo(centerX - 10, centerY + 28);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX + 8, centerY + 10);
+                ctx.lineTo(centerX + 10, centerY + 28);
+                ctx.stroke();
+                
+                ctx.shadowBlur = 0;
+                
+                // Inner tentacle glow
+                ctx.strokeStyle = '#66ffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX - 12, centerY + 8);
+                ctx.lineTo(centerX - 18, centerY + 25);
+                ctx.moveTo(centerX + 12, centerY + 8);
+                ctx.lineTo(centerX + 18, centerY + 25);
+                ctx.moveTo(centerX - 20, centerY + 5);
+                ctx.lineTo(centerX - 28, centerY + 22);
+                ctx.moveTo(centerX + 20, centerY + 5);
+                ctx.lineTo(centerX + 28, centerY + 22);
+                ctx.moveTo(centerX - 8, centerY + 10);
+                ctx
