@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharos Invaders - Leaderboard</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/favicon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #001122 0%, #003366 30%, #0066aa 70%, #00aadd 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            color: #00ddff;
+            padding: 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 170, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, 
+                rgba(0, 17, 34, 0.9) 0%, 
+                rgba(0, 51, 102, 0.8) 50%, 
+                rgba(0, 102, 170, 0.7) 100%);
+            border: 3px solid #00ddff;
+            border-radius: 20px;
+            box-shadow: 
+                0 0 40px rgba(0, 221, 255, 0.6),
+                inset 0 0 20px rgba(0, 221, 255, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(0, 17, 34, 0.8);
+            padding: 30px;
+            text-align: center;
+            border-bottom: 2px solid rgba(0, 221, 255, 0.3);
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 221, 255, 1);
+            background: linear-gradient(45deg, #00ddff, #66ccff, #00aadd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+            color: #00ddff;
+            border: 2px solid #00ddff;
+            padding: 12px 24px;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-button:hover {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-content {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .leaderboard-table th {
+            background: rgba(0, 221, 255, 0.2);
+            color: #00ddff;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid rgba(0, 221, 255, 0.5);
+            font-size: 16px;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .leaderboard-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 221, 255, 0.2);
+            font-size: 14px;
+        }
+
+        .leaderboard-table tr:nth-child(even) {
+            background: rgba(0, 221, 255, 0.05);
+        }
+
+        .leaderboard-table tr:hover {
+            background: rgba(0, 221, 255, 0.15);
+            transition: background 0.3s ease;
+        }
+
+        .rank-cell {
+            text-align: center;
+            font-weight: bold;
+            min-width: 60px;
+        }
+
+        .name-cell {
+            font-weight: bold;
+            color: #66ccff;
+        }
+
+        .address-cell {
+            font-family: 'Courier New', monospace;
+            color: #aaccff;
+            font-size: 12px;
+        }
+
+        .score-cell {
+            text-align: right;
+            font-weight: bold;
+            color: #00ff88;
+            font-size: 16px;
+        }
+
+        .medal {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+
+        .top-3 {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05)) !important;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #00ddff;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 221, 255, 0.3);
+            border-top: 3px solid #00ddff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: rgba(0, 221, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(0, 221, 255, 0.3);
+        }
+
+        .stat-box h3 {
+            color: #00ddff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .stat-box .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #ff6666;
+            font-size: 18px;
+        }
+
+        /* Scrollbar styling */
+        .leaderboard-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .leaderboard-content::-webkit-scrollbar-track {
+            background: rgba(0, 221, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .leaderboard-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 221, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        .leaderboard-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 221, 255, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .leaderboard-content {
+                padding: 20px;
+                max-height: 60vh;
+            }
+            
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 PHAROS INVADERS LEADERBOARD</h1>
+            <p>Top 100 Cosmic Warriors of the Ocean Depths</p>
+            <a href="javascript:history.back()" class="back-button">← Back to Game</a>
+        </div>
+        
+        <div class="leaderboard-content">
+            <div class="stats" id="gameStats">
+                <!-- Stats will be loaded here -->
+            </div>
+            
+            <div id="loadingIndicator" class="loading">
+                <div class="spinner"></div>
+                <p>Loading leaderboard from blockchain...</p>
+            </div>
+            
+            <div id="errorMessage" class="error" style="display: none;">
+                <p>Failed to load leaderboard. Please try again later.</p>
+                <button onclick="loadLeaderboard()" class="back-button" style="margin-top: 20px;">Retry</button>
+            </div>
+            
+            <div id="leaderboardTable" style="display: none;">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-cell">Rank</th>
+                            <th class="name-cell">Player Name</th>
+                            <th class="address-cell">Wallet Address</th>
+                            <th class="score-cell">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <!-- Leaderboard data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web3 Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    
+    <!-- Wallet Connector Module -->
+    <script src="wallet-connector.js"></script>
+
+    <script>
+        // Initialize wallet connector (but don't require connection for viewing leaderboard)
+        let walletConnector;
+
+        async function initWalletConnector() {
+            // Create a simplified wallet connector just for reading data
+            walletConnector = {
+                config: {
+                    NETWORK_NAME: 'Pharos Testnet',
+                    RPC_URL: 'https://testnet.dplabs-internal.com',
+                    CHAIN_ID: '688688',
+                    CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
+                    GAME_FEE: '0.001'
+                },
+                contractABI: [
+                    {
+                        "inputs": [{"name": "_limit", "type": "uint256"}],
+                        "name": "getTopScores",
+                        "outputs": [
+                            {
+                                "components": [
+                                    {"name": "player", "type": "address"},
+                                    {"name": "score", "type": "uint256"},
+                                    {"name": "timestamp", "type": "uint256"},
+                                    {"name": "playerName", "type": "string"}
+                                ],
+                                "name": "",
+                                "type": "tuple[]"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "getGameStats",
+                        "outputs": [
+                            {"name": "totalGames", "type": "uint256"},
+                            {"name": "totalPlayers", "type": "uint256"},
+                            {"name": "totalFeesCollected", "type": "uint256"}
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    }
+                ]
+            };
+            
+            // Initialize Web3 with public RPC (read-only)
+            try {
+                walletConnector.web3 = new Web3(walletConnector.config.RPC_URL);
+                walletConnector.contract = new walletConnector.web3.eth.Contract(
+                    walletConnector.contractABI, 
+                    walletConnector.config.CONTRACT_ADDRESS
+                );
+                return true;
+            } catch (error) {
+                console.error('Failed to initialize wallet connector:', error);
+                return false;
+            }
+        }
+
+        async function loadGameStats() {
+            try {
+                const stats = await walletConnector.contract.methods.getGameStats().call();
+                const statsContainer = document.getElementById('gameStats');
+                
+                statsContainer.innerHTML = `
+                    <div class="stat-box">
+                        <h3>Total Games Played</h3>
+                        <div class="value">${stats.totalGames}</div>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Total Players</h3>
+                        <div class="value">${stats.totalPlayers}</div>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Total Fees Collected</h3>
+                        <div class="value">${walletConnector.web3.utils.fromWei(stats.totalFeesCollected, 'ether')} PHRS</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load game stats:', error);
+                document.getElementById('gameStats').innerHTML = '<div class="stat-box"><h3>Stats unavailable</h3><div class="value">-</div></div>';
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                // Show loading
+                document.getElementById('loadingIndicator').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('leaderboardTable').style.display = 'none';
+                
+                // Load top 100 scores
+                const topScores = await walletConnector.contract.methods.getTopScores(100).call();
+                
+                if (topScores.length === 0) {
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    document.getElementById('errorMessage').innerHTML = '<p>No scores recorded yet. Be the first to play!</p>';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    return;
+                }
+
+                // Build leaderboard table
+                const tbody = document.getElementById('leaderboardBody');
+                tbody.innerHTML = '';
+                
+                topScores.forEach((record, index) => {
+                    const rank = index + 1;
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const medal = rank <= 3 ? medals[rank - 1] : '';
+                    const maskedAddress = maskAddress(record.player);
+                    const isTop3 = rank <= 3;
+                    
+                    const row = document.createElement('tr');
+                    if (isTop3) {
+                        row.classList.add('top-3');
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="rank-cell">
+                            <span class="medal">${medal}</span>${rank}
+                        </td>
+                        <td class="name-cell">${escapeHtml(record.playerName)}</td>
+                        <td class="address-cell">${maskedAddress}</td>
+                        <td class="score-cell">${parseInt(record.score).toLocaleString()}</td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+                
+                // Hide loading and show table
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('leaderboardTable').style.display = 'block';
+                
+                // Load stats
+                await loadGameStats();
+                
+            } catch (error) {
+                console.error('Failed to load leaderboard:', error);
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        // Mask wallet address function
+        function maskAddress(address) {
+            if (!address || address.length < 10) return address;
+            return `${address.slice(0, 6)}***${address.slice(-6)}`;
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize and load data when page loads
+        window.addEventListener('load', async () => {
+            const initialized = await initWalletConnector();
+            if (initialized) {
+                await loadLeaderboard();
+            } else {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('errorMessage').innerHTML = '<p>Failed to connect to blockchain. Please try again later.</p>';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(async () => {
+            if (walletConnector && walletConnector.contract) {
+                try {
+                    await loadLeaderboard();
+                } catch (error) {
+                    console.error('Auto-refresh failed:', error);
+                }
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
