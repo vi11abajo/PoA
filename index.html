@@ -25,7 +25,6 @@
             position: relative;
         }
 
-        /* Hide any overflow text */
         html, body {
             overflow: hidden;
         }
@@ -167,6 +166,12 @@
             transform: translateY(-2px);
         }
 
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
         .bubbles {
             position: absolute;
             width: 100%;
@@ -217,6 +222,132 @@
                 opacity: 0;
             }
         }
+
+        /* Blockchain Modal Styles */
+        .blockchain-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, 
+                rgba(0, 17, 34, 0.95) 0%, 
+                rgba(0, 51, 102, 0.9) 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            color: #00ddff;
+            max-width: 400px;
+            border: 2px solid #00ddff;
+            box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #00ddff;
+            font-size: 24px;
+        }
+
+        .blockchain-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 221, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 221, 255, 0.3);
+        }
+
+        .blockchain-section input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #00ddff;
+            border-radius: 5px;
+            background: rgba(0, 17, 34, 0.8);
+            color: #00ddff;
+            font-size: 14px;
+        }
+
+        .blockchain-section input::placeholder {
+            color: rgba(0, 221, 255, 0.6);
+        }
+
+        #leaderboard-container {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+
+        #leaderboard-container ol {
+            padding-left: 20px;
+        }
+
+        #leaderboard-container li {
+            margin: 5px 0;
+            padding: 8px;
+            background: rgba(0, 221, 255, 0.1);
+            border-radius: 5px;
+            border-left: 3px solid #00ddff;
+        }
+
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 17, 34, 0.95);
+            color: #00ddff;
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 1001;
+            border: 2px solid #00ddff;
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+            text-align: center;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 221, 255, 0.3);
+            border-top: 3px solid #00ddff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .blockchain-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 12px;
+            color: #00ddff;
+            background: rgba(0, 17, 34, 0.7);
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 221, 255, 0.3);
+        }
+
+        .status-online {
+            color: #00ff88;
+        }
+
+        .status-offline {
+            color: #ff6666;
+        }
     </style>
 </head>
 <body>
@@ -227,6 +358,10 @@
     <div class="bubbles"></div>
     
     <div class="game-container">
+        <div class="blockchain-status" id="blockchainStatus">
+            <span class="status-offline">⚡ Offline Mode</span>
+        </div>
+        
         <div class="ui">
             <div>🏆 Score: <span id="score">0</span></div>
             <div>💙 Lives: <span id="lives">3</span></div>
@@ -239,7 +374,7 @@
             <h1>🐙 PHAROS INVADERS 🦀</h1>
             <p>Defend the ocean depths from the crab invasion!</p>
             <p style="font-size: 16px; margin: 15px 0;">Futuristic cyborg octopus vs army of crabs</p>
-            <button onclick="startGame()">START BATTLE</button>
+            <button onclick="startGame()" id="startButton">START BATTLE</button>
             <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
                 <p>Controls: ← → to move, SPACE to attack</p>
                 <p>Use plasma charges to win!</p>
@@ -250,6 +385,16 @@
             <h2>🌊 WASTED 🌊</h2>
             <p>Final Score: <span id="finalScore">0</span></p>
             <p>The crabs have conquered the ocean!</p>
+            
+            <div class="blockchain-section" id="blockchainSection" style="display: none;">
+                <h3>🏆 Save to Leaderboard</h3>
+                <p style="font-size: 14px; margin-bottom: 15px;">Record your score on the Pharos blockchain!</p>
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                <br>
+                <button onclick="saveScoreToBlockchain()" id="saveScoreButton">Save Score (FREE)</button>
+                <div id="leaderboard-container"></div>
+            </div>
+            
             <button onclick="restartGame()">NEW BATTLE</button>
         </div>
     </div>
@@ -259,12 +404,273 @@
         <p style="opacity: 0.7;">Pharos Network - Fastest EVM Layer-1</p>
     </div>
 
+    <!-- Web3 and Blockchain Integration -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
     <script>
-        // Load octopus and crab images first
+        // Blockchain Configuration
+        const BLOCKCHAIN_CONFIG = {
+            NETWORK_NAME: 'Pharos Testnet',
+            RPC_URL: 'https://testnet.dplabs-internal.com', // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ RPC
+            CHAIN_ID: '688688', // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ CHAIN ID
+            CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e', // ЗАМЕНИТЕ НА АДРЕС КОНТРАКТА
+            GAME_FEE: '0.001' // В PHRS
+        };
+
+        // Contract ABI (simplified for essential functions)
+        const CONTRACT_ABI = [
+            {
+                "inputs": [],
+                "name": "startGame",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"name": "_score", "type": "uint256"},
+                    {"name": "_playerName", "type": "string"}
+                ],
+                "name": "recordScore",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "_limit", "type": "uint256"}],
+                "name": "getTopScores",
+                "outputs": [
+                    {
+                        "components": [
+                            {"name": "player", "type": "address"},
+                            {"name": "score", "type": "uint256"},
+                            {"name": "timestamp", "type": "uint256"},
+                            {"name": "playerName", "type": "string"}
+                        ],
+                        "name": "",
+                        "type": "tuple[]"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        // Blockchain variables
+        let web3 = null;
+        let contract = null;
+        let userAccount = null;
+        let blockchainEnabled = false;
+        let hasPaidFee = false;
+
+        // Initialize blockchain connection
+        async function initializeBlockchain() {
+            try {
+                if (typeof window.ethereum !== 'undefined') {
+                    web3 = new Web3(window.ethereum);
+                    
+                    // Request account access
+                    const accounts = await window.ethereum.request({
+                        method: 'eth_requestAccounts'
+                    });
+                    
+                    userAccount = accounts[0];
+                    
+                    // Check if we're on the right network
+                    const chainId = await web3.eth.getChainId();
+                    if (chainId.toString() !== BLOCKCHAIN_CONFIG.CHAIN_ID) {
+                        await switchNetwork();
+                    }
+                    
+                    // Initialize contract
+                    contract = new web3.eth.Contract(CONTRACT_ABI, BLOCKCHAIN_CONFIG.CONTRACT_ADDRESS);
+                    
+                    blockchainEnabled = true;
+                    updateBlockchainStatus(true);
+                    
+                    console.log('Blockchain initialized successfully');
+                    return true;
+                    
+                } else {
+                    console.log('MetaMask not detected');
+                    updateBlockchainStatus(false);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Blockchain initialization error:', error);
+                updateBlockchainStatus(false);
+                return false;
+            }
+        }
+
+        async function switchNetwork() {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: `0x${parseInt(BLOCKCHAIN_CONFIG.CHAIN_ID).toString(16)}` }]
+                });
+            } catch (error) {
+                console.error('Network switch error:', error);
+                throw error;
+            }
+        }
+
+        function updateBlockchainStatus(isOnline) {
+            const statusElement = document.getElementById('blockchainStatus');
+            if (isOnline) {
+                statusElement.innerHTML = '<span class="status-online">⚡ Blockchain Connected</span>';
+            } else {
+                statusElement.innerHTML = '<span class="status-offline">⚡ Offline Mode</span>';
+            }
+        }
+
+        async function showFeeConfirmation() {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'blockchain-modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>🚀 Start Blockchain Game</h3>
+                        <p style="margin: 15px 0;">Entry Fee: <strong>${BLOCKCHAIN_CONFIG.GAME_FEE} PHRS</strong></p>
+                        <p style="font-size: 14px; opacity: 0.8;">Your score will be recorded on the Pharos blockchain</p>
+                        <button onclick="confirmFee(true)">Pay & Start</button>
+                        <button onclick="confirmFee(false)">Play Offline</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                window.confirmFee = (confirmed) => {
+                    document.body.removeChild(modal);
+                    delete window.confirmFee;
+                    resolve(confirmed);
+                };
+            });
+        }
+
+        async function payGameFee() {
+            try {
+                showLoading('Processing payment...');
+                
+                const gasEstimate = await contract.methods.startGame().estimateGas({
+                    from: userAccount,
+                    value: web3.utils.toWei(BLOCKCHAIN_CONFIG.GAME_FEE, 'ether')
+                });
+
+                const tx = await contract.methods.startGame().send({
+                    from: userAccount,
+                    value: web3.utils.toWei(BLOCKCHAIN_CONFIG.GAME_FEE, 'ether'),
+                    gas: Math.round(gasEstimate * 1.2)
+                });
+
+                hideLoading();
+                hasPaidFee = true;
+                console.log('Game fee paid, tx:', tx.transactionHash);
+                return true;
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Payment error:', error);
+                alert('Payment failed: ' + error.message);
+                return false;
+            }
+        }
+
+        async function saveScoreToBlockchain() {
+            const playerName = document.getElementById('playerName').value.trim();
+            
+            if (!playerName) {
+                alert('Please enter your name');
+                return;
+            }
+
+            if (!blockchainEnabled) {
+                alert('Blockchain not connected');
+                return;
+            }
+
+            try {
+                showLoading('Saving score to blockchain...');
+                
+                const gasEstimate = await contract.methods
+                    .recordScore(score, playerName)
+                    .estimateGas({ from: userAccount });
+
+                const tx = await contract.methods
+                    .recordScore(score, playerName)
+                    .send({
+                        from: userAccount,
+                        gas: Math.round(gasEstimate * 1.2)
+                    });
+
+                hideLoading();
+                console.log('Score saved, tx:', tx.transactionHash);
+                alert('Score saved to blockchain successfully!');
+                
+                // Load and show leaderboard
+                await loadLeaderboard();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Save score error:', error);
+                alert('Failed to save score: ' + error.message);
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                if (!contract) return;
+                
+                const topScores = await contract.methods.getTopScores(10).call();
+                const container = document.getElementById('leaderboard-container');
+                
+                if (topScores.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; margin: 10px 0;">No scores yet - be the first!</p>';
+                    return;
+                }
+
+                let html = '<h4 style="color: #00ddff; margin-bottom: 10px;">🏆 Top 10 Scores</h4><ol>';
+                topScores.forEach((record, index) => {
+                    const date = new Date(record.timestamp * 1000).toLocaleDateString();
+                    const truncatedAddress = record.player.slice(0, 6) + '...' + record.player.slice(-4);
+                    html += `<li><strong>${record.playerName}</strong>: ${record.score} points<br>
+                             <small style="opacity: 0.7;">${truncatedAddress} • ${date}</small></li>`;
+                });
+                html += '</ol>';
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Failed to load leaderboard:', error);
+            }
+        }
+
+        function showLoading(message) {
+            const loading = document.createElement('div');
+            loading.id = 'loading-indicator';
+            loading.className = 'loading-indicator';
+            loading.innerHTML = `
+                <div class="spinner"></div>
+                <p>${message}</p>
+            `;
+            document.body.appendChild(loading);
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loading-indicator');
+            if (loading) {
+                document.body.removeChild(loading);
+            }
+        }
+
+        // Initialize blockchain on page load
+        window.addEventListener('load', async () => {
+            await initializeBlockchain();
+        });
+
+        // Game code starts here (existing game logic)
         const octopusImage = new Image();
         let octopusImageLoaded = false;
         
-        // Load crab images
         const crabImages = {
             violet: new Image(),
             red: new Image(),
@@ -281,7 +687,6 @@
             green: false
         };
         
-        // Set octopus image source
         octopusImage.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png';
         
         octopusImage.onload = function() {
@@ -294,14 +699,12 @@
             octopusImageLoaded = false;
         };
         
-        // Set crab image sources
         crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
         crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
         crabImages.yellow.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabYellow.png';
         crabImages.blue.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBlue.png';
         crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabGreen.png';
         
-        // Load events for crabs
         Object.keys(crabImages).forEach(color => {
             crabImages[color].onload = function() {
                 crabImagesLoaded[color] = true;
@@ -314,7 +717,6 @@
             };
         });
 
-        // Create bubbles effect
         function createBubbles() {
             const bubblesContainer = document.querySelector('.bubbles');
             setInterval(() => {
@@ -340,14 +742,12 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Game variables
         let gameState = 'start';
         let score = 0;
         let lives = 3;
         let level = 1;
         let gameSpeed = 1;
 
-        // Player octopus
         const player = {
             x: canvas.width / 2 - 30,
             y: canvas.height - 80,
@@ -356,14 +756,12 @@
             speed: 6
         };
 
-        // Game objects arrays
         let bullets = [];
         let invaders = [];
         let invaderBullets = [];
         let particles = [];
         let ripples = [];
 
-        // Crab settings
         const invaderRows = 5;
         const invaderCols = 10;
         const invaderWidth = 35;
@@ -372,12 +770,10 @@
         let invaderDirection = 1;
         let invaderDropDistance = 25;
 
-        // Controls
         const keys = {};
         let lastShotTime = 0;
         const shotCooldown = 300;
 
-        // Keyboard events
         document.addEventListener('keydown', (e) => {
             keys[e.code] = true;
             
@@ -399,7 +795,6 @@
             keys[e.code] = false;
         });
 
-        // Create crabs
         function createInvaders() {
             invaders = [];
             const startX = 50;
@@ -409,13 +804,12 @@
 
             for (let row = 0; row < invaderRows; row++) {
                 for (let col = 0; col < invaderCols; col++) {
-                    // Assign crab types by row (top to bottom)
-                    let crabType = 'green';  // default
-                    if (row === 0) crabType = 'violet';      // Top row - most valuable
-                    else if (row === 1) crabType = 'red';    // Second row
-                    else if (row === 2) crabType = 'yellow'; // Third row
-                    else if (row === 3) crabType = 'blue';   // Fourth row
-                    else if (row === 4) crabType = 'green';  // Bottom row - least valuable
+                    let crabType = 'green';
+                    if (row === 0) crabType = 'violet';
+                    else if (row === 1) crabType = 'red';
+                    else if (row === 2) crabType = 'yellow';
+                    else if (row === 3) crabType = 'blue';
+                    else if (row === 4) crabType = 'green';
                     
                     invaders.push({
                         x: startX + col * spacingX,
@@ -431,7 +825,6 @@
             }
         }
 
-        // Create ink bullet
         function createBullet() {
             const now = Date.now();
             if (now - lastShotTime > shotCooldown) {
@@ -448,7 +841,6 @@
             }
         }
 
-        // Create crab bubble
         function createInvaderBullet(invader) {
             if (Math.random() < 0.0008 * level) {
                 invaderBullets.push({
@@ -462,7 +854,6 @@
             }
         }
 
-        // Create explosion particles
         function createExplosion(x, y, color, isOctopus = false) {
             const particleCount = isOctopus ? 15 : 12;
             for (let i = 0; i < particleCount; i++) {
@@ -480,7 +871,6 @@
             }
         }
 
-        // Create water ripple
         function createRipple(x, y) {
             ripples.push({
                 x: x,
@@ -491,7 +881,6 @@
             });
         }
 
-        // Update player
         function updatePlayer() {
             if (keys['ArrowLeft'] && player.x > 0) {
                 player.x -= player.speed;
@@ -504,7 +893,6 @@
             }
         }
 
-        // Update bullets
         function updateBullets() {
             bullets = bullets.filter(bullet => {
                 bullet.y -= bullet.speed;
@@ -521,7 +909,6 @@
             });
         }
 
-        // Update crabs
         function updateInvaders() {
             let shouldDrop = false;
             let aliveInvaders = invaders.filter(inv => inv.alive);
@@ -563,7 +950,6 @@
             }
         }
 
-        // Update particles and effects
         function updateParticles() {
             particles = particles.filter(particle => {
                 particle.x += particle.vx;
@@ -580,9 +966,7 @@
             });
         }
 
-        // Check collisions
         function checkCollisions() {
-            // Ink bullets vs crabs
             for (let i = bullets.length - 1; i >= 0; i--) {
                 for (let j = invaders.length - 1; j >= 0; j--) {
                     if (invaders[j].alive && 
@@ -599,11 +983,11 @@
                                    invaders[j].y + invaders[j].height/2);
                         
                         let points = {
-                            'violet': 100,  // Top row - most valuable
-                            'red': 80,      // Second row  
-                            'yellow': 60,   // Third row
-                            'blue': 40,     // Fourth row
-                            'green': 20     // Bottom row - least valuable
+                            'violet': 100,
+                            'red': 80,
+                            'yellow': 60,
+                            'blue': 40,
+                            'green': 20
                         }[invaders[j].type];
                         score += points;
                         
@@ -614,7 +998,6 @@
                 }
             }
 
-            // Crab bubbles vs octopus
             for (let i = invaderBullets.length - 1; i >= 0; i--) {
                 if (invaderBullets[i].x < player.x + player.width &&
                     invaderBullets[i].x + invaderBullets[i].width > player.x &&
@@ -633,7 +1016,6 @@
             }
         }
 
-        // Get crab color (fallback colors)
         function getCrabColor(type) {
             switch(type) {
                 case 'violet': return '#9966ff';
@@ -645,21 +1027,16 @@
             }
         }
 
-        // Draw player with your octopus image
         function drawPlayer() {
             const centerX = player.x + player.width / 2;
             const centerY = player.y + player.height / 2;
             
             if (octopusImageLoaded && octopusImage.complete) {
-                // Draw your octopus image
                 ctx.save();
-                
-                // Add glow effect around the image
                 ctx.shadowColor = '#00ddff';
                 ctx.shadowBlur = 15;
                 
-                // Draw the octopus image centered
-                const imageSize = 70; // Adjust size as needed
+                const imageSize = 70;
                 ctx.drawImage(
                     octopusImage, 
                     centerX - imageSize/2, 
@@ -670,7 +1047,6 @@
                 
                 ctx.restore();
                 
-                // Add some futuristic effects around your octopus
                 ctx.strokeStyle = '#00ddff';
                 ctx.lineWidth = 2;
                 ctx.globalAlpha = 0.5;
@@ -680,7 +1056,7 @@
                 ctx.globalAlpha = 1;
                 
             } else {
-                // Fallback: draw futuristic octopus if image fails to load
+                // Fallback octopus drawing code (same as original)
                 const helmetGradient = ctx.createRadialGradient(centerX, centerY - 10, 0, centerX, centerY - 10, 25);
                 helmetGradient.addColorStop(0, '#8899aa');
                 helmetGradient.addColorStop(0.5, '#556677');
@@ -690,14 +1066,12 @@
                 ctx.arc(centerX, centerY - 10, 25, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Helmet rim/edge
                 ctx.strokeStyle = '#445566';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY - 10, 25, 0, Math.PI * 2);
                 ctx.stroke();
                 
-                // Large front visor (blue transparent)
                 const visorGradient = ctx.createRadialGradient(centerX, centerY - 10, 0, centerX, centerY - 10, 20);
                 visorGradient.addColorStop(0, '#66bbff');
                 visorGradient.addColorStop(1, '#2288dd');
@@ -706,40 +1080,34 @@
                 ctx.arc(centerX, centerY - 8, 18, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Visor frame
                 ctx.strokeStyle = '#334455';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY - 8, 18, 0, Math.PI * 2);
                 ctx.stroke();
                 
-                // Side helmet details
                 ctx.fillStyle = '#667788';
                 ctx.fillRect(centerX - 28, centerY - 15, 8, 12);
                 ctx.fillRect(centerX + 20, centerY - 15, 8, 12);
                 
-                // Cyan/turquoise glowing details
                 ctx.fillStyle = '#00dddd';
                 ctx.fillRect(centerX - 26, centerY - 13, 4, 2);
                 ctx.fillRect(centerX + 22, centerY - 13, 4, 2);
                 ctx.fillRect(centerX - 26, centerY - 8, 4, 2);
                 ctx.fillRect(centerX + 22, centerY - 8, 4, 2);
                 
-                // Top antenna/equipment
                 ctx.fillStyle = '#556677';
                 ctx.fillRect(centerX - 3, centerY - 35, 6, 10);
                 ctx.fillStyle = '#00dddd';
                 ctx.fillRect(centerX - 2, centerY - 34, 4, 2);
                 ctx.fillRect(centerX - 2, centerY - 30, 4, 2);
                 
-                // Glowing cyan tentacles (6 tentacles, no animation)
                 ctx.strokeStyle = '#00dddd';
                 ctx.lineWidth = 5;
                 ctx.lineCap = 'round';
                 ctx.shadowColor = '#00dddd';
                 ctx.shadowBlur = 8;
                 
-                // Front tentacles
                 ctx.beginPath();
                 ctx.moveTo(centerX - 12, centerY + 8);
                 ctx.lineTo(centerX - 18, centerY + 25);
@@ -750,7 +1118,6 @@
                 ctx.lineTo(centerX + 18, centerY + 25);
                 ctx.stroke();
                 
-                // Side tentacles
                 ctx.beginPath();
                 ctx.moveTo(centerX - 20, centerY + 5);
                 ctx.lineTo(centerX - 28, centerY + 22);
@@ -761,9 +1128,6 @@
                 ctx.lineTo(centerX + 28, centerY + 22);
                 ctx.stroke();
                 
-                // Back tentacles
-                ctx.beginPath();
-                // Inner tentacle glow
                 ctx.strokeStyle = '#66ffff';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -781,7 +1145,6 @@
                 ctx.lineTo(centerX + 10, centerY + 28);
                 ctx.stroke();
                 
-                // Eyes inside visor
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(centerX - 6, centerY - 12, 4, 0, Math.PI * 2);
@@ -794,7 +1157,6 @@
                 ctx.arc(centerX + 6, centerY - 12, 2.5, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Eye highlights
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(centerX - 5, centerY - 13, 1, 0, Math.PI * 2);
@@ -803,7 +1165,6 @@
             }
         }
 
-        // Draw crabs with your images
         function drawInvaders() {
             for (let invader of invaders) {
                 if (invader.alive) {
@@ -811,17 +1172,12 @@
                     const centerY = invader.y + invader.height / 2;
                     const bobbing = Math.sin(invader.animFrame) * 2;
                     
-                    // Try to draw the actual crab image
                     if (crabImagesLoaded[invader.type] && crabImages[invader.type].complete) {
-                        // Draw your crab image
                         ctx.save();
-                        
-                        // Add slight glow effect
                         ctx.shadowColor = getCrabColor(invader.type);
                         ctx.shadowBlur = 5;
                         
-                        // Draw the crab image
-                        const imageSize = 40; // Adjust size as needed
+                        const imageSize = 40;
                         ctx.drawImage(
                             crabImages[invader.type], 
                             centerX - imageSize/2, 
@@ -833,23 +1189,18 @@
                         ctx.restore();
                         
                     } else {
-                        // Fallback: draw simple colored crab if image fails
+                        // Fallback crab drawing (same as original)
                         ctx.fillStyle = getCrabColor(invader.type);
-                        
-                        // Crab body
                         ctx.fillRect(invader.x + 5, invader.y + 8 + bobbing, invader.width - 10, invader.height - 16);
                         
-                        // Shell
                         ctx.beginPath();
                         ctx.ellipse(centerX, centerY + bobbing, invader.width/2 - 5, invader.height/2 - 8, 0, 0, Math.PI * 2);
                         ctx.fill();
                         
-                        // Claws
                         const clawOffset = Math.sin(invader.clawOffset) * 3;
                         ctx.fillRect(invader.x - 3 + clawOffset, invader.y + 12 + bobbing, 8, 6);
                         ctx.fillRect(invader.x + invader.width - 5 - clawOffset, invader.y + 12 + bobbing, 8, 6);
                         
-                        // Legs
                         ctx.strokeStyle = getCrabColor(invader.type);
                         ctx.lineWidth = 2;
                         for (let i = 0; i < 6; i++) {
@@ -863,7 +1214,6 @@
                             ctx.stroke();
                         }
                         
-                        // Eyes
                         ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
                         ctx.arc(centerX - 4, invader.y + 6 + bobbing, 2, 0, Math.PI * 2);
@@ -880,11 +1230,8 @@
             }
         }
 
-        // Draw bullets and effects
         function drawBullets() {
-            // Ink bullets
             for (let bullet of bullets) {
-                // Ink trail
                 ctx.strokeStyle = 'rgba(102, 102, 255, 0.6)';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
@@ -899,7 +1246,6 @@
                 ctx.stroke();
                 ctx.globalAlpha = 1;
                 
-                // Bullet itself
                 ctx.fillStyle = '#6666ff';
                 ctx.beginPath();
                 ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, 4, 0, Math.PI * 2);
@@ -914,7 +1260,6 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Crab bubbles
             for (let bullet of invaderBullets) {
                 ctx.strokeStyle = '#66ccff';
                 ctx.lineWidth = 2;
@@ -929,7 +1274,6 @@
             }
         }
 
-        // Draw particles
         function drawParticles() {
             for (let particle of particles) {
                 let alpha = particle.life / particle.maxLife;
@@ -942,7 +1286,6 @@
             }
         }
 
-        // Draw ripples
         function drawRipples() {
             for (let ripple of ripples) {
                 ctx.strokeStyle = `rgba(0, 221, 255, ${ripple.life / 30})`;
@@ -953,7 +1296,6 @@
             }
         }
 
-        // Draw UI
         function drawUI() {
             if (gameState === 'paused') {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -967,7 +1309,6 @@
             }
         }
 
-        // Main game loop
         function gameLoop() {
             if (gameState === 'playing') {
                 updatePlayer();
@@ -976,7 +1317,6 @@
                 updateParticles();
                 checkCollisions();
 
-                // Check level completion
                 let aliveInvaders = invaders.filter(inv => inv.alive);
                 if (aliveInvaders.length === 0) {
                     level++;
@@ -987,13 +1327,11 @@
                     invaderBullets = [];
                 }
 
-                // Update UI
                 document.getElementById('score').textContent = score;
                 document.getElementById('lives').textContent = lives;
                 document.getElementById('level').textContent = level;
             }
 
-            // Rendering
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawPlayer();
             drawInvaders();
@@ -1005,14 +1343,35 @@
             if (gameState === 'gameOver') {
                 document.getElementById('finalScore').textContent = score;
                 document.getElementById('gameOver').style.display = 'block';
+                
+                // Show blockchain section if blockchain is enabled and fee was paid
+                if (blockchainEnabled && hasPaidFee) {
+                    document.getElementById('blockchainSection').style.display = 'block';
+                    loadLeaderboard(); // Load current leaderboard
+                }
                 return;
             }
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Start game function
-        function startGame() {
+        async function startGame() {
+            // Check if blockchain is enabled and handle fee payment
+            if (blockchainEnabled) {
+                const confirmed = await showFeeConfirmation();
+                
+                if (confirmed) {
+                    const paymentSuccess = await payGameFee();
+                    if (!paymentSuccess) {
+                        return; // Don't start game if payment failed
+                    }
+                } else {
+                    // User chose to play offline
+                    hasPaidFee = false;
+                }
+            }
+            
+            // Start the actual game
             gameState = 'playing';
             score = 0;
             lives = 3;
@@ -1036,16 +1395,13 @@
             gameLoop();
         }
 
-        // Restart game function
         function restartGame() {
             document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('startScreen').style.display = 'block';
-            gameState = 'start';
-        }
-
-        // Initialize game
-        document.getElementById('startScreen').style.display = 'block';
-
-    </script>
+        </script>
 </body>
 </html>
+            gameState = 'start';
+            hasPaidFee = false; // Reset fee payment status
+        }
+
+        document.getElementById('startScreen').style.display = 'block';
