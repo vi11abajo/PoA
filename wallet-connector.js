@@ -11,10 +11,10 @@ class WalletConnector {
         // Конфигурация блокчейна
         this.config = {
             NETWORK_NAME: 'Pharos Testnet',
-            RPC_URL: 'https://testnet.dplabs-internal.com', // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ RPC
-            CHAIN_ID: '688688', // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ CHAIN ID
-            CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e', // ЗАМЕНИТЕ НА АДРЕС КОНТРАКТА
-            GAME_FEE: '0.001' // В PHRS
+            RPC_URL: 'https://testnet.dplabs-internal.com',
+            CHAIN_ID: '688688',
+            CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
+            GAME_FEE: '0.001'
         };
         
         // ABI контракта (только нужные функции)
@@ -259,19 +259,9 @@ class WalletConnector {
                     <span>MetaMask</span>
                 </div>
                 
-                <div class="wallet-option" onclick="walletConnector.connectWallet('walletconnect')">
-                    <img src="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.5 12.5c3.5-3.5 9.2-3.5 12.7 0l.4.4c.2.2.2.5 0 .7l-1.4 1.4c-.1.1-.3.1-.4 0l-.6-.6c-2.4-2.4-6.3-2.4-8.7 0l-.6.6c-.1.1-.3.1-.4 0l-1.4-1.4c-.2-.2-.2-.5 0-.7l.4-.4z' fill='%233b99fc'/%3E%3Cpath d='M23.8 16.8l1.2 1.2c.2.2.2.5 0 .7l-5.4 5.4c-.2.2-.5.2-.7 0l-3.8-3.8c0-.1-.1-.1-.2 0l-3.8 3.8c-.2.2-.5.2-.7 0l-5.4-5.4c-.2-.2-.2-.5 0-.7l1.2-1.2c.2-.2.5-.2.7 0l3.8 3.8c0 .1.1.1.2 0l3.8-3.8c.2-.2.5-.2.7 0l3.8 3.8c0 .1.1.1.2 0l3.8-3.8c.2-.2.5-.2.7 0z' fill='%233b99fc'/%3E%3C/svg%3E" alt="WalletConnect">
-                    <span>WalletConnect</span>
-                </div>
-                
-                <div class="wallet-option" onclick="walletConnector.connectWallet('coinbase')">
-                    <img src="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16 32c8.837 0 16-7.163 16-16S24.837 0 16 0 0 7.163 0 16s7.163 16 16 16z' fill='%23335dd4'/%3E%3Cpath d='M16 6C10.477 6 6 10.477 6 16s4.477 10 10 10 10-4.477 10-10S21.523 6 16 6zm0 16c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z' fill='%23fff'/%3E%3Cpath d='M13 13h6v6h-6z' fill='%23335dd4'/%3E%3C/svg%3E" alt="Coinbase">
-                    <span>Coinbase Wallet</span>
-                </div>
-                
-                <div class="wallet-option disabled">
-                    <img src="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16 32c8.837 0 16-7.163 16-16S24.837 0 16 0 0 7.163 0 16s7.163 16 16 16z' fill='%23764abc'/%3E%3Cpath d='M8 12h16v8H8z' fill='%23fff'/%3E%3C/svg%3E" alt="Other">
-                    <span>Other Wallets (Soon)</span>
+                <div class="wallet-option" onclick="walletConnector.connectWallet('okx')">
+                    <img src="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16 32C7.163 32 0 24.837 0 16S7.163 0 16 0s16 7.163 16 16-7.163 16-16 16z' fill='%23000'/%3E%3Cpath d='M8 8h6v6H8zm10 0h6v6h-6zM8 18h6v6H8zm10 0h6v6h-6z' fill='%23fff'/%3E%3C/svg%3E" alt="OKX">
+                    <span>OKX Wallet</span>
                 </div>
             </div>
         `;
@@ -315,16 +305,13 @@ class WalletConnector {
                     }
                     break;
                     
-                case 'walletconnect':
-                    this.showError('WalletConnect integration coming soon!');
-                    return;
-                    
-                case 'coinbase':
-                    if (typeof window.ethereum !== 'undefined' && window.ethereum.isCoinbaseWallet) {
+                case 'okx':
+                    if (typeof window.okexchain !== 'undefined') {
+                        provider = window.okexchain;
+                    } else if (typeof window.ethereum !== 'undefined' && window.ethereum.isOkxWallet) {
                         provider = window.ethereum;
                     } else {
-                        this.showError('Coinbase Wallet not detected. Please install Coinbase Wallet extension.');
-                        return;
+                        throw new Error('OKX Wallet not detected. Please install OKX Wallet extension.');
                     }
                     break;
                     
