@@ -516,10 +516,11 @@ class WalletConnector {
             modal.className = 'wallet-modal';
             modal.style.display = 'flex';
             
+           const currentFee = '0.001';
             // Получаем актуальную комиссию из GAME_CONFIG
-            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
-                ? GAME_CONFIG.GAME_FEE 
-                : this.getGameFee();
+//            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
+//                ? GAME_CONFIG.GAME_FEE 
+//                : this.getGameFee();
             
             console.log('🎮 Current game fee from config:', currentFee); // Для отладки
             
@@ -549,10 +550,12 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
+            const currentFee = '0.001'; 
+            
             // Получаем актуальную комиссию из GAME_CONFIG
-            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
-                ? GAME_CONFIG.GAME_FEE 
-                : this.getGameFee();
+//            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
+//                ? GAME_CONFIG.GAME_FEE 
+//                : this.getGameFee();
             
             console.log('💰 Trying to pay game fee:', currentFee, 'PHRS');
             
