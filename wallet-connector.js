@@ -8,13 +8,13 @@ class WalletConnector {
         this.walletType = null;
         this.hasPaidFee = false;
         
-        // Конфигурация блокчейна
+        // Конфигурация блокчейна - берем из GAME_CONFIG если он загружен
         this.config = {
             NETWORK_NAME: 'Pharos Testnet',
             RPC_URL: 'https://testnet.dplabs-internal.com',
             CHAIN_ID: '688688',
             CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
-            GAME_FEE: GAME_CONFIG.GAME_FEE
+            GAME_FEE: this.getGameFee() // Используем функцию для получения комиссии
         };
         
         // ABI контракта (только нужные функции)
@@ -57,6 +57,16 @@ class WalletConnector {
         ];
         
         this.initUI();
+    }
+    
+    // Функция для получения комиссии игры
+    getGameFee() {
+        // Проверяем, загружен ли GAME_CONFIG
+        if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) {
+            return GAME_CONFIG.GAME_FEE;
+        }
+        // Fallback значение если конфиг не загружен
+        return '0.001';
     }
     
     // Инициализация UI
@@ -289,7 +299,6 @@ class WalletConnector {
         // Если было ожидание начала игры и пользователь закрыл модал, просто очищаем флаг
         if (window.pendingGameStart) {
             window.pendingGameStart = false;
-            // Не предлагаем оффлайн режим - кошелек обязателен
         }
     }
     
@@ -364,7 +373,9 @@ class WalletConnector {
             if (window.pendingGameStart) {
                 window.pendingGameStart = false;
                 setTimeout(() => {
-                    window.startGame();
+                    if (typeof window.startGame === 'function') {
+                        window.startGame();
+                    }
                 }, 1000); // Небольшая задержка для показа сообщения об успехе
             }
             
@@ -443,40 +454,54 @@ class WalletConnector {
         const walletButton = document.getElementById('wallet-button');
         const statusElement = document.getElementById('wallet-status');
         
-        if (this.connected && this.account) {
-            walletButton.classList.add('connected');
-            const shortAddress = `${this.account.slice(0, 6)}...${this.account.slice(-4)}`;
-            statusElement.textContent = shortAddress;
-        } else {
-            walletButton.classList.remove('connected');
-            statusElement.textContent = 'Connect Wallet';
+        if (walletButton && statusElement) {
+            if (this.connected && this.account) {
+                walletButton.classList.add('connected');
+                const shortAddress = `${this.account.slice(0, 6)}...${this.account.slice(-4)}`;
+                statusElement.textContent = shortAddress;
+            } else {
+                walletButton.classList.remove('connected');
+                statusElement.textContent = 'Connect Wallet';
+            }
         }
     }
     
     // Отображение сообщений
     showLoading(message) {
-        document.getElementById('wallet-message').innerHTML = `
-            <div class="loading-spinner"></div>
-            <p>${message}</p>
-        `;
+        const messageEl = document.getElementById('wallet-message');
+        if (messageEl) {
+            messageEl.innerHTML = `
+                <div class="loading-spinner"></div>
+                <p>${message}</p>
+            `;
+        }
     }
     
     showError(message) {
-        document.getElementById('wallet-message').innerHTML = `
-            <div class="error-message">${message}</div>
-        `;
-        setTimeout(() => this.clearMessage(), 5000);
+        const messageEl = document.getElementById('wallet-message');
+        if (messageEl) {
+            messageEl.innerHTML = `
+                <div class="error-message">${message}</div>
+            `;
+            setTimeout(() => this.clearMessage(), 5000);
+        }
     }
     
     showSuccess(message) {
-        document.getElementById('wallet-message').innerHTML = `
-            <div class="success-message">${message}</div>
-        `;
-        setTimeout(() => this.clearMessage(), 3000);
+        const messageEl = document.getElementById('wallet-message');
+        if (messageEl) {
+            messageEl.innerHTML = `
+                <div class="success-message">${message}</div>
+            `;
+            setTimeout(() => this.clearMessage(), 3000);
+        }
     }
     
     clearMessage() {
-        document.getElementById('wallet-message').innerHTML = '';
+        const messageEl = document.getElementById('wallet-message');
+        if (messageEl) {
+            messageEl.innerHTML = '';
+        }
     }
     
     // Платежные функции для игры
@@ -490,10 +515,14 @@ class WalletConnector {
             const modal = document.createElement('div');
             modal.className = 'wallet-modal';
             modal.style.display = 'flex';
+            
+            // Получаем актуальную комиссию
+            const currentFee = this.getGameFee();
+            
             modal.innerHTML = `
                 <div class="wallet-modal-content">
                     <h3>🚀 Start Blockchain Game</h3>
-                    <p style="margin: 15px 0;">Entry Fee: <strong>${GAME_CONFIG.GAME_FEE} PHRS</strong></p>
+                    <p style="margin: 15px 0;">Entry Fee: <strong>${currentFee} PHRS</strong></p>
                     <p style="font-size: 14px; opacity: 0.8;">Your score will be recorded on the Pharos blockchain</p>
                     <button onclick="confirmGameStart(true)" style="margin: 10px; padding: 12px 20px; background: #00ddff; color: #001122; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Pay & Start</button>
                     <button onclick="confirmGameStart(false)" style="margin: 10px; padding: 12px 20px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer;">Play Offline</button>
@@ -516,14 +545,16 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
+            const currentFee = this.getGameFee();
+            
             const gasEstimate = await this.contract.methods.startGame().estimateGas({
                 from: this.account,
-                value: this.web3.utils.toWei(this.config.GAME_FEE, 'ether')
+                value: this.web3.utils.toWei(currentFee, 'ether')
             });
 
             const tx = await this.contract.methods.startGame().send({
                 from: this.account,
-                value: this.web3.utils.toWei(this.config.GAME_FEE, 'ether'),
+                value: this.web3.utils.toWei(currentFee, 'ether'),
                 gas: Math.round(gasEstimate * 1.2)
             });
 
