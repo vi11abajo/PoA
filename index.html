@@ -118,13 +118,14 @@
             background: linear-gradient(135deg, 
                 rgba(0, 17, 34, 0.95) 0%, 
                 rgba(0, 51, 102, 0.9) 100%);
-            padding: 35px;
+            padding: 25px;
             border: 3px solid #00ddff;
             border-radius: 20px;
             box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
             backdrop-filter: blur(15px);
-            max-width: 95vw;
-            min-width: 450px;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
             box-sizing: border-box;
         }
 
@@ -137,6 +138,7 @@
         .start-screen {
             color: #00ddff;
             font-size: 20px;
+            min-width: 450px;
         }
 
         .start-screen h1 {
@@ -242,13 +244,12 @@
         }
 
         .blockchain-section {
-            margin-top: 30px;
-            padding: 25px;
+            margin-top: 20px;
+            padding: 20px;
             background: rgba(0, 221, 255, 0.1);
             border-radius: 10px;
             border: 1px solid rgba(0, 221, 255, 0.3);
             display: none;
-            max-width: 650px;
             width: 100%;
             margin-left: auto;
             margin-right: auto;
@@ -257,17 +258,18 @@
         .blockchain-section h3 {
             margin-bottom: 15px;
             color: #00ddff;
-            white-space: nowrap;
+            font-size: 18px;
         }
 
         .blockchain-section p {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.4;
         }
 
         .blockchain-section input {
-            width: 80%;
+            width: 100%;
+            max-width: 300px;
             padding: 10px;
             margin: 10px 0;
             border: 2px solid #00ddff;
@@ -275,6 +277,7 @@
             background: rgba(0, 17, 34, 0.8);
             color: #00ddff;
             font-size: 14px;
+            box-sizing: border-box;
         }
 
         .blockchain-section input::placeholder {
@@ -282,11 +285,11 @@
         }
 
         #leaderboard-container {
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: left;
-            max-height: 300px;
+            max-height: 200px;
             overflow-y: auto;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         #leaderboard-container ol {
@@ -295,7 +298,7 @@
 
         #leaderboard-container li {
             margin: 5px 0;
-            padding: 8px;
+            padding: 6px;
             background: rgba(0, 221, 255, 0.1);
             border-radius: 5px;
             border-left: 3px solid #00ddff;
@@ -387,21 +390,44 @@
             transform: translateX(-50%);
             z-index: 10;
         }
+        
+        /* Скрываем кнопку лидерборда когда показано game over окно */
+        .game-over-active .main-leaderboard-button {
+            display: none;
+        }
 
         @media (max-width: 768px) {
             .game-over, .start-screen {
-                min-width: 320px;
                 max-width: 95vw;
-                padding: 25px;
+                padding: 20px;
+                font-size: 18px;
             }
             
-            .game-over h2, .game-over p {
+            .start-screen {
+                min-width: 320px;
+            }
+            
+            .game-over h2 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .game-over p {
                 font-size: 16px;
+                margin-bottom: 10px;
             }
             
             .blockchain-section {
-                max-width: 95vw;
-                padding: 20px;
+                padding: 15px;
+                margin-top: 15px;
+            }
+            
+            .blockchain-section h3 {
+                font-size: 16px;
+            }
+            
+            .blockchain-section input {
+                max-width: 100%;
             }
             
             .tx-copy-container {
@@ -412,13 +438,24 @@
             .tx-copy-container span {
                 word-break: break-all;
                 text-align: center;
+                font-size: 10px;
+            }
+            
+            #leaderboard-container {
+                max-height: 150px;
+                font-size: 11px;
             }
         }
 
         @media (max-width: 480px) {
             .game-over, .start-screen {
+                max-width: 95vw;
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            .start-screen {
                 min-width: 280px;
-                padding: 20px;
             }
             
             .game-over h2 {
@@ -427,6 +464,20 @@
             
             .game-over p {
                 font-size: 14px;
+            }
+            
+            .blockchain-section {
+                padding: 12px;
+            }
+            
+            .blockchain-section h3 {
+                font-size: 14px;
+            }
+            
+            button {
+                padding: 12px 20px;
+                font-size: 14px;
+                margin: 8px;
             }
         }
     </style>
@@ -1308,6 +1359,9 @@
             drawUI();
 
             if (gameState === 'gameOver') {
+                // Добавляем класс к body для скрытия кнопки лидерборда
+                document.body.classList.add('game-over-active');
+                
                 document.getElementById('finalScore').textContent = score;
                 document.getElementById('gameOver').style.display = 'block';
                 
@@ -1376,6 +1430,9 @@
 
         // Actually start the game (separated logic)
         function actuallyStartGame() {
+            // Убираем класс game-over-active если он был
+            document.body.classList.remove('game-over-active');
+            
             // Start the actual game
             gameState = 'playing';
             score = 0;
@@ -1435,16 +1492,18 @@
                 // Hide the save section and show only transaction info
                 document.getElementById('saveScoreButton').style.display = 'none';
                 document.getElementById('playerName').style.display = 'none';
-                document.querySelector('#blockchainSection h3').style.display = 'none';
-                document.querySelector('#blockchainSection p').style.display = 'none';
+                const h3Element = document.querySelector('#blockchainSection h3');
+                const pElement = document.querySelector('#blockchainSection p');
+                if (h3Element) h3Element.style.display = 'none';
+                if (pElement) pElement.style.display = 'none';
                 
                 // Show only transaction hash with copy button
                 document.getElementById('save-status').innerHTML = `
-                    <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 14px; text-align: center;">
-                        <h4 style="margin-bottom: 10px; color: #00ff88;">Transaction Hash:</h4>
+                    <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 12px; text-align: center;">
+                        <h4 style="margin-bottom: 10px; color: #00ff88; font-size: 14px;">Transaction Hash:</h4>
                         <div class="tx-copy-container" style="justify-content: center;">
-                            <span style="font-family: 'Courier New', monospace; font-size: 12px;">${txHash}</span>
-                            <button class="copy-btn" onclick="copyToClipboard('${txHash}')" style="margin-left: 10px;">📋 Copy</button>
+                            <span style="font-family: 'Courier New', monospace; font-size: 10px; word-break: break-all;">${txHash}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${txHash}')" style="margin-left: 10px; font-size: 10px; padding: 4px 8px;">📋 Copy</button>
                         </div>
                     </div>
                 `;
@@ -1472,20 +1531,20 @@
                     return;
                 }
 
-                let html = '<h4 style="color: #00ddff; margin-bottom: 10px;">🏆 Top 3 Players</h4>';
-                html += '<div style="font-size: 12px; margin-bottom: 10px;"><strong>Name</strong> | <strong>Address</strong> | <strong>Score</strong></div>';
+                let html = '<h4 style="color: #00ddff; margin-bottom: 10px; font-size: 14px;">🏆 Top 3 Players</h4>';
+                html += '<div style="font-size: 10px; margin-bottom: 10px; color: #aaccff;"><strong>Name</strong> | <strong>Address</strong> | <strong>Score</strong></div>';
                 
                 topScores.forEach((record, index) => {
                     const medals = ['🥇', '🥈', '🥉'];
                     const medal = medals[index] || '🅿️';
                     const maskedAddress = maskAddress(record.player);
                     
-                    html += `<div style="margin: 8px 0; padding: 8px; background: rgba(0, 221, 255, 0.1); border-radius: 5px; border-left: 3px solid #00ddff; font-size: 12px;">
+                    html += `<div style="margin: 6px 0; padding: 6px; background: rgba(0, 221, 255, 0.1); border-radius: 5px; border-left: 3px solid #00ddff; font-size: 10px;">
                         ${medal} <strong>${record.playerName}</strong> | ${maskedAddress} | <strong>${record.score}</strong>
                     </div>`;
                 });
                 
-                html += '<div style="text-align: center; margin-top: 15px;"><button onclick="window.location.href=\'leaderboard.html\';" style="padding: 8px 16px; font-size: 12px; background: rgba(0, 221, 255, 0.2); color: #00ddff; border: 1px solid #00ddff; border-radius: 5px; cursor: pointer;">View Full Leaderboard</button></div>';
+                html += '<div style="text-align: center; margin-top: 12px;"><button onclick="window.location.href=\'leaderboard.html\';" style="padding: 6px 12px; font-size: 10px; background: rgba(0, 221, 255, 0.2); color: #00ddff; border: 1px solid #00ddff; border-radius: 5px; cursor: pointer;">View Full Leaderboard</button></div>';
                 
                 container.innerHTML = html;
                 
@@ -1526,6 +1585,9 @@
 
         // Restart game function
         function restartGame() {
+            // Убираем класс game-over-active чтобы показать кнопку лидерборда
+            document.body.classList.remove('game-over-active');
+            
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'block';
             gameState = 'start';
