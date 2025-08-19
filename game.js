@@ -1,4 +1,4 @@
-// game.js - FIXED version
+// game.js - CLEAN FIXED version
 
 console.log('🎮 Loading game.js...');
 
@@ -13,16 +13,22 @@ let scoreAlreadySaved = false;
 let currentGameSession = null;
 
 // Canvas and game objects
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
+let canvas, ctx, player;
 
-// Simple player object
-const player = {
-    x: 400,
-    y: 550,
-    width: 60,
-    height: 60
-};
+// Initialize canvas when DOM is ready
+function initCanvas() {
+    canvas = document.getElementById('gameCanvas');
+    if (canvas) {
+        ctx = canvas.getContext('2d');
+        player = {
+            x: 400,
+            y: 550,
+            width: 60,
+            height: 60
+        };
+        console.log('✅ Canvas initialized');
+    }
+}
 
 // Create bubbles effect
 function createBubbles() {
@@ -50,7 +56,7 @@ function createBubbles() {
 
 // Simple drawing function
 function drawGame() {
-    if (!ctx) return;
+    if (!ctx || !canvas) return;
     
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -77,13 +83,18 @@ function drawGame() {
     ctx.textAlign = 'center';
     ctx.fillText('🎮 GAME RUNNING! 🎮', canvas.width / 2, canvas.height / 2);
     ctx.fillText('Press SPACE to test controls', canvas.width / 2, canvas.height / 2 + 40);
-    ctx.fillText('This is a demo - full game coming soon!', canvas.width / 2, canvas.height / 2 + 80);
+    ctx.fillText('Use ← → arrows to move octopus', canvas.width / 2, canvas.height / 2 + 80);
 }
 
 // Start game function - MAIN FUNCTION
 async function startGame() {
     try {
         console.log('🚀 START GAME CALLED!');
+        
+        // Initialize canvas if not done
+        if (!canvas) {
+            initCanvas();
+        }
         
         // Check if wallet connector exists
         if (!window.walletConnector) {
@@ -142,43 +153,37 @@ function actuallyStartGame() {
     score = 0;
     lives = 5;
     level = 1;
-    gameSpeed = 1;
     
     // Hide screens
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('gameOver').style.display = 'none';
+    const startScreen = document.getElementById('startScreen');
+    const gameOver = document.getElementById('gameOver');
+    
+    if (startScreen) startScreen.style.display = 'none';
+    if (gameOver) gameOver.style.display = 'none';
+    
     document.body.classList.remove('game-over-active');
     
     // Start game loop
-    requestAnimationFrame(gameLoop);
+    gameLoop();
     console.log('✅ Game started successfully!');
+    
+    // Auto-end game after 10 seconds for demo
+    setTimeout(() => {
+        if (gameState === 'playing') {
+            endGame();
+        }
+    }, 10000);
 }
 
 // Simple game loop
 function gameLoop() {
     if (gameState === 'playing') {
-        // Draw the game
         drawGame();
-        
-        // Update UI
         updateUI();
-        
-        // Simple game logic - automatically end after 10 seconds for demo
-        setTimeout(() => {
-            if (gameState === 'playing') {
-                score = Math.floor(Math.random() * 5000) + 1000; // Random score for demo
-                lives = 0;
-                gameState = 'gameOver';
-            }
-        }, 10000);
-    }
-    
-    if (gameState === 'gameOver') {
+        requestAnimationFrame(gameLoop);
+    } else if (gameState === 'gameOver') {
         showGameOver();
-        return;
     }
-    
-    requestAnimationFrame(gameLoop);
 }
 
 function updateUI() {
@@ -191,35 +196,50 @@ function updateUI() {
     if (levelEl) levelEl.textContent = level;
     
     // Increase score gradually for demo
-    if (gameState === 'playing') {
-        score += 10;
-    }
+    score += 10;
+}
+
+function endGame() {
+    score = Math.floor(Math.random() * 5000) + 1000; // Random final score
+    gameState = 'gameOver';
+    showGameOver();
 }
 
 function showGameOver() {
     document.body.classList.add('game-over-active');
-    document.getElementById('finalScore').textContent = score;
-    document.getElementById('gameOver').style.display = 'block';
+    
+    const finalScoreEl = document.getElementById('finalScore');
+    const gameOverEl = document.getElementById('gameOver');
+    const blockchainSection = document.getElementById('blockchainSection');
+    
+    if (finalScoreEl) finalScoreEl.textContent = score;
+    if (gameOverEl) gameOverEl.style.display = 'block';
     
     if (window.walletConnector && walletConnector.connected && hasPaidFee && currentGameSession) {
-        document.getElementById('blockchainSection').style.display = 'block';
+        if (blockchainSection) blockchainSection.style.display = 'block';
     } else {
-        document.getElementById('blockchainSection').style.display = 'none';
+        if (blockchainSection) blockchainSection.style.display = 'none';
     }
 }
 
 // Restart game
 function restartGame() {
     document.body.classList.remove('game-over-active');
-    document.getElementById('gameOver').style.display = 'none';
-    document.getElementById('startScreen').style.display = 'block';
+    
+    const gameOverEl = document.getElementById('gameOver');
+    const startScreenEl = document.getElementById('startScreen');
+    
+    if (gameOverEl) gameOverEl.style.display = 'none';
+    if (startScreenEl) startScreenEl.style.display = 'block';
+    
     gameState = 'start';
     scoreAlreadySaved = false;
 }
 
 // Save score to blockchain
 async function saveScoreToBlockchain() {
-    const playerName = document.getElementById('playerName').value.trim();
+    const playerNameEl = document.getElementById('playerName');
+    const playerName = playerNameEl ? playerNameEl.value.trim() : '';
     
     if (!playerName) {
         alert('Please enter your name');
@@ -250,16 +270,20 @@ async function saveScoreToBlockchain() {
         scoreAlreadySaved = true;
         
         // Hide save form
-        document.getElementById('saveScoreButton').style.display = 'none';
-        document.getElementById('playerName').style.display = 'none';
+        const saveButton = document.getElementById('saveScoreButton');
+        if (saveButton) saveButton.style.display = 'none';
+        if (playerNameEl) playerNameEl.style.display = 'none';
         
         // Show transaction hash
-        document.getElementById('save-status').innerHTML = `
-            <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 12px; text-align: center;">
-                <h4 style="margin-bottom: 10px; color: #00ff88; font-size: 14px;">Transaction Hash:</h4>
-                <div style="font-family: 'Courier New', monospace; font-size: 10px; word-break: break-all;">${txHash}</div>
-            </div>
-        `;
+        const saveStatus = document.getElementById('save-status');
+        if (saveStatus) {
+            saveStatus.innerHTML = `
+                <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 12px; text-align: center;">
+                    <h4 style="margin-bottom: 10px; color: #00ff88; font-size: 14px;">Transaction Hash:</h4>
+                    <div style="font-family: 'Courier New', monospace; font-size: 10px; word-break: break-all;">${txHash}</div>
+                </div>
+            `;
+        }
         
     } catch (error) {
         hideLoading();
@@ -270,10 +294,11 @@ async function saveScoreToBlockchain() {
 
 // Keyboard controls
 document.addEventListener('keydown', (e) => {
+    if (!player) return;
+    
     if (e.code === 'Space' && gameState === 'playing') {
         e.preventDefault();
         console.log('🚀 SPACE pressed - shooting!');
-        // Add shooting logic here
     }
     
     if (e.code === 'ArrowLeft' && gameState === 'playing') {
@@ -301,8 +326,8 @@ function showLoading(message) {
 
 function hideLoading() {
     const loading = document.getElementById('loading-indicator');
-    if (loading) {
-        document.body.removeChild(loading);
+    if (loading && loading.parentNode) {
+        loading.parentNode.removeChild(loading);
     }
 }
 
@@ -314,7 +339,13 @@ window.saveScoreToBlockchain = saveScoreToBlockchain;
 // Initialize when page loads
 window.addEventListener('load', () => {
     console.log('🎮 Game loaded and ready!');
-    document.getElementById('startScreen').style.display = 'block';
+    
+    // Initialize canvas
+    initCanvas();
+    
+    // Show start screen
+    const startScreen = document.getElementById('startScreen');
+    if (startScreen) startScreen.style.display = 'block';
     
     // Create bubbles effect
     createBubbles();
@@ -327,221 +358,6 @@ window.addEventListener('load', () => {
             console.log('❌ WalletConnector not found');
         }
     }, 1000);
-});
-
-console.log('✅ game.js loaded successfully!');// game.js - FIXED version
-
-console.log('🎮 Loading game.js...');
-
-// Game variables
-let gameState = 'start';
-let score = 0;
-let lives = 5;
-let level = 1;
-let gameSpeed = 1;
-let hasPaidFee = false;
-let scoreAlreadySaved = false;
-let currentGameSession = null;
-
-// Start game function - MAIN FUNCTION
-async function startGame() {
-    try {
-        console.log('🚀 START GAME CALLED!');
-        
-        // Check if wallet connector exists
-        if (!window.walletConnector) {
-            console.log('❌ No wallet connector');
-            alert('Wallet connector not found. Please refresh the page.');
-            return;
-        }
-        
-        console.log('✅ Wallet connector found');
-        
-        // Check if wallet is connected
-        if (!walletConnector.connected) {
-            console.log('💼 Wallet not connected, showing modal...');
-            window.pendingGameStart = true;
-            walletConnector.showWalletModal();
-            return;
-        }
-        
-        console.log('✅ Wallet connected, starting game...');
-        
-        // Reset game variables
-        hasPaidFee = false;
-        scoreAlreadySaved = false;
-        currentGameSession = null;
-        
-        // Show payment modal
-        const shouldPayFee = await walletConnector.showGameStartModal();
-        
-        if (shouldPayFee) {
-            showLoading('Processing payment...');
-            await walletConnector.payGameFee();
-            hasPaidFee = true;
-            currentGameSession = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            hideLoading();
-            console.log('✅ Payment completed');
-        } else {
-            console.log('🎮 Playing offline');
-        }
-        
-        // Actually start the game
-        actuallyStartGame();
-        
-    } catch (error) {
-        hideLoading();
-        console.error('❌ Error starting game:', error);
-        alert('Error: ' + error.message);
-    }
-}
-
-// Actually start the game
-function actuallyStartGame() {
-    console.log('🎮 Actually starting game...');
-    
-    // Reset game state
-    gameState = 'playing';
-    score = 0;
-    lives = 5;
-    level = 1;
-    gameSpeed = 1;
-    
-    // Hide screens
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('gameOver').style.display = 'none';
-    document.body.classList.remove('game-over-active');
-    
-    // Start game loop
-    requestAnimationFrame(gameLoop);
-    console.log('✅ Game started successfully!');
-}
-
-// Simple game loop
-function gameLoop() {
-    if (gameState === 'playing') {
-        // Simple game logic here
-        updateUI();
-    }
-    
-    if (gameState === 'gameOver') {
-        showGameOver();
-        return;
-    }
-    
-    requestAnimationFrame(gameLoop);
-}
-
-function updateUI() {
-    const scoreEl = document.getElementById('score');
-    const livesEl = document.getElementById('lives');
-    const levelEl = document.getElementById('level');
-    
-    if (scoreEl) scoreEl.textContent = score;
-    if (livesEl) livesEl.textContent = lives;
-    if (levelEl) levelEl.textContent = level;
-}
-
-function showGameOver() {
-    document.body.classList.add('game-over-active');
-    document.getElementById('finalScore').textContent = score;
-    document.getElementById('gameOver').style.display = 'block';
-    
-    if (window.walletConnector && walletConnector.connected && hasPaidFee && currentGameSession) {
-        document.getElementById('blockchainSection').style.display = 'block';
-    } else {
-        document.getElementById('blockchainSection').style.display = 'none';
-    }
-}
-
-// Restart game
-function restartGame() {
-    document.body.classList.remove('game-over-active');
-    document.getElementById('gameOver').style.display = 'none';
-    document.getElementById('startScreen').style.display = 'block';
-    gameState = 'start';
-    scoreAlreadySaved = false;
-}
-
-// Save score to blockchain
-async function saveScoreToBlockchain() {
-    const playerName = document.getElementById('playerName').value.trim();
-    
-    if (!playerName) {
-        alert('Please enter your name');
-        return;
-    }
-
-    if (!window.walletConnector || !walletConnector.connected) {
-        alert('Wallet not connected');
-        return;
-    }
-    
-    if (!hasPaidFee || !currentGameSession) {
-        alert('Game fee was not paid for this session.');
-        return;
-    }
-    
-    if (scoreAlreadySaved) {
-        alert('You have already saved your score for this game session!');
-        return;
-    }
-
-    try {
-        showLoading('Saving score to blockchain...');
-        
-        const txHash = await walletConnector.saveScore(score, playerName);
-        
-        hideLoading();
-        scoreAlreadySaved = true;
-        
-        // Hide save form
-        document.getElementById('saveScoreButton').style.display = 'none';
-        document.getElementById('playerName').style.display = 'none';
-        
-        // Show transaction hash
-        document.getElementById('save-status').innerHTML = `
-            <div style="background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 12px; text-align: center;">
-                <h4 style="margin-bottom: 10px; color: #00ff88; font-size: 14px;">Transaction Hash:</h4>
-                <div style="font-family: 'Courier New', monospace; font-size: 10px; word-break: break-all;">${txHash}</div>
-            </div>
-        `;
-        
-    } catch (error) {
-        hideLoading();
-        console.error('Save score error:', error);
-        alert('Failed to save score: ' + error.message);
-    }
-}
-
-// Utility functions
-function showLoading(message) {
-    const loading = document.createElement('div');
-    loading.id = 'loading-indicator';
-    loading.className = 'loading-indicator';
-    loading.innerHTML = `
-        <div class="spinner"></div>
-        <p>${message}</p>
-    `;
-    document.body.appendChild(loading);
-}
-
-function hideLoading() {
-    const loading = document.getElementById('loading-indicator');
-    if (loading) {
-        document.body.removeChild(loading);
-    }
-}
-
-// Make functions globally available
-window.startGame = startGame;
-window.restartGame = restartGame;
-window.saveScoreToBlockchain = saveScoreToBlockchain;
-
-// Initialize when page loads
-window.addEventListener('load', () => {
-    console.log('🎮 Game loaded and ready!');
-    document.getElementById('startScreen').style.display = 'block';
 });
 
 console.log('✅ game.js loaded successfully!');
