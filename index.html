@@ -1555,18 +1555,6 @@
         // Initialize game
         document.getElementById('startScreen').style.display = 'block';
     </script>
-   window.addEventListener('load', function() {
-    console.log('🔧 Forcing correct game fee...');
-    
-    if (window.GAME_CONFIG) {
-        window.GAME_CONFIG.GAME_FEE = '0.001';
-        console.log('✅ GAME_CONFIG.GAME_FEE set to:', window.GAME_CONFIG.GAME_FEE);
-    }
-    
-    if (window.walletConnector) {
-        window.walletConnector.config.GAME_FEE = '0.001';
-        console.log('✅ walletConnector.config.GAME_FEE set to:', window.walletConnector.config.GAME_FEE);
-    }
-});
+  
 </body>
 </html>
