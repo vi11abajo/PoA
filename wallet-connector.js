@@ -265,12 +265,12 @@ class WalletConnector {
                 <div id="wallet-message"></div>
                 
                 <div class="wallet-option" onclick="walletConnector.connectWallet('metamask')">
-                    <img src="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30.04 3.484l-12.364 9.09 2.292-5.388z' fill='%23e2761b'/%3E%3Cpath d='M1.96 3.484l12.265 9.16-2.193-5.458z' fill='%23e4761b'/%3E%3Cpath d='M25.707 23.242l-3.294 5.01 7.049 1.94 2.022-6.82z' fill='%23e4761b'/%3E%3Cpath d='M.475 23.372l2.023 6.82 7.048-1.94-3.293-5.01z' fill='%23e4761b'/%3E%3Cpath d='M9.29 14.24l-1.962 2.952 6.995.317-.24-7.491z' fill='%23e4761b'/%3E%3Cpath d='M22.71 14.24l-4.854-4.293-.159 7.564 6.995-.317z' fill='%23e4761b'/%3E%3Cpath d='M9.546 28.252l4.204-2.03-3.615-2.818z' fill='%23e4761b'/%3E%3Cpath d='M18.25 26.222l4.205 2.03-.59-4.848z' fill='%23e4761b'/%3E%3C/svg%3E" alt="MetaMask">
+                    <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/mmicon.png" alt="MetaMask">
                     <span>MetaMask</span>
                 </div>
                 
                 <div class="wallet-option" onclick="walletConnector.connectWallet('okx')">
-                    <img src="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16 32C7.163 32 0 24.837 0 16S7.163 0 16 0s16 7.163 16 16-7.163 16-16 16z' fill='%23000'/%3E%3Cpath d='M8 8h6v6H8zm10 0h6v6h-6zM8 18h6v6H8zm10 0h6v6h-6z' fill='%23fff'/%3E%3C/svg%3E" alt="OKX">
+                    <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/okxicon.png" alt="OKX">
                     <span>OKX Wallet</span>
                 </div>
             </div>
