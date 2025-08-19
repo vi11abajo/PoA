@@ -14,7 +14,7 @@ class WalletConnector {
             RPC_URL: 'https://testnet.dplabs-internal.com',
             CHAIN_ID: '688688',
             CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
-            GAME_FEE: '0.001'
+            GAME_FEE: GAME_CONFIG.GAME_FEE
         };
         
         // ABI контракта (только нужные функции)
@@ -493,7 +493,7 @@ class WalletConnector {
             modal.innerHTML = `
                 <div class="wallet-modal-content">
                     <h3>🚀 Start Blockchain Game</h3>
-                    <p style="margin: 15px 0;">Entry Fee: <strong>${this.config.GAME_FEE} PHRS</strong></p>
+                    <p style="margin: 15px 0;">Entry Fee: <strong>${GAME_CONFIG.GAME_FEE} PHRS</strong></p>
                     <p style="font-size: 14px; opacity: 0.8;">Your score will be recorded on the Pharos blockchain</p>
                     <button onclick="confirmGameStart(true)" style="margin: 10px; padding: 12px 20px; background: #00ddff; color: #001122; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Pay & Start</button>
                     <button onclick="confirmGameStart(false)" style="margin: 10px; padding: 12px 20px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer;">Play Offline</button>
