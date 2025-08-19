@@ -124,8 +124,8 @@
             box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
             backdrop-filter: blur(15px);
             max-width: 90vw;
+            min-width: 500px;
             max-height: 85vh;
-            overflow-y: auto;
             box-sizing: border-box;
         }
 
@@ -399,6 +399,7 @@
         @media (max-width: 768px) {
             .game-over, .start-screen {
                 max-width: 95vw;
+                min-width: 350px;
                 padding: 20px;
                 font-size: 18px;
             }
@@ -450,6 +451,7 @@
         @media (max-width: 480px) {
             .game-over, .start-screen {
                 max-width: 95vw;
+                min-width: 300px;
                 padding: 15px;
                 font-size: 16px;
             }
@@ -505,7 +507,7 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         
         <div class="start-screen" id="startScreen">
-            <h1>🙌 PHAROS INVADERS 🦀</h1>
+            <h1>🐙 PHAROS INVADERS 🦀</h1>
             <p>Defend the ocean depths from the crab invasion!</p>
             <p style="font-size: 16px; margin: 15px 0;">Futuristic cyborg octopus vs army of crabs</p>
             <button onclick="startGame()" id="startButton">START BATTLE</button>
@@ -577,6 +579,7 @@
         let gameSpeed = 1;
         let hasPaidFee = false;
         let scoreAlreadySaved = false;
+        let currentGameSession = null; // Добавляем уникальный ID сессии игры
 
         // FPS-independent timing variables
         let lastTime = 0;
@@ -1365,9 +1368,21 @@
                 document.getElementById('finalScore').textContent = score;
                 document.getElementById('gameOver').style.display = 'block';
                 
-                // Show blockchain section ONLY if wallet is connected AND fee was paid
-                if (walletConnector && walletConnector.connected && walletConnector.hasPaidFee) {
+                // Show blockchain section ONLY if wallet is connected AND fee was paid для ЭТОЙ игровой сессии
+                if (walletConnector && walletConnector.connected && hasPaidFee && currentGameSession) {
                     document.getElementById('blockchainSection').style.display = 'block';
+                    
+                    // Очищаем предыдущую информацию
+                    document.getElementById('save-status').innerHTML = '';
+                    document.getElementById('playerName').value = '';
+                    document.getElementById('playerName').style.display = 'block';
+                    document.getElementById('saveScoreButton').style.display = 'inline-block';
+                    
+                    const h3Element = document.querySelector('#blockchainSection h3');
+                    const pElement = document.querySelector('#blockchainSection p');
+                    if (h3Element) h3Element.style.display = 'block';
+                    if (pElement) pElement.style.display = 'block';
+                    
                     loadLeaderboard();
                 } else {
                     // Hide blockchain section if playing offline or no fee paid
@@ -1384,9 +1399,10 @@
             try {
                 console.log('Starting game...');
                 
-                // Reset fee payment status and score save status
+                // Reset fee payment status and score save status для новой игры
                 hasPaidFee = false;
                 scoreAlreadySaved = false;
+                currentGameSession = null; // Сбрасываем сессию
                 
                 // Check if walletConnector exists and is connected
                 if (!window.walletConnector || !walletConnector.connected) {
@@ -1409,10 +1425,13 @@
                     await walletConnector.payGameFee();
                     hasPaidFee = true;
                     walletConnector.hasPaidFee = true;
+                    // Создаем новую игровую сессию
+                    currentGameSession = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                     hideLoading();
-                    console.log('Payment completed');
+                    console.log('Payment completed, session:', currentGameSession);
                 } else {
                     hasPaidFee = false;
+                    currentGameSession = null;
                     if (walletConnector) walletConnector.hasPaidFee = false;
                     console.log('Playing without fee');
                 }
@@ -1471,13 +1490,13 @@
                 return;
             }
             
-            if (!walletConnector.hasPaidFee) {
-                alert('Game fee was not paid. Cannot save score to blockchain.');
+            if (!hasPaidFee || !currentGameSession) {
+                alert('Game fee was not paid for this session. Cannot save score to blockchain.');
                 return;
             }
             
             if (scoreAlreadySaved) {
-                alert('You have already saved your score for this game!');
+                alert('You have already saved your score for this game session!');
                 return;
             }
 
@@ -1487,7 +1506,7 @@
                 const txHash = await walletConnector.saveScore(score, playerName);
                 
                 hideLoading();
-                scoreAlreadySaved = true; // Mark as saved
+                scoreAlreadySaved = true; // Mark as saved для этой сессии
                 
                 // Hide the save section and show only transaction info
                 document.getElementById('saveScoreButton').style.display = 'none';
@@ -1591,9 +1610,9 @@
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'block';
             gameState = 'start';
-            hasPaidFee = false; // Reset fee payment status
-            scoreAlreadySaved = false; // Reset score save status
-            if (walletConnector) walletConnector.hasPaidFee = false; // Reset wallet connector state too
+            
+            // НЕ сбрасываем hasPaidFee и currentGameSession - они сбрасываются только при новом старте
+            scoreAlreadySaved = false; // Только сброс статуса сохранения для этого экрана
         }
 
         // Loading utilities
