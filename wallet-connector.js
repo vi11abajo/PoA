@@ -7,6 +7,7 @@ class WalletConnector {
         this.connected = false;
         this.walletType = null;
         this.hasPaidFee = false;
+        this.isInitialized = false; // Флаг инициализации
         
         // Конфигурация блокчейна - берем из GAME_CONFIG если он загружен
         this.config = {
@@ -56,8 +57,15 @@ class WalletConnector {
             }
         ];
         
+        this.init();
+    }
+    
+    // Асинхронная инициализация
+    async init() {
         this.initUI();
-        this.restoreConnectionFromStorage(); // Восстанавливаем подключение при загрузке
+        await this.restoreConnectionFromStorage();
+        this.isInitialized = true;
+        console.log('🔗 WalletConnector initialized, connected:', this.connected);
     }
     
     // Функция для получения комиссии игры
@@ -72,12 +80,20 @@ class WalletConnector {
     
     // Сохранение состояния подключения
     saveConnectionToStorage() {
-        if (this.connected && this.account && this.walletType) {
-            localStorage.setItem('pharos_wallet_connected', JSON.stringify({
-                account: this.account,
-                walletType: this.walletType,
-                connected: true
-            }));
+        try {
+            if (this.connected && this.account && this.walletType) {
+                const connectionData = {
+                    account: this.account,
+                    walletType: this.walletType,
+                    connected: true,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('pharos_wallet_connected', JSON.stringify(connectionData));
+                console.log('💾 Connection saved to localStorage');
+            }
+        } catch (error) {
+            console.error('Failed to save connection:', error);
+            // Игнорируем ошибки localStorage
         }
     }
     
@@ -85,22 +101,52 @@ class WalletConnector {
     async restoreConnectionFromStorage() {
         try {
             const savedConnection = localStorage.getItem('pharos_wallet_connected');
-            if (savedConnection) {
-                const connectionData = JSON.parse(savedConnection);
-                if (connectionData.connected && connectionData.account && connectionData.walletType) {
-                    console.log('Attempting to restore wallet connection...');
-                    await this.connectWallet(connectionData.walletType, true); // true = silent restore
+            if (!savedConnection) {
+                console.log('🔍 No saved connection found');
+                return false;
+            }
+            
+            const connectionData = JSON.parse(savedConnection);
+            
+            // Проверяем, что данные не слишком старые (7 дней)
+            const weekInMs = 7 * 24 * 60 * 60 * 1000;
+            if (connectionData.timestamp && (Date.now() - connectionData.timestamp > weekInMs)) {
+                console.log('🕐 Saved connection expired');
+                this.clearConnectionFromStorage();
+                return false;
+            }
+            
+            if (connectionData.connected && connectionData.account && connectionData.walletType) {
+                console.log('🔄 Attempting to restore wallet connection for:', connectionData.walletType);
+                
+                // Добавляем небольшую задержку чтобы страница успела загрузиться
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const restored = await this.connectWallet(connectionData.walletType, true);
+                if (restored) {
+                    console.log('✅ Wallet connection restored successfully');
+                    return true;
+                } else {
+                    console.log('❌ Failed to restore wallet connection');
+                    this.clearConnectionFromStorage();
                 }
             }
         } catch (error) {
-            console.log('Failed to restore wallet connection:', error);
-            localStorage.removeItem('pharos_wallet_connected');
+            console.log('❌ Failed to restore wallet connection:', error);
+            this.clearConnectionFromStorage();
         }
+        return false;
     }
     
     // Очистка сохраненного состояния
     clearConnectionFromStorage() {
-        localStorage.removeItem('pharos_wallet_connected');
+        try {
+            localStorage.removeItem('pharos_wallet_connected');
+            console.log('🗑️ Connection data cleared from localStorage');
+        } catch (error) {
+            console.error('Failed to clear connection data:', error);
+            // Игнорируем ошибки localStorage
+        }
     }EE;
         }
         // Fallback значение если конфиг не загружен
@@ -384,14 +430,20 @@ class WalletConnector {
             let accounts;
             if (silentRestore) {
                 // При восстановлении пытаемся получить аккаунты без запроса разрешений
-                accounts = await provider.request({ method: 'eth_accounts' });
+                try {
+                    accounts = await provider.request({ method: 'eth_accounts' });
+                } catch (error) {
+                    console.log('Failed to get accounts silently:', error);
+                    return false;
+                }
             } else {
                 accounts = await provider.request({ method: 'eth_requestAccounts' });
             }
             
-            if (accounts.length === 0) {
+            if (!accounts || accounts.length === 0) {
                 if (silentRestore) {
                     // При тихом восстановлении просто не подключаемся
+                    console.log('No accounts available for silent restore');
                     return false;
                 } else {
                     throw new Error('No accounts found. Please unlock your wallet.');
@@ -401,16 +453,32 @@ class WalletConnector {
             this.account = accounts[0];
             this.walletType = walletType;
             
-            // Проверка сети
-            const chainId = await this.web3.eth.getChainId();
-            if (chainId.toString() !== this.config.CHAIN_ID) {
+            // Проверка сети (только для активного подключения)
+            try {
+                const chainId = await this.web3.eth.getChainId();
+                if (chainId.toString() !== this.config.CHAIN_ID) {
+                    if (!silentRestore) {
+                        await this.switchNetwork();
+                    } else {
+                        console.log('Wrong network during restore, but continuing...');
+                    }
+                }
+            } catch (error) {
+                console.log('Network check failed:', error);
                 if (!silentRestore) {
-                    await this.switchNetwork();
+                    throw error;
                 }
             }
             
             // Инициализация контракта
-            this.contract = new this.web3.eth.Contract(this.contractABI, this.config.CONTRACT_ADDRESS);
+            try {
+                this.contract = new this.web3.eth.Contract(this.contractABI, this.config.CONTRACT_ADDRESS);
+            } catch (error) {
+                console.log('Contract initialization failed:', error);
+                if (!silentRestore) {
+                    throw error;
+                }
+            }
             
             this.connected = true;
             this.updateConnectionStatus();
@@ -436,6 +504,7 @@ class WalletConnector {
                 }, 1000); // Небольшая задержка для показа сообщения об успехе
             }
             
+            console.log('✅ Wallet connected:', this.account);
             return true;
             
         } catch (error) {
