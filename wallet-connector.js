@@ -516,8 +516,12 @@ class WalletConnector {
             modal.className = 'wallet-modal';
             modal.style.display = 'flex';
             
-            // Получаем актуальную комиссию
-            const currentFee = this.getGameFee();
+            // Получаем актуальную комиссию из GAME_CONFIG
+            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
+                ? GAME_CONFIG.GAME_FEE 
+                : this.getGameFee();
+            
+            console.log('🎮 Current game fee from config:', currentFee); // Для отладки
             
             modal.innerHTML = `
                 <div class="wallet-modal-content">
@@ -545,7 +549,12 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
-            const currentFee = this.getGameFee();
+            // Получаем актуальную комиссию из GAME_CONFIG
+            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
+                ? GAME_CONFIG.GAME_FEE 
+                : this.getGameFee();
+            
+            console.log('💰 Paying game fee:', currentFee, 'PHRS'); // Для отладки
             
             const gasEstimate = await this.contract.methods.startGame().estimateGas({
                 from: this.account,
