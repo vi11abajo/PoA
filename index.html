@@ -490,11 +490,9 @@
     <!-- Web3 Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
     
-    <!-- Wallet Connector Module -->
-    <script src="wallet-connector.js"></script>
-    
-    <!-- Game Configuration -->
+    <!-- ВАЖНО: Сначала загружаем конфиг, потом wallet connector -->
     <script src="game-config.js"></script>
+    <script src="wallet-connector.js"></script>
 
     <!-- Game Logic -->
     <script>
@@ -1294,12 +1292,10 @@
                 const scoreEl = document.getElementById('score');
                 const livesEl = document.getElementById('lives');
                 const levelEl = document.getElementById('level');
-                const fpsEl = document.getElementById('fps');
                 
                 if (scoreEl) scoreEl.textContent = score;
                 if (livesEl) livesEl.textContent = lives;
                 if (levelEl) levelEl.textContent = level;
-                if (fpsEl) fpsEl.textContent = currentFPS;
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1315,7 +1311,7 @@
                 document.getElementById('gameOver').style.display = 'block';
                 
                 // Show blockchain section ONLY if wallet is connected AND fee was paid
-                if (walletConnector.connected && walletConnector.hasPaidFee) {
+                if (walletConnector && walletConnector.connected && walletConnector.hasPaidFee) {
                     document.getElementById('blockchainSection').style.display = 'block';
                     loadLeaderboard();
                 } else {
@@ -1337,11 +1333,13 @@
                 hasPaidFee = false;
                 scoreAlreadySaved = false;
                 
-                // Check if wallet is connected, if not - show wallet modal
-                if (!walletConnector.connected) {
+                // Check if walletConnector exists and is connected
+                if (!window.walletConnector || !walletConnector.connected) {
                     console.log('Wallet not connected, showing wallet modal...');
                     window.pendingGameStart = true;
-                    walletConnector.showWalletModal();
+                    if (window.walletConnector) {
+                        walletConnector.showWalletModal();
+                    }
                     return; // Don't start game yet, wait for wallet connection
                 }
                 
@@ -1360,7 +1358,7 @@
                     console.log('Payment completed');
                 } else {
                     hasPaidFee = false;
-                    walletConnector.hasPaidFee = false;
+                    if (walletConnector) walletConnector.hasPaidFee = false;
                     console.log('Playing without fee');
                 }
                 
@@ -1371,7 +1369,6 @@
             } catch (error) {
                 hideLoading();
                 console.error('Error starting game:', error);
-                console.error('Error stack:', error.stack);
                 alert('Error starting game: ' + error.message);
             }
         }
@@ -1381,7 +1378,7 @@
             // Start the actual game
             gameState = 'playing';
             score = 0;
-            lives = GAME_CONFIG.PLAYER_LIVES;
+            lives = GAME_CONFIG.PLAYER_LIVES; // ИСПРАВЛЕНО: теперь берет из конфига
             level = 1;
             gameSpeed = 1;
             invaderSpeed = 1;
@@ -1411,7 +1408,7 @@
                 return;
             }
 
-            if (!walletConnector.connected) {
+            if (!walletConnector || !walletConnector.connected) {
                 alert('Wallet not connected');
                 return;
             }
@@ -1464,6 +1461,8 @@
         // Load leaderboard (only top 3 for game over screen)
         async function loadLeaderboard() {
             try {
+                if (!walletConnector) return;
+                
                 const topScores = await walletConnector.getTopScores(3); // Only top 3
                 const container = document.getElementById('leaderboard-container');
                 
@@ -1500,11 +1499,6 @@
             return `${address.slice(0, 6)}***${address.slice(-6)}`;
         }
 
-        // Open full leaderboard page
-        function openLeaderboard() {
-            window.open('leaderboard.html', '_blank');
-        }
-
         // Copy to clipboard function
         async function copyToClipboard(text) {
             try {
@@ -1529,13 +1523,6 @@
             }
         }
 
-        // Escape HTML function
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         // Restart game function
         function restartGame() {
             document.getElementById('gameOver').style.display = 'none';
@@ -1543,7 +1530,7 @@
             gameState = 'start';
             hasPaidFee = false; // Reset fee payment status
             scoreAlreadySaved = false; // Reset score save status
-            walletConnector.hasPaidFee = false; // Reset wallet connector state too
+            if (walletConnector) walletConnector.hasPaidFee = false; // Reset wallet connector state too
         }
 
         // Loading utilities
