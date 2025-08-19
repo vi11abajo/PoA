@@ -25,6 +25,37 @@
             position: relative;
         }
 
+        .pharos-logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .pharos-logo img {
+            height: 40px;
+            width: auto;
+            filter: drop-shadow(0 0 15px rgba(0, 221, 255, 0.8));
+            transition: all 0.3s ease;
+        }
+
+        .pharos-logo img:hover {
+            filter: drop-shadow(0 0 25px rgba(0, 221, 255, 1));
+            transform: scale(1.05);
+        }
+
+        .main-leaderboard-button {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .game-over-active .main-leaderboard-button {
+            display: none;
+        }
+
         .game-container {
             position: relative;
             border: 3px solid #00ddff;
@@ -165,19 +196,60 @@
             100% { transform: rotate(360deg); }
         }
 
-        .game-over-active .main-leaderboard-button {
-            display: none;
-        }
-
         .controls {
             margin-top: 20px;
             text-align: center;
             color: #66ccff;
             font-size: 14px;
         }
+
+        .bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle, rgba(0, 221, 255, 0.3), rgba(102, 204, 255, 0.1));
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0% { 
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="pharos-logo">
+        <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png" alt="Pharos Network">
+    </div>
+    
+    <div class="main-leaderboard-button">
+        <button onclick="window.location.href='leaderboard.html';" style="padding: 10px 20px; font-size: 14px; margin: 0;">
+            🏆 Leaderboard
+        </button>
+    </div>
+    
+    <div class="bubbles"></div>
+    
     <div class="game-container">
         <div class="ui">
             <div>🏆 Score: <span id="score">0</span></div>
