@@ -1,6 +1,6 @@
-// game.js - CLEAN FIXED version
+// game.js - FULL GAME RESTORED
 
-console.log('🎮 Loading game.js...');
+console.log('🎮 Loading full game.js...');
 
 // Game variables
 let gameState = 'start';
@@ -12,20 +12,91 @@ let hasPaidFee = false;
 let scoreAlreadySaved = false;
 let currentGameSession = null;
 
-// Canvas and game objects
-let canvas, ctx, player;
+// FPS variables
+let lastTime = 0;
+const targetFPS = 60;
+const frameTime = 1000 / targetFPS;
+let deltaTime = 0;
 
-// Initialize canvas when DOM is ready
+// Load game images
+const octopusImage = new Image();
+let octopusImageLoaded = false;
+
+const crabImages = {
+    violet: new Image(),
+    red: new Image(),
+    yellow: new Image(),
+    blue: new Image(),
+    green: new Image()
+};
+
+let crabImagesLoaded = {
+    violet: false,
+    red: false,
+    yellow: false,
+    blue: false,
+    green: false
+};
+
+// Set image sources
+octopusImage.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png';
+octopusImage.onload = () => { octopusImageLoaded = true; console.log('🐙 Octopus image loaded'); };
+octopusImage.onerror = () => { octopusImageLoaded = false; console.log('❌ Octopus image failed'); };
+
+crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
+crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
+crabImages.yellow.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabYellow.png';
+crabImages.blue.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBlue.png';
+crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabGreen.png';
+
+Object.keys(crabImages).forEach(color => {
+    crabImages[color].onload = () => { 
+        crabImagesLoaded[color] = true; 
+        console.log(`🦀 ${color} crab loaded`);
+    };
+    crabImages[color].onerror = () => { 
+        crabImagesLoaded[color] = false; 
+        console.log(`❌ ${color} crab failed`);
+    };
+});
+
+// Canvas and game objects
+let canvas, ctx;
+
+// Game objects
+const player = {
+    x: 370,
+    y: 520,
+    width: 60,
+    height: 60,
+    speed: 6
+};
+
+let bullets = [];
+let invaders = [];
+let invaderBullets = [];
+let particles = [];
+let ripples = [];
+
+// Game settings
+const invaderRows = 5;
+const invaderCols = 10;
+const invaderWidth = 35;
+const invaderHeight = 30;
+let invaderSpeed = 1;
+let invaderDirection = 1;
+let invaderDropDistance = 25;
+
+// Controls
+const keys = {};
+let lastShotTime = 0;
+const shotCooldown = 300;
+
+// Initialize canvas
 function initCanvas() {
     canvas = document.getElementById('gameCanvas');
     if (canvas) {
         ctx = canvas.getContext('2d');
-        player = {
-            x: 400,
-            y: 550,
-            width: 60,
-            height: 60
-        };
         console.log('✅ Canvas initialized');
     }
 }
@@ -54,49 +125,502 @@ function createBubbles() {
     }, 500);
 }
 
-// Simple drawing function
-function drawGame() {
-    if (!ctx || !canvas) return;
+// Keyboard events
+document.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
     
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw simple player (octopus)
-    ctx.fillStyle = '#00ddff';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-    
-    // Draw octopus emoji as placeholder
-    ctx.font = '40px Arial';
-    ctx.fillText('🐙', player.x + 10, player.y + 35);
-    
-    // Draw some crabs as targets
-    ctx.font = '30px Arial';
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 3; j++) {
-            ctx.fillText('🦀', 100 + i * 120, 80 + j * 80);
-        }
+    if (e.code === 'KeyP' && gameState === 'playing') {
+        gameState = 'paused';
+    } else if (e.code === 'KeyP' && gameState === 'paused') {
+        gameState = 'playing';
+        requestAnimationFrame(gameLoop);
     }
     
-    // Simple game text
-    ctx.fillStyle = '#00ddff';
-    ctx.font = '24px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('🎮 GAME RUNNING! 🎮', canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Press SPACE to test controls', canvas.width / 2, canvas.height / 2 + 40);
-    ctx.fillText('Use ← → arrows to move octopus', canvas.width / 2, canvas.height / 2 + 80);
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (gameState === 'start') {
+            startGame();
+        }
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    keys[e.code] = false;
+});
+
+// Create crabs
+function createInvaders() {
+    invaders = [];
+    const startX = 50;
+    const startY = 50;
+    const spacingX = 65;
+    const spacingY = 55;
+
+    for (let row = 0; row < invaderRows; row++) {
+        for (let col = 0; col < invaderCols; col++) {
+            let crabType = 'green';
+            if (row === 0) crabType = 'violet';
+            else if (row === 1) crabType = 'red';
+            else if (row === 2) crabType = 'yellow';
+            else if (row === 3) crabType = 'blue';
+            else if (row === 4) crabType = 'green';
+            
+            invaders.push({
+                x: startX + col * spacingX,
+                y: startY + row * spacingY,
+                width: invaderWidth,
+                height: invaderHeight,
+                alive: true,
+                type: crabType,
+                animFrame: 0,
+                clawOffset: Math.random() * Math.PI * 2
+            });
+        }
+    }
 }
 
-// Start game function - MAIN FUNCTION
+// Create player bullet
+function createBullet() {
+    const now = Date.now();
+    if (now - lastShotTime > shotCooldown) {
+        bullets.push({
+            x: player.x + player.width / 2 - 3,
+            y: player.y,
+            width: 6,
+            height: 15,
+            speed: 8,
+            trail: []
+        });
+        lastShotTime = now;
+        createRipple(player.x + player.width / 2, player.y);
+    }
+}
+
+// Create crab bullet
+function createInvaderBullet(invader) {
+    const fireRate = 0.0008 * level;
+    if (Math.random() < fireRate) {
+        invaderBullets.push({
+            x: invader.x + invader.width / 2 - 4,
+            y: invader.y + invader.height,
+            width: 8,
+            height: 8,
+            speed: 2.5,
+            wobble: 0
+        });
+    }
+}
+
+// Create explosion particles
+function createExplosion(x, y, color, isOctopus = false) {
+    const particleCount = isOctopus ? 15 : 12;
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.5) * 12,
+            life: 40,
+            maxLife: 40,
+            color: color,
+            size: Math.random() * 4 + 2,
+            isInk: isOctopus
+        });
+    }
+}
+
+// Create water ripple
+function createRipple(x, y) {
+    ripples.push({
+        x: x,
+        y: y,
+        size: 0,
+        maxSize: 50,
+        life: 30
+    });
+}
+
+// Update player
+function updatePlayer(deltaTime) {
+    const moveSpeed = player.speed * deltaTime;
+    
+    if (keys['ArrowLeft'] && player.x > 0) {
+        player.x -= moveSpeed;
+    }
+    if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
+        player.x += moveSpeed;
+    }
+    if (keys['Space']) {
+        createBullet();
+    }
+}
+
+// Update bullets
+function updateBullets(deltaTime) {
+    // Player bullets
+    bullets = bullets.filter(bullet => {
+        bullet.y -= bullet.speed * deltaTime;
+        bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
+        if (bullet.trail.length > 8) bullet.trail.shift();
+        return bullet.y > -bullet.height;
+    });
+
+    // Crab bullets
+    invaderBullets = invaderBullets.filter(bullet => {
+        bullet.y += bullet.speed * deltaTime;
+        bullet.wobble += 0.2 * deltaTime;
+        bullet.x += Math.sin(bullet.wobble) * 0.5 * deltaTime;
+        return bullet.y < canvas.height;
+    });
+}
+
+// Update crabs
+function updateInvaders(deltaTime) {
+    let shouldDrop = false;
+    let aliveInvaders = invaders.filter(inv => inv.alive);
+
+    const speedMultiplier = 1 + (50 - aliveInvaders.length) * 0.025;
+    const currentSpeed = invaderSpeed * speedMultiplier * gameSpeed * deltaTime;
+
+    for (let invader of aliveInvaders) {
+        if ((invader.x <= 0 && invaderDirection === -1) || 
+            (invader.x >= canvas.width - invader.width && invaderDirection === 1)) {
+            shouldDrop = true;
+            break;
+        }
+    }
+
+    if (shouldDrop) {
+        invaderDirection *= -1;
+        for (let invader of invaders) {
+            if (invader.alive) {
+                invader.y += invaderDropDistance;
+            }
+        }
+    }
+
+    for (let invader of invaders) {
+        if (invader.alive) {
+            invader.x += currentSpeed * invaderDirection;
+            invader.animFrame += 0.08 * deltaTime;
+            invader.clawOffset += 0.12 * deltaTime;
+            createInvaderBullet(invader);
+        }
+    }
+
+    for (let invader of aliveInvaders) {
+        if (invader.y + invader.height >= player.y) {
+            gameState = 'gameOver';
+            break;
+        }
+    }
+}
+
+// Update particles and effects
+function updateParticles(deltaTime) {
+    particles = particles.filter(particle => {
+        particle.x += particle.vx * deltaTime;
+        particle.y += particle.vy * deltaTime;
+        particle.vy += 0.2 * deltaTime;
+        particle.life -= deltaTime;
+        return particle.life > 0;
+    });
+
+    ripples = ripples.filter(ripple => {
+        ripple.size = (ripple.maxSize * (30 - ripple.life)) / 30;
+        ripple.life -= deltaTime;
+        return ripple.life > 0;
+    });
+}
+
+// Check collisions
+function checkCollisions() {
+    // Player bullets vs crabs
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        for (let j = invaders.length - 1; j >= 0; j--) {
+            if (invaders[j].alive && 
+                bullets[i].x < invaders[j].x + invaders[j].width &&
+                bullets[i].x + bullets[i].width > invaders[j].x &&
+                bullets[i].y < invaders[j].y + invaders[j].height &&
+                bullets[i].y + bullets[i].height > invaders[j].y) {
+                
+                let crabColor = getCrabColor(invaders[j].type);
+                createExplosion(invaders[j].x + invaders[j].width/2, 
+                              invaders[j].y + invaders[j].height/2, crabColor);
+                
+                createRipple(invaders[j].x + invaders[j].width/2, 
+                           invaders[j].y + invaders[j].height/2);
+                
+                let points = {
+                    'violet': 100,
+                    'red': 80,
+                    'yellow': 60,
+                    'blue': 40,
+                    'green': 20
+                }[invaders[j].type];
+                
+                score += points;
+                invaders[j].alive = false;
+                bullets.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    // Crab bullets vs player
+    for (let i = invaderBullets.length - 1; i >= 0; i--) {
+        if (invaderBullets[i].x < player.x + player.width &&
+            invaderBullets[i].x + invaderBullets[i].width > player.x &&
+            invaderBullets[i].y < player.y + player.height &&
+            invaderBullets[i].y + invaderBullets[i].height > player.y) {
+            
+            createExplosion(player.x + player.width/2, player.y + player.height/2, 
+                          '#6666ff', true);
+            invaderBullets.splice(i, 1);
+            lives--;
+            
+            if (lives <= 0) {
+                gameState = 'gameOver';
+            }
+        }
+    }
+}
+
+// Get crab color
+function getCrabColor(type) {
+    switch(type) {
+        case 'violet': return '#9966ff';
+        case 'red': return '#ff3333';
+        case 'yellow': return '#ffdd33';
+        case 'blue': return '#3366ff';
+        case 'green': return '#33cc66';
+        default: return '#cc3333';
+    }
+}
+
+// Draw player
+function drawPlayer() {
+    const centerX = player.x + player.width / 2;
+    const centerY = player.y + player.height / 2;
+    
+    if (octopusImageLoaded && octopusImage.complete) {
+        ctx.save();
+        ctx.shadowColor = '#00ddff';
+        ctx.shadowBlur = 15;
+        
+        const imageSize = 70;
+        ctx.drawImage(
+            octopusImage, 
+            centerX - imageSize/2, 
+            centerY - imageSize/2, 
+            imageSize, 
+            imageSize
+        );
+        
+        ctx.restore();
+        
+        ctx.strokeStyle = '#00ddff';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        
+    } else {
+        // Fallback - draw simple octopus
+        ctx.fillStyle = '#00ddff';
+        ctx.font = '50px Arial';
+        ctx.fillText('🐙', player.x, player.y + 40);
+    }
+}
+
+// Draw crabs
+function drawInvaders() {
+    for (let invader of invaders) {
+        if (invader.alive) {
+            const centerX = invader.x + invader.width / 2;
+            const centerY = invader.y + invader.height / 2;
+            const bobbing = Math.sin(invader.animFrame) * 2;
+            
+            if (crabImagesLoaded[invader.type] && crabImages[invader.type].complete) {
+                ctx.save();
+                ctx.shadowColor = getCrabColor(invader.type);
+                ctx.shadowBlur = 5;
+                
+                const imageSize = 40;
+                ctx.drawImage(
+                    crabImages[invader.type], 
+                    centerX - imageSize/2, 
+                    centerY - imageSize/2 + bobbing, 
+                    imageSize, 
+                    imageSize
+                );
+                
+                ctx.restore();
+                
+            } else {
+                // Fallback - draw emoji crab
+                ctx.font = '25px Arial';
+                ctx.fillText('🦀', invader.x, invader.y + 20 + bobbing);
+            }
+        }
+    }
+}
+
+// Draw bullets
+function drawBullets() {
+    // Player bullets
+    for (let bullet of bullets) {
+        // Draw trail
+        ctx.strokeStyle = 'rgba(102, 102, 255, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i < bullet.trail.length - 1; i++) {
+            const alpha = i / bullet.trail.length;
+            ctx.globalAlpha = alpha * 0.8;
+            if (i < bullet.trail.length - 1) {
+                ctx.moveTo(bullet.trail[i].x, bullet.trail[i].y);
+                ctx.lineTo(bullet.trail[i + 1].x, bullet.trail[i + 1].y);
+            }
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        
+        // Draw bullet
+        ctx.fillStyle = '#6666ff';
+        ctx.beginPath();
+        ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowColor = '#6666ff';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#aaaaff';
+        ctx.beginPath();
+        ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    // Crab bullets - RED COLOR
+    for (let bullet of invaderBullets) {
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, bullet.width/2, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        ctx.fillStyle = 'rgba(255, 68, 68, 0.3)';
+        ctx.beginPath();
+        ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, bullet.width/2 - 1, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Draw particles
+function drawParticles() {
+    for (let particle of particles) {
+        let alpha = particle.life / particle.maxLife;
+        ctx.fillStyle = particle.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+}
+
+// Draw ripples
+function drawRipples() {
+    for (let ripple of ripples) {
+        ctx.strokeStyle = `rgba(0, 221, 255, ${ripple.life / 30})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, ripple.size, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+}
+
+// Draw UI overlays
+function drawUI() {
+    if (gameState === 'paused') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00ddff';
+        ctx.font = '48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', canvas.width/2, canvas.height/2);
+        ctx.font = '24px Arial';
+        ctx.fillText('Press P to continue', canvas.width/2, canvas.height/2 + 50);
+    }
+}
+
+// Main game loop
+function gameLoop(currentTime) {
+    if (lastTime === 0) lastTime = currentTime;
+    const rawDeltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+    
+    deltaTime = rawDeltaTime / frameTime;
+    if (deltaTime > 3) deltaTime = 3;
+    
+    if (gameState === 'playing') {
+        updatePlayer(deltaTime);
+        updateBullets(deltaTime);
+        updateInvaders(deltaTime);
+        updateParticles(deltaTime);
+        checkCollisions();
+
+        let aliveInvaders = invaders.filter(inv => inv.alive);
+        if (aliveInvaders.length === 0) {
+            level++;
+            gameSpeed += 0.07;
+            invaderSpeed += 0.5;
+            createInvaders();
+            bullets = [];
+            invaderBullets = [];
+        }
+
+        updateUI();
+    }
+
+    if (gameState === 'gameOver') {
+        showGameOver();
+        return;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawPlayer();
+    drawInvaders();
+    drawBullets();
+    drawParticles();
+    drawRipples();
+    drawUI();
+
+    if (gameState === 'playing' || gameState === 'paused') {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+function updateUI() {
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const levelEl = document.getElementById('level');
+    
+    if (scoreEl) scoreEl.textContent = score;
+    if (livesEl) livesEl.textContent = lives;
+    if (levelEl) levelEl.textContent = level;
+}
+
+// Start game function
 async function startGame() {
     try {
         console.log('🚀 START GAME CALLED!');
         
-        // Initialize canvas if not done
         if (!canvas) {
             initCanvas();
         }
         
-        // Check if wallet connector exists
         if (!window.walletConnector) {
             console.log('❌ No wallet connector');
             alert('Wallet connector not found. Please refresh the page.');
@@ -105,7 +629,6 @@ async function startGame() {
         
         console.log('✅ Wallet connector found');
         
-        // Check if wallet is connected
         if (!walletConnector.connected) {
             console.log('💼 Wallet not connected, showing modal...');
             window.pendingGameStart = true;
@@ -115,12 +638,10 @@ async function startGame() {
         
         console.log('✅ Wallet connected, starting game...');
         
-        // Reset game variables
         hasPaidFee = false;
         scoreAlreadySaved = false;
         currentGameSession = null;
         
-        // Show payment modal
         const shouldPayFee = await walletConnector.showGameStartModal();
         
         if (shouldPayFee) {
@@ -134,7 +655,6 @@ async function startGame() {
             console.log('🎮 Playing offline');
         }
         
-        // Actually start the game
         actuallyStartGame();
         
     } catch (error) {
@@ -148,13 +668,23 @@ async function startGame() {
 function actuallyStartGame() {
     console.log('🎮 Actually starting game...');
     
-    // Reset game state
     gameState = 'playing';
     score = 0;
     lives = 5;
     level = 1;
+    gameSpeed = 1;
+    invaderSpeed = 1;
     
-    // Hide screens
+    bullets = [];
+    invaderBullets = [];
+    particles = [];
+    ripples = [];
+    
+    player.x = canvas.width / 2 - 30;
+    player.y = canvas.height - 80;
+    
+    createInvaders();
+    
     const startScreen = document.getElementById('startScreen');
     const gameOver = document.getElementById('gameOver');
     
@@ -163,46 +693,8 @@ function actuallyStartGame() {
     
     document.body.classList.remove('game-over-active');
     
-    // Start game loop
-    gameLoop();
+    gameLoop(performance.now());
     console.log('✅ Game started successfully!');
-    
-    // Auto-end game after 10 seconds for demo
-    setTimeout(() => {
-        if (gameState === 'playing') {
-            endGame();
-        }
-    }, 10000);
-}
-
-// Simple game loop
-function gameLoop() {
-    if (gameState === 'playing') {
-        drawGame();
-        updateUI();
-        requestAnimationFrame(gameLoop);
-    } else if (gameState === 'gameOver') {
-        showGameOver();
-    }
-}
-
-function updateUI() {
-    const scoreEl = document.getElementById('score');
-    const livesEl = document.getElementById('lives');
-    const levelEl = document.getElementById('level');
-    
-    if (scoreEl) scoreEl.textContent = score;
-    if (livesEl) livesEl.textContent = lives;
-    if (levelEl) levelEl.textContent = level;
-    
-    // Increase score gradually for demo
-    score += 10;
-}
-
-function endGame() {
-    score = Math.floor(Math.random() * 5000) + 1000; // Random final score
-    gameState = 'gameOver';
-    showGameOver();
 }
 
 function showGameOver() {
@@ -216,7 +708,21 @@ function showGameOver() {
     if (gameOverEl) gameOverEl.style.display = 'block';
     
     if (window.walletConnector && walletConnector.connected && hasPaidFee && currentGameSession) {
-        if (blockchainSection) blockchainSection.style.display = 'block';
+        if (blockchainSection) {
+            blockchainSection.style.display = 'block';
+            
+            // Reset save form
+            const saveButton = document.getElementById('saveScoreButton');
+            const playerName = document.getElementById('playerName');
+            const saveStatus = document.getElementById('save-status');
+            
+            if (saveButton) saveButton.style.display = 'inline-block';
+            if (playerName) {
+                playerName.style.display = 'block';
+                playerName.value = '';
+            }
+            if (saveStatus) saveStatus.innerHTML = '';
+        }
     } else {
         if (blockchainSection) blockchainSection.style.display = 'none';
     }
@@ -269,12 +775,10 @@ async function saveScoreToBlockchain() {
         hideLoading();
         scoreAlreadySaved = true;
         
-        // Hide save form
         const saveButton = document.getElementById('saveScoreButton');
         if (saveButton) saveButton.style.display = 'none';
         if (playerNameEl) playerNameEl.style.display = 'none';
         
-        // Show transaction hash
         const saveStatus = document.getElementById('save-status');
         if (saveStatus) {
             saveStatus.innerHTML = `
@@ -291,26 +795,6 @@ async function saveScoreToBlockchain() {
         alert('Failed to save score: ' + error.message);
     }
 }
-
-// Keyboard controls
-document.addEventListener('keydown', (e) => {
-    if (!player) return;
-    
-    if (e.code === 'Space' && gameState === 'playing') {
-        e.preventDefault();
-        console.log('🚀 SPACE pressed - shooting!');
-    }
-    
-    if (e.code === 'ArrowLeft' && gameState === 'playing') {
-        player.x = Math.max(0, player.x - 20);
-        console.log('⬅️ Moving left');
-    }
-    
-    if (e.code === 'ArrowRight' && gameState === 'playing') {
-        player.x = Math.min(canvas.width - player.width, player.x + 20);
-        console.log('➡️ Moving right');
-    }
-});
 
 // Utility functions
 function showLoading(message) {
@@ -338,19 +822,15 @@ window.saveScoreToBlockchain = saveScoreToBlockchain;
 
 // Initialize when page loads
 window.addEventListener('load', () => {
-    console.log('🎮 Game loaded and ready!');
+    console.log('🎮 Full game loaded and ready!');
     
-    // Initialize canvas
     initCanvas();
     
-    // Show start screen
     const startScreen = document.getElementById('startScreen');
     if (startScreen) startScreen.style.display = 'block';
     
-    // Create bubbles effect
     createBubbles();
     
-    // Wait a bit for wallet connector
     setTimeout(() => {
         if (window.walletConnector) {
             console.log('✅ WalletConnector ready:', walletConnector.connected);
@@ -360,4 +840,4 @@ window.addEventListener('load', () => {
     }, 1000);
 });
 
-console.log('✅ game.js loaded successfully!');
+console.log('✅ Full game.js loaded successfully!');
