@@ -7,18 +7,18 @@ class WalletConnector {
         this.connected = false;
         this.walletType = null;
         this.hasPaidFee = false;
-        this.isInitialized = false; // Флаг инициализации
+        this.isInitialized = false;
         
-        // Конфигурация блокчейна - берем из GAME_CONFIG если он загружен
+        // Конфигурация блокчейна
         this.config = {
             NETWORK_NAME: 'Pharos Testnet',
             RPC_URL: 'https://testnet.dplabs-internal.com',
             CHAIN_ID: '688688',
             CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
-            GAME_FEE: this.getGameFee() // Используем функцию для получения комиссии
+            GAME_FEE: this.getGameFee()
         };
         
-        // ABI контракта (только нужные функции)
+        // ABI контракта
         this.contractABI = [
             {
                 "inputs": [],
@@ -57,14 +57,18 @@ class WalletConnector {
             }
         ];
         
-        // Синхронная инициализация UI
+        console.log('🔄 Creating WalletConnector...');
         this.initUI();
-        
-        // Асинхронная инициализация подключения
         this.initAsync();
     }
     
-    // Асинхронная инициализация
+    getGameFee() {
+        if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) {
+            return GAME_CONFIG.GAME_FEE;
+        }
+        return '0.001';
+    }
+    
     async initAsync() {
         try {
             console.log('🔄 Starting wallet connector async initialization...');
@@ -73,114 +77,17 @@ class WalletConnector {
             console.log('✅ WalletConnector initialized, connected:', this.connected);
         } catch (error) {
             console.error('❌ Failed to initialize wallet connector:', error);
-            this.isInitialized = true; // Помечаем как инициализированный даже при ошибке
+            this.isInitialized = true;
         }
     }
     
-    // Функция для получения комиссии игры
-    getGameFee() {
-        // Проверяем, загружен ли GAME_CONFIG
-        if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) {
-            return GAME_CONFIG.GAME_FEE;
-        }
-        // Fallback значение если конфиг не загружен
-        return '0.001';
-    }
-    
-    // Сохранение состояния подключения
-    saveConnectionToStorage() {
-        try {
-            if (this.connected && this.account && this.walletType) {
-                const connectionData = {
-                    account: this.account,
-                    walletType: this.walletType,
-                    connected: true,
-                    timestamp: Date.now()
-                };
-                localStorage.setItem('pharos_wallet_connected', JSON.stringify(connectionData));
-                console.log('💾 Connection saved to localStorage');
-            }
-        } catch (error) {
-            console.error('Failed to save connection:', error);
-            // Игнорируем ошибки localStorage
-        }
-    }
-    
-    // Восстановление состояния подключения
-    async restoreConnectionFromStorage() {
-        try {
-            const savedConnection = localStorage.getItem('pharos_wallet_connected');
-            if (!savedConnection) {
-                console.log('🔍 No saved connection found');
-                return false;
-            }
-            
-            const connectionData = JSON.parse(savedConnection);
-            
-            // Проверяем, что данные не слишком старые (7 дней)
-            const weekInMs = 7 * 24 * 60 * 60 * 1000;
-            if (connectionData.timestamp && (Date.now() - connectionData.timestamp > weekInMs)) {
-                console.log('🕐 Saved connection expired');
-                this.clearConnectionFromStorage();
-                return false;
-            }
-            
-            if (connectionData.connected && connectionData.account && connectionData.walletType) {
-                console.log('🔄 Found saved connection for:', connectionData.walletType);
-                
-                // Пробуем восстановить подключение только если MetaMask/OKX доступны
-                const hasWallet = (connectionData.walletType === 'metamask' && typeof window.ethereum !== 'undefined') ||
-                                 (connectionData.walletType === 'okx' && (typeof window.okexchain !== 'undefined' || (window.ethereum && window.ethereum.isOkxWallet)));
-                
-                if (hasWallet) {
-                    console.log('🔄 Attempting to restore wallet connection...');
-                    // Добавляем небольшую задержку чтобы страница успела загрузиться
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    const restored = await this.connectWallet(connectionData.walletType, true);
-                    if (restored) {
-                        console.log('✅ Wallet connection restored successfully');
-                        return true;
-                    } else {
-                        console.log('❌ Failed to restore wallet connection');
-                        // НЕ очищаем данные, возможно пользователь просто не разлочил кошелек
-                    }
-                } else {
-                    console.log('🔍 Wallet extension not available');
-                }
-            }
-        } catch (error) {
-            console.log('❌ Failed to restore wallet connection:', error);
-            // НЕ очищаем данные при ошибке, возможно временная проблема
-        }
-        return false;
-    }
-    
-    // Очистка сохраненного состояния
-    clearConnectionFromStorage() {
-        try {
-            localStorage.removeItem('pharos_wallet_connected');
-            console.log('🗑️ Connection data cleared from localStorage');
-        } catch (error) {
-            console.error('Failed to clear connection data:', error);
-            // Игнорируем ошибки localStorage
-        }
-    }EE;
-        }
-        // Fallback значение если конфиг не загружен
-        return '0.001';
-    }
-    
-    // Инициализация UI
     initUI() {
         this.createWalletButton();
         this.createWalletModal();
         this.updateConnectionStatus();
     }
     
-    // Создание кнопки подключения кошелька
     createWalletButton() {
-        // Проверяем, что кнопка еще не создана
         if (document.getElementById('wallet-button')) {
             console.log('Wallet button already exists');
             return;
@@ -197,7 +104,6 @@ class WalletConnector {
             </button>
         `;
         
-        // Добавляем стили если их еще нет
         if (!document.getElementById('wallet-styles')) {
             const style = document.createElement('style');
             style.id = 'wallet-styles';
@@ -252,9 +158,7 @@ class WalletConnector {
                 }
                 
                 .wallet-modal-content {
-                    background: linear-gradient(135deg, 
-                        rgba(0, 17, 34, 0.95) 0%, 
-                        rgba(0, 51, 102, 0.9) 100%);
+                    background: linear-gradient(135deg, rgba(0, 17, 34, 0.95) 0%, rgba(0, 51, 102, 0.9) 100%);
                     padding: 30px;
                     border-radius: 20px;
                     border: 2px solid #00ddff;
@@ -299,16 +203,6 @@ class WalletConnector {
                 .wallet-option span {
                     font-size: 16px;
                     font-weight: bold;
-                }
-                
-                .wallet-option.disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-                
-                .wallet-option.disabled:hover {
-                    transform: none;
-                    background: rgba(0, 221, 255, 0.05);
                 }
                 
                 .close-modal {
@@ -360,7 +254,6 @@ class WalletConnector {
                     font-size: 14px;
                 }
             `;
-            
             document.head.appendChild(style);
         }
         
@@ -368,9 +261,7 @@ class WalletConnector {
         console.log('✅ Wallet button created successfully');
     }
     
-    // Создание модального окна выбора кошелька
     createWalletModal() {
-        // Проверяем, что модал еще не создан
         if (document.getElementById('wallet-modal')) {
             console.log('Wallet modal already exists');
             return;
@@ -403,7 +294,6 @@ class WalletConnector {
         console.log('✅ Wallet modal created successfully');
     }
     
-    // Показать модальное окно
     showWalletModal() {
         if (this.connected) {
             this.disconnect();
@@ -412,7 +302,6 @@ class WalletConnector {
         }
     }
     
-    // Скрыть модальное окно
     hideWalletModal() {
         const modal = document.getElementById('wallet-modal');
         if (modal) {
@@ -420,13 +309,11 @@ class WalletConnector {
         }
         this.clearMessage();
         
-        // Если было ожидание начала игры и пользователь закрыл модал, просто очищаем флаг
         if (window.pendingGameStart) {
             window.pendingGameStart = false;
         }
     }
     
-    // Подключение к кошельку
     async connectWallet(walletType, silentRestore = false) {
         try {
             if (!silentRestore) {
@@ -437,15 +324,10 @@ class WalletConnector {
             
             switch (walletType) {
                 case 'metamask':
-                    if (typeof window.ethereum !== 'undefined') {
-                        // Проверяем, что это именно MetaMask
-                        if (window.ethereum.isMetaMask) {
-                            provider = window.ethereum;
-                        } else {
-                            throw new Error('MetaMask not detected. Please install MetaMask extension.');
-                        }
+                    if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+                        provider = window.ethereum;
                     } else {
-                        throw new Error('No Ethereum wallet detected. Please install MetaMask.');
+                        throw new Error('MetaMask not detected. Please install MetaMask extension.');
                     }
                     break;
                     
@@ -463,13 +345,10 @@ class WalletConnector {
                     throw new Error('Unsupported wallet type');
             }
             
-            // Инициализация Web3
             this.web3 = new Web3(provider);
             
-            // Запрос доступа к аккаунтам
             let accounts;
             if (silentRestore) {
-                // При восстановлении пытаемся получить аккаунты без запроса разрешений
                 try {
                     accounts = await provider.request({ method: 'eth_accounts' });
                 } catch (error) {
@@ -482,7 +361,6 @@ class WalletConnector {
             
             if (!accounts || accounts.length === 0) {
                 if (silentRestore) {
-                    // При тихом восстановлении просто не подключаемся
                     console.log('No accounts available for silent restore');
                     return false;
                 } else {
@@ -493,14 +371,11 @@ class WalletConnector {
             this.account = accounts[0];
             this.walletType = walletType;
             
-            // Проверка сети (только для активного подключения)
             try {
                 const chainId = await this.web3.eth.getChainId();
                 if (chainId.toString() !== this.config.CHAIN_ID) {
                     if (!silentRestore) {
                         await this.switchNetwork();
-                    } else {
-                        console.log('Wrong network during restore, but continuing...');
                     }
                 }
             } catch (error) {
@@ -510,7 +385,6 @@ class WalletConnector {
                 }
             }
             
-            // Инициализация контракта
             try {
                 this.contract = new this.web3.eth.Contract(this.contractABI, this.config.CONTRACT_ADDRESS);
             } catch (error) {
@@ -528,20 +402,16 @@ class WalletConnector {
                 this.showSuccess('Wallet connected successfully!');
             }
             
-            // Сохраняем состояние подключения
             this.saveConnectionToStorage();
-            
-            // Настройка слушателей событий
             this.setupEventListeners();
             
-            // Если пользователь нажал START BATTLE и подключил кошелек, продолжаем игру
             if (window.pendingGameStart && !silentRestore) {
                 window.pendingGameStart = false;
                 setTimeout(() => {
                     if (typeof window.startGame === 'function') {
                         window.startGame();
                     }
-                }, 1000); // Небольшая задержка для показа сообщения об успехе
+                }, 1000);
             }
             
             console.log('✅ Wallet connected:', this.account);
@@ -556,7 +426,6 @@ class WalletConnector {
         }
     }
     
-    // Отключение кошелька
     disconnect() {
         this.web3 = null;
         this.contract = null;
@@ -564,11 +433,10 @@ class WalletConnector {
         this.connected = false;
         this.walletType = null;
         this.hasPaidFee = false;
-        this.clearConnectionFromStorage(); // Очищаем сохраненное состояние
+        this.clearConnectionFromStorage();
         this.updateConnectionStatus();
     }
     
-    // Переключение сети
     async switchNetwork() {
         try {
             await window.ethereum.request({
@@ -576,7 +444,6 @@ class WalletConnector {
                 params: [{ chainId: `0x${parseInt(this.config.CHAIN_ID).toString(16)}` }]
             });
         } catch (switchError) {
-            // Если сеть не добавлена, пытаемся добавить
             if (switchError.code === 4902) {
                 try {
                     await window.ethereum.request({
@@ -601,7 +468,6 @@ class WalletConnector {
         }
     }
     
-    // Настройка слушателей событий
     setupEventListeners() {
         if (window.ethereum) {
             window.ethereum.on('accountsChanged', (accounts) => {
@@ -610,7 +476,7 @@ class WalletConnector {
                 } else {
                     this.account = accounts[0];
                     this.updateConnectionStatus();
-                    this.saveConnectionToStorage(); // Обновляем сохраненное состояние
+                    this.saveConnectionToStorage();
                 }
             });
             
@@ -620,7 +486,6 @@ class WalletConnector {
                 }
             });
             
-            // Слушатель отключения от кошелька
             window.ethereum.on('disconnect', () => {
                 console.log('Wallet disconnected');
                 this.disconnect();
@@ -628,7 +493,6 @@ class WalletConnector {
         }
     }
     
-    // Обновление статуса подключения
     updateConnectionStatus() {
         const walletButton = document.getElementById('wallet-button');
         const statusElement = document.getElementById('wallet-status');
@@ -645,7 +509,6 @@ class WalletConnector {
         }
     }
     
-    // Отображение сообщений
     showLoading(message) {
         const messageEl = document.getElementById('wallet-message');
         if (messageEl) {
@@ -683,7 +546,76 @@ class WalletConnector {
         }
     }
     
-    // Платежные функции для игры
+    saveConnectionToStorage() {
+        try {
+            if (this.connected && this.account && this.walletType) {
+                const connectionData = {
+                    account: this.account,
+                    walletType: this.walletType,
+                    connected: true,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('pharos_wallet_connected', JSON.stringify(connectionData));
+                console.log('💾 Connection saved to localStorage');
+            }
+        } catch (error) {
+            console.error('Failed to save connection:', error);
+        }
+    }
+    
+    async restoreConnectionFromStorage() {
+        try {
+            const savedConnection = localStorage.getItem('pharos_wallet_connected');
+            if (!savedConnection) {
+                console.log('🔍 No saved connection found');
+                return false;
+            }
+            
+            const connectionData = JSON.parse(savedConnection);
+            
+            const weekInMs = 7 * 24 * 60 * 60 * 1000;
+            if (connectionData.timestamp && (Date.now() - connectionData.timestamp > weekInMs)) {
+                console.log('🕐 Saved connection expired');
+                this.clearConnectionFromStorage();
+                return false;
+            }
+            
+            if (connectionData.connected && connectionData.account && connectionData.walletType) {
+                console.log('🔄 Found saved connection for:', connectionData.walletType);
+                
+                const hasWallet = (connectionData.walletType === 'metamask' && typeof window.ethereum !== 'undefined') ||
+                                 (connectionData.walletType === 'okx' && (typeof window.okexchain !== 'undefined' || (window.ethereum && window.ethereum.isOkxWallet)));
+                
+                if (hasWallet) {
+                    console.log('🔄 Attempting to restore wallet connection...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const restored = await this.connectWallet(connectionData.walletType, true);
+                    if (restored) {
+                        console.log('✅ Wallet connection restored successfully');
+                        return true;
+                    } else {
+                        console.log('❌ Failed to restore wallet connection');
+                    }
+                } else {
+                    console.log('🔍 Wallet extension not available');
+                }
+            }
+        } catch (error) {
+            console.log('❌ Failed to restore wallet connection:', error);
+        }
+        return false;
+    }
+    
+    clearConnectionFromStorage() {
+        try {
+            localStorage.removeItem('pharos_wallet_connected');
+            console.log('🗑️ Connection data cleared from localStorage');
+        } catch (error) {
+            console.error('Failed to clear connection data:', error);
+        }
+    }
+    
     async showGameStartModal() {
         if (!this.connected) {
             this.showWalletModal();
@@ -695,13 +627,7 @@ class WalletConnector {
             modal.className = 'wallet-modal';
             modal.style.display = 'flex';
             
-           const currentFee = '0.001';
-            // Получаем актуальную комиссию из GAME_CONFIG
-//            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
-//                ? GAME_CONFIG.GAME_FEE 
-//                : this.getGameFee();
-            
-            console.log('🎮 Current game fee from config:', currentFee); // Для отладки
+            const currentFee = '0.001';
             
             modal.innerHTML = `
                 <div class="wallet-modal-content">
@@ -729,19 +655,12 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
-            const currentFee = '0.001'; 
-            
-            // Получаем актуальную комиссию из GAME_CONFIG
-//            const currentFee = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) 
-//                ? GAME_CONFIG.GAME_FEE 
-//                : this.getGameFee();
-            
+            const currentFee = '0.001';
             console.log('💰 Trying to pay game fee:', currentFee, 'PHRS');
             
             const feeInWei = this.web3.utils.toWei(currentFee, 'ether');
             console.log('💰 Fee in Wei:', feeInWei);
             
-            // Проверим баланс пользователя
             const balance = await this.web3.eth.getBalance(this.account);
             const balanceInEther = this.web3.utils.fromWei(balance, 'ether');
             console.log('💳 User balance:', balanceInEther, 'PHRS');
@@ -763,16 +682,14 @@ class WalletConnector {
                 gas: Math.round(gasEstimate * 1.2)
             });
 
-            // НЕ устанавливаем this.hasPaidFee здесь - это будет управляться в игре
             console.log('✅ Game fee paid successfully! TX:', tx.transactionHash);
             return true;
             
         } catch (error) {
             console.error('❌ Payment error details:', error);
             
-            // Улучшенная обработка ошибок
             if (error.message.includes('Insufficient fee') || error.message.includes('insufficient fee')) {
-                throw new Error(`Fee too low! Contract requires more than ${currentFee} PHRS. Try increasing GAME_FEE in game-config.js`);
+                throw new Error(`Fee too low! Contract requires more than ${currentFee} PHRS.`);
             } else if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
                 throw new Error(error.message || 'Insufficient funds in wallet');
             } else if (error.message.includes('User denied') || error.message.includes('rejected')) {
