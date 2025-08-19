@@ -318,10 +318,9 @@
 
     <!-- Web3 Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    
+    <!-- ВАЖНО: Сначала конфиг, потом wallet connector -->
     <script src="game-config.js"></script>
-    <script src="wallet-connector.js"></script>
-    <!-- Wallet Connector Module -->
-    <script src="wallet-connector.js"></script>
 
     <script>
         // Initialize wallet connector (but don't require connection for viewing leaderboard)
@@ -335,7 +334,8 @@
                     RPC_URL: 'https://testnet.dplabs-internal.com',
                     CHAIN_ID: '688688',
                     CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
-                    GAME_FEE: GAME_CONFIG.GAME_FEE
+                    // Используем GAME_CONFIG если он загружен, иначе fallback
+                    GAME_FEE: (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) ? GAME_CONFIG.GAME_FEE : '0.001'
                 },
                 contractABI: [
                     {
@@ -483,6 +483,8 @@
 
         // Initialize and load data when page loads
         window.addEventListener('load', async () => {
+            console.log('Page loaded, GAME_CONFIG:', typeof GAME_CONFIG !== 'undefined' ? GAME_CONFIG : 'not loaded');
+            
             const initialized = await initWalletConnector();
             if (initialized) {
                 await loadLeaderboard();
