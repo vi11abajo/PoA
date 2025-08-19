@@ -554,26 +554,54 @@ class WalletConnector {
                 ? GAME_CONFIG.GAME_FEE 
                 : this.getGameFee();
             
-            console.log('💰 Paying game fee:', currentFee, 'PHRS'); // Для отладки
+            console.log('💰 Trying to pay game fee:', currentFee, 'PHRS');
+            
+            const feeInWei = this.web3.utils.toWei(currentFee, 'ether');
+            console.log('💰 Fee in Wei:', feeInWei);
+            
+            // Проверим баланс пользователя
+            const balance = await this.web3.eth.getBalance(this.account);
+            const balanceInEther = this.web3.utils.fromWei(balance, 'ether');
+            console.log('💳 User balance:', balanceInEther, 'PHRS');
+            
+            if (parseFloat(balanceInEther) < parseFloat(currentFee)) {
+                throw new Error(`Insufficient balance. You have ${balanceInEther} PHRS, but need ${currentFee} PHRS`);
+            }
             
             const gasEstimate = await this.contract.methods.startGame().estimateGas({
                 from: this.account,
-                value: this.web3.utils.toWei(currentFee, 'ether')
+                value: feeInWei
             });
+            
+            console.log('⛽ Estimated gas:', gasEstimate);
 
             const tx = await this.contract.methods.startGame().send({
                 from: this.account,
-                value: this.web3.utils.toWei(currentFee, 'ether'),
+                value: feeInWei,
                 gas: Math.round(gasEstimate * 1.2)
             });
 
             this.hasPaidFee = true;
-            console.log('Game fee paid, tx:', tx.transactionHash);
+            console.log('✅ Game fee paid successfully! TX:', tx.transactionHash);
             return true;
             
         } catch (error) {
-            console.error('Payment error:', error);
-            throw error;
+            console.error('❌ Payment error details:', error);
+            
+            // Улучшенная обработка ошибок
+            if (error.message.includes('Insufficient fee') || error.message.includes('insufficient fee')) {
+                throw new Error(`Fee too low! Contract requires more than ${currentFee} PHRS. Try increasing GAME_FEE in game-config.js`);
+            } else if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
+                throw new Error(error.message || 'Insufficient funds in wallet');
+            } else if (error.message.includes('User denied') || error.message.includes('rejected')) {
+                throw new Error('Transaction cancelled by user');
+            } else if (error.message.includes('gas')) {
+                throw new Error('Transaction failed due to gas issues. Please try again.');
+            } else if (error.message.includes('network')) {
+                throw new Error('Network error. Please check your connection and try again.');
+            } else {
+                throw new Error(`Payment failed: ${error.message || 'Unknown error'}`);
+            }
         }
     }
     
