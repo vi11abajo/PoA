@@ -83,6 +83,7 @@
                 rgba(0, 34, 68, 0.8) 30%,
                 rgba(0, 51, 102, 0.7) 70%,
                 rgba(0, 102, 170, 0.6) 100%);
+            border-radius: 17px; /* Скругление углов canvas */
         }
 
         .ui {
@@ -615,7 +616,7 @@
         let particles = [];
         let ripples = [];
 
-        // Crab settings (теперь используют конфигурацию)
+        // Crab settings (теперь использует конфигурацию)
         let invaderRows = GAME_CONFIG.INVADERS_ROWS;
         let invaderCols = GAME_CONFIG.INVADERS_COLS;
         const invaderWidth = 35;
@@ -1195,15 +1196,15 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Crab bubbles
+            // Crab bubbles - ИЗМЕНИЛИ НА КРАСНЫЙ ЦВЕТ
             for (let bullet of invaderBullets) {
-                ctx.strokeStyle = '#66ccff';
+                ctx.strokeStyle = '#ff4444'; // Изменено с '#66ccff' на красный
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, bullet.width/2, 0, Math.PI * 2);
                 ctx.stroke();
                 
-                ctx.fillStyle = 'rgba(102, 204, 255, 0.3)';
+                ctx.fillStyle = 'rgba(255, 68, 68, 0.3)'; // Изменено с синего на красный
                 ctx.beginPath();
                 ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, bullet.width/2 - 1, 0, Math.PI * 2);
                 ctx.fill();
