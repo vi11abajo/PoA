@@ -57,15 +57,24 @@ class WalletConnector {
             }
         ];
         
-        this.init();
+        // Синхронная инициализация UI
+        this.initUI();
+        
+        // Асинхронная инициализация подключения
+        this.initAsync();
     }
     
     // Асинхронная инициализация
-    async init() {
-        this.initUI();
-        await this.restoreConnectionFromStorage();
-        this.isInitialized = true;
-        console.log('🔗 WalletConnector initialized, connected:', this.connected);
+    async initAsync() {
+        try {
+            console.log('🔄 Starting wallet connector async initialization...');
+            await this.restoreConnectionFromStorage();
+            this.isInitialized = true;
+            console.log('✅ WalletConnector initialized, connected:', this.connected);
+        } catch (error) {
+            console.error('❌ Failed to initialize wallet connector:', error);
+            this.isInitialized = true; // Помечаем как инициализированный даже при ошибке
+        }
     }
     
     // Функция для получения комиссии игры
@@ -117,23 +126,32 @@ class WalletConnector {
             }
             
             if (connectionData.connected && connectionData.account && connectionData.walletType) {
-                console.log('🔄 Attempting to restore wallet connection for:', connectionData.walletType);
+                console.log('🔄 Found saved connection for:', connectionData.walletType);
                 
-                // Добавляем небольшую задержку чтобы страница успела загрузиться
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Пробуем восстановить подключение только если MetaMask/OKX доступны
+                const hasWallet = (connectionData.walletType === 'metamask' && typeof window.ethereum !== 'undefined') ||
+                                 (connectionData.walletType === 'okx' && (typeof window.okexchain !== 'undefined' || (window.ethereum && window.ethereum.isOkxWallet)));
                 
-                const restored = await this.connectWallet(connectionData.walletType, true);
-                if (restored) {
-                    console.log('✅ Wallet connection restored successfully');
-                    return true;
+                if (hasWallet) {
+                    console.log('🔄 Attempting to restore wallet connection...');
+                    // Добавляем небольшую задержку чтобы страница успела загрузиться
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const restored = await this.connectWallet(connectionData.walletType, true);
+                    if (restored) {
+                        console.log('✅ Wallet connection restored successfully');
+                        return true;
+                    } else {
+                        console.log('❌ Failed to restore wallet connection');
+                        // НЕ очищаем данные, возможно пользователь просто не разлочил кошелек
+                    }
                 } else {
-                    console.log('❌ Failed to restore wallet connection');
-                    this.clearConnectionFromStorage();
+                    console.log('🔍 Wallet extension not available');
                 }
             }
         } catch (error) {
             console.log('❌ Failed to restore wallet connection:', error);
-            this.clearConnectionFromStorage();
+            // НЕ очищаем данные при ошибке, возможно временная проблема
         }
         return false;
     }
@@ -162,6 +180,14 @@ class WalletConnector {
     
     // Создание кнопки подключения кошелька
     createWalletButton() {
+        // Проверяем, что кнопка еще не создана
+        if (document.getElementById('wallet-button')) {
+            console.log('Wallet button already exists');
+            return;
+        }
+        
+        console.log('Creating wallet button...');
+        
         const walletButton = document.createElement('div');
         walletButton.id = 'wallet-button';
         walletButton.className = 'wallet-button';
@@ -171,174 +197,187 @@ class WalletConnector {
             </button>
         `;
         
-        // Добавляем стили
-        const style = document.createElement('style');
-        style.textContent = `
-            .wallet-button {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 1000;
-            }
+        // Добавляем стили если их еще нет
+        if (!document.getElementById('wallet-styles')) {
+            const style = document.createElement('style');
+            style.id = 'wallet-styles';
+            style.textContent = `
+                .wallet-button {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 1000;
+                }
+                
+                .wallet-button button {
+                    background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+                    color: #00ddff;
+                    border: 2px solid #00ddff;
+                    padding: 12px 20px;
+                    font-family: 'Arial', sans-serif;
+                    font-size: 14px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    border-radius: 25px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+                    backdrop-filter: blur(10px);
+                }
+                
+                .wallet-button button:hover {
+                    background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+                    box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+                    transform: translateY(-2px);
+                }
+                
+                .wallet-button.connected button {
+                    background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(102, 255, 179, 0.3));
+                    border-color: #00ff88;
+                    color: #00ff88;
+                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+                }
+                
+                .wallet-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: none;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 2000;
+                    backdrop-filter: blur(5px);
+                }
+                
+                .wallet-modal-content {
+                    background: linear-gradient(135deg, 
+                        rgba(0, 17, 34, 0.95) 0%, 
+                        rgba(0, 51, 102, 0.9) 100%);
+                    padding: 30px;
+                    border-radius: 20px;
+                    border: 2px solid #00ddff;
+                    box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
+                    max-width: 400px;
+                    width: 90%;
+                    text-align: center;
+                    color: #00ddff;
+                }
+                
+                .wallet-modal h3 {
+                    margin-bottom: 25px;
+                    font-size: 24px;
+                    color: #00ddff;
+                }
+                
+                .wallet-option {
+                    display: flex;
+                    align-items: center;
+                    padding: 15px;
+                    margin: 10px 0;
+                    border: 1px solid rgba(0, 221, 255, 0.3);
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    background: rgba(0, 221, 255, 0.05);
+                }
+                
+                .wallet-option:hover {
+                    background: rgba(0, 221, 255, 0.15);
+                    border-color: #00ddff;
+                    transform: translateX(5px);
+                }
+                
+                .wallet-option img {
+                    width: 32px;
+                    height: 32px;
+                    margin-right: 15px;
+                    border-radius: 6px;
+                }
+                
+                .wallet-option span {
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+                
+                .wallet-option.disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                
+                .wallet-option.disabled:hover {
+                    transform: none;
+                    background: rgba(0, 221, 255, 0.05);
+                }
+                
+                .close-modal {
+                    position: absolute;
+                    top: 15px;
+                    right: 20px;
+                    background: none;
+                    border: none;
+                    color: #00ddff;
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 0;
+                    width: 30px;
+                    height: 30px;
+                }
+                
+                .loading-spinner {
+                    border: 3px solid rgba(0, 221, 255, 0.3);
+                    border-top: 3px solid #00ddff;
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 15px;
+                }
+                
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                .error-message {
+                    background: rgba(255, 102, 102, 0.2);
+                    border: 1px solid #ff6666;
+                    color: #ff6666;
+                    padding: 10px;
+                    border-radius: 8px;
+                    margin: 15px 0;
+                    font-size: 14px;
+                }
+                
+                .success-message {
+                    background: rgba(0, 255, 136, 0.2);
+                    border: 1px solid #00ff88;
+                    color: #00ff88;
+                    padding: 10px;
+                    border-radius: 8px;
+                    margin: 15px 0;
+                    font-size: 14px;
+                }
+            `;
             
-            .wallet-button button {
-                background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
-                color: #00ddff;
-                border: 2px solid #00ddff;
-                padding: 12px 20px;
-                font-family: 'Arial', sans-serif;
-                font-size: 14px;
-                font-weight: bold;
-                cursor: pointer;
-                border-radius: 25px;
-                transition: all 0.3s ease;
-                box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
-                backdrop-filter: blur(10px);
-            }
-            
-            .wallet-button button:hover {
-                background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
-                box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
-                transform: translateY(-2px);
-            }
-            
-            .wallet-button.connected button {
-                background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(102, 255, 179, 0.3));
-                border-color: #00ff88;
-                color: #00ff88;
-                box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-            }
-            
-            .wallet-modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.8);
-                display: none;
-                justify-content: center;
-                align-items: center;
-                z-index: 2000;
-                backdrop-filter: blur(5px);
-            }
-            
-            .wallet-modal-content {
-                background: linear-gradient(135deg, 
-                    rgba(0, 17, 34, 0.95) 0%, 
-                    rgba(0, 51, 102, 0.9) 100%);
-                padding: 30px;
-                border-radius: 20px;
-                border: 2px solid #00ddff;
-                box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
-                max-width: 400px;
-                width: 90%;
-                text-align: center;
-                color: #00ddff;
-            }
-            
-            .wallet-modal h3 {
-                margin-bottom: 25px;
-                font-size: 24px;
-                color: #00ddff;
-            }
-            
-            .wallet-option {
-                display: flex;
-                align-items: center;
-                padding: 15px;
-                margin: 10px 0;
-                border: 1px solid rgba(0, 221, 255, 0.3);
-                border-radius: 10px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                background: rgba(0, 221, 255, 0.05);
-            }
-            
-            .wallet-option:hover {
-                background: rgba(0, 221, 255, 0.15);
-                border-color: #00ddff;
-                transform: translateX(5px);
-            }
-            
-            .wallet-option img {
-                width: 32px;
-                height: 32px;
-                margin-right: 15px;
-                border-radius: 6px;
-            }
-            
-            .wallet-option span {
-                font-size: 16px;
-                font-weight: bold;
-            }
-            
-            .wallet-option.disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
-            
-            .wallet-option.disabled:hover {
-                transform: none;
-                background: rgba(0, 221, 255, 0.05);
-            }
-            
-            .close-modal {
-                position: absolute;
-                top: 15px;
-                right: 20px;
-                background: none;
-                border: none;
-                color: #00ddff;
-                font-size: 24px;
-                cursor: pointer;
-                padding: 0;
-                width: 30px;
-                height: 30px;
-            }
-            
-            .loading-spinner {
-                border: 3px solid rgba(0, 221, 255, 0.3);
-                border-top: 3px solid #00ddff;
-                border-radius: 50%;
-                width: 30px;
-                height: 30px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 15px;
-            }
-            
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-            
-            .error-message {
-                background: rgba(255, 102, 102, 0.2);
-                border: 1px solid #ff6666;
-                color: #ff6666;
-                padding: 10px;
-                border-radius: 8px;
-                margin: 15px 0;
-                font-size: 14px;
-            }
-            
-            .success-message {
-                background: rgba(0, 255, 136, 0.2);
-                border: 1px solid #00ff88;
-                color: #00ff88;
-                padding: 10px;
-                border-radius: 8px;
-                margin: 15px 0;
-                font-size: 14px;
-            }
-        `;
+            document.head.appendChild(style);
+        }
         
-        document.head.appendChild(style);
         document.body.appendChild(walletButton);
+        console.log('✅ Wallet button created successfully');
     }
     
     // Создание модального окна выбора кошелька
     createWalletModal() {
+        // Проверяем, что модал еще не создан
+        if (document.getElementById('wallet-modal')) {
+            console.log('Wallet modal already exists');
+            return;
+        }
+        
+        console.log('Creating wallet modal...');
+        
         const modal = document.createElement('div');
         modal.id = 'wallet-modal';
         modal.className = 'wallet-modal';
@@ -361,6 +400,7 @@ class WalletConnector {
         `;
         
         document.body.appendChild(modal);
+        console.log('✅ Wallet modal created successfully');
     }
     
     // Показать модальное окно
