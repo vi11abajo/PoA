@@ -551,10 +551,24 @@
     <!-- Game Logic -->
     <script>
         // Initialize config info on page load
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
             // Apply configuration on load
             applyGameConfig();
             console.log('🎮 Game initialized with config:', GAME_CONFIG);
+            
+            // Ждем инициализации wallet connector и логируем состояние
+            setTimeout(() => {
+                if (window.walletConnector) {
+                    console.log('🔗 WalletConnector status:', {
+                        initialized: walletConnector.isInitialized,
+                        connected: walletConnector.connected,
+                        account: walletConnector.account,
+                        walletType: walletConnector.walletType
+                    });
+                } else {
+                    console.log('❌ WalletConnector not found');
+                }
+            }, 2000);
         });
 
         // Применение конфигурации к игровым переменным
@@ -1399,18 +1413,38 @@
             try {
                 console.log('Starting game...');
                 
+                // Ждем инициализации wallet connector
+                if (!window.walletConnector || !walletConnector.isInitialized) {
+                    console.log('Waiting for wallet connector to initialize...');
+                    showLoading('Initializing wallet connector...');
+                    
+                    // Ждем до 5 секунд инициализации
+                    let attempts = 0;
+                    const maxAttempts = 50; // 5 секунд (50 * 100мс)
+                    
+                    while ((!window.walletConnector || !walletConnector.isInitialized) && attempts < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        attempts++;
+                    }
+                    
+                    hideLoading();
+                    
+                    if (!window.walletConnector || !walletConnector.isInitialized) {
+                        alert('Failed to initialize wallet connector. Please refresh the page.');
+                        return;
+                    }
+                }
+                
                 // Reset fee payment status and score save status для новой игры
                 hasPaidFee = false;
                 scoreAlreadySaved = false;
                 currentGameSession = null; // Сбрасываем сессию
                 
                 // Check if walletConnector exists and is connected
-                if (!window.walletConnector || !walletConnector.connected) {
+                if (!walletConnector.connected) {
                     console.log('Wallet not connected, showing wallet modal...');
                     window.pendingGameStart = true;
-                    if (window.walletConnector) {
-                        walletConnector.showWalletModal();
-                    }
+                    walletConnector.showWalletModal();
                     return; // Don't start game yet, wait for wallet connection
                 }
                 
