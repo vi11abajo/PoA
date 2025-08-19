@@ -510,7 +510,7 @@
             <h1>🐙 PHAROS INVADERS 🦀</h1>
             <p>Defend the ocean depths from the crab invasion!</p>
             <p style="font-size: 16px; margin: 15px 0;">Futuristic cyborg octopus vs army of crabs</p>
-            <button onclick="startGame()" id="startButton">START BATTLE</button>
+            <button onclick="window.startGame()" id="startButton">START BATTLE</button>
             <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
                 <p>Controls: ← → to move, SPACE to attack</p>
                 <p>Use plasma charges to win!</p>
@@ -1496,6 +1496,9 @@
                 alert('Error starting game: ' + error.message);
             }
         }
+        
+        // Делаем функцию доступной глобально
+        window.startGame = startGame;
 
         // Actually start the game (separated logic)
         function actuallyStartGame() {
