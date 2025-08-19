@@ -1,9 +1,4 @@
-// Initialize config info on page load
-        window.addEventListener('load', () => {
-            // Apply configuration on load
-            applyGameConfig();
-            console.log('🎮 Game initialized with config:', GAME_CONFIG);
-        });<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -128,7 +123,7 @@
             box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
             backdrop-filter: blur(15px);
             max-width: 95vw;
-            min-width: 450px; /* Увеличиваем минимальную ширину */
+            min-width: 450px;
             box-sizing: border-box;
         }
 
@@ -155,7 +150,6 @@
             overflow: hidden;
         }
 
-        /* Адаптивность для мобильных */
         @media (max-width: 768px) {
             .start-screen h1 {
                 font-size: 24px;
@@ -246,7 +240,6 @@
             }
         }
 
-        /* Blockchain section styles */
         .blockchain-section {
             margin-top: 30px;
             padding: 25px;
@@ -254,7 +247,7 @@
             border-radius: 10px;
             border: 1px solid rgba(0, 221, 255, 0.3);
             display: none;
-            max-width: 650px; /* Увеличиваем ширину еще больше */
+            max-width: 650px;
             width: 100%;
             margin-left: auto;
             margin-right: auto;
@@ -263,11 +256,11 @@
         .blockchain-section h3 {
             margin-bottom: 15px;
             color: #00ddff;
-            white-space: nowrap; /* Заголовок в одну строку */
+            white-space: nowrap;
         }
 
         .blockchain-section p {
-            white-space: nowrap; /* Описание в одну строку */
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -337,7 +330,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Leaderboard button styles */
         .leaderboard-button {
             position: absolute;
             top: 15px;
@@ -346,7 +338,6 @@
             z-index: 10;
         }
 
-        /* Save status styles */
         #save-status .success-message {
             background: rgba(0, 255, 136, 0.2);
             border: 1px solid #00ff88;
@@ -388,7 +379,6 @@
             color: #00ff88;
         }
 
-        /* Main screen leaderboard button */
         .main-leaderboard-button {
             position: absolute;
             top: 20px;
@@ -397,7 +387,6 @@
             z-index: 10;
         }
 
-        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .game-over, .start-screen {
                 min-width: 320px;
@@ -464,7 +453,7 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         
         <div class="start-screen" id="startScreen">
-            <h1>🐙 PHAROS INVADERS 🦀</h1>
+            <h1>🙌 PHAROS INVADERS 🦀</h1>
             <p>Defend the ocean depths from the crab invasion!</p>
             <p style="font-size: 16px; margin: 15px 0;">Futuristic cyborg octopus vs army of crabs</p>
             <button onclick="startGame()" id="startButton">START BATTLE</button>
@@ -509,6 +498,13 @@
 
     <!-- Game Logic -->
     <script>
+        // Initialize config info on page load
+        window.addEventListener('load', () => {
+            // Apply configuration on load
+            applyGameConfig();
+            console.log('🎮 Game initialized with config:', GAME_CONFIG);
+        });
+
         // Применение конфигурации к игровым переменным
         function applyGameConfig() {
             // Пересчитываем базовые параметры с учетом конфигурации
@@ -541,7 +537,7 @@
         // FPS counter for debugging
         let fpsCounter = 0;
         let fpsTime = 0;
-        let currentFPS = 0; // Новая переменная для отслеживания сохранения
+        let currentFPS = 0;
 
         // Load game images
         const octopusImage = new Image();
@@ -633,7 +629,7 @@
         // Controls
         const keys = {};
         let lastShotTime = 0;
-        const shotCooldown = (300 * 100) / GAME_CONFIG.PLAYER_FIRE_RATE; // Применяем конфиг
+        const shotCooldown = (300 * 100) / GAME_CONFIG.PLAYER_FIRE_RATE; // Применем конфиг
 
         // Keyboard events
         document.addEventListener('keydown', (e) => {
@@ -906,7 +902,7 @@
                             'green': 20
                         }[invaders[j].type];
                         
-                        // Применяем множитель очков
+                        // Применем множитель очков
                         let points = Math.round((basePoints * GAME_CONFIG.SCORE_MULTIPLIER) / 100);
                         score += points;
                         
@@ -1344,7 +1340,7 @@
                 // Check if wallet is connected, if not - show wallet modal
                 if (!walletConnector.connected) {
                     console.log('Wallet not connected, showing wallet modal...');
-                    window.pendingGameStart = true; // Флаг ожидания подключения кошелька
+                    window.pendingGameStart = true;
                     walletConnector.showWalletModal();
                     return; // Don't start game yet, wait for wallet connection
                 }
@@ -1481,7 +1477,7 @@
                 
                 topScores.forEach((record, index) => {
                     const medals = ['🥇', '🥈', '🥉'];
-                    const medal = medals[index] || '🏅';
+                    const medal = medals[index] || '🅿️';
                     const maskedAddress = maskAddress(record.player);
                     
                     html += `<div style="margin: 8px 0; padding: 8px; background: rgba(0, 221, 255, 0.1); border-radius: 5px; border-left: 3px solid #00ddff; font-size: 12px;">
