@@ -1555,50 +1555,18 @@
         // Initialize game
         document.getElementById('startScreen').style.display = 'block';
     </script>
-    <script>
-// Принудительная проверка и исправление конфига
-window.addEventListener('load', function() {
-    console.log('🔍 Config check started...');
-    console.log('GAME_CONFIG:', GAME_CONFIG);
-    console.log('GAME_FEE:', GAME_CONFIG ? GAME_CONFIG.GAME_FEE : 'undefined');
+   window.addEventListener('load', function() {
+    console.log('🔧 Forcing correct game fee...');
     
-    // Если конфиг не загрузился или комиссия неправильная
-    if (!GAME_CONFIG || GAME_CONFIG.GAME_FEE !== '0.001') {
-        console.warn('⚠️ Config problem detected! Forcing correct values...');
-        
-        // Принудительно устанавливаем правильный конфиг
-        window.GAME_CONFIG = {
-            CRAB_SPEED: 80,
-            CRAB_FIRE_RATE: 80,
-            CRAB_BULLET_SPEED: 90,
-            PLAYER_LIVES: 5,
-            PLAYER_SPEED: 110,
-            PLAYER_FIRE_RATE: 100,
-            PLAYER_BULLET_SPEED: 110,
-            LEVEL_DIFFICULTY: 95,
-            SCORE_MULTIPLIER: 100,
-            WAVE_SPEED_INCREASE: 7,
-            GAME_FEE: '0.001', // ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ 0.001
-            PARTICLE_COUNT: 100,
-            ANIMATION_SPEED: 100,
-            INVADERS_ROWS: 5,
-            INVADERS_COLS: 10,
-            BULLET_PENETRATION: false,
-            DOUBLE_SHOT: false,
-            SHIELD_MODE: false
-        };
-        
-        console.log('✅ Config fixed! New GAME_FEE:', GAME_CONFIG.GAME_FEE);
-        
-        // Обновляем walletConnector если он уже создан
-        if (window.walletConnector) {
-            window.walletConnector.config.GAME_FEE = '0.001';
-            console.log('✅ WalletConnector config updated!');
-        }
-    } else {
-        console.log('✅ Config is correct!');
+    if (window.GAME_CONFIG) {
+        window.GAME_CONFIG.GAME_FEE = '0.001';
+        console.log('✅ GAME_CONFIG.GAME_FEE set to:', window.GAME_CONFIG.GAME_FEE);
+    }
+    
+    if (window.walletConnector) {
+        window.walletConnector.config.GAME_FEE = '0.001';
+        console.log('✅ walletConnector.config.GAME_FEE set to:', window.walletConnector.config.GAME_FEE);
     }
 });
-</script>
 </body>
 </html>
