@@ -1,8 +1,5 @@
-// game.js - FULL GAME RESTORED
+console.log('ðŸŽ® Loading full game.js...');
 
-console.log('🎮 Loading full game.js...');
-
-// Game variables
 let gameState = 'start';
 let score = 0;
 let lives = 5;
@@ -12,13 +9,11 @@ let hasPaidFee = false;
 let scoreAlreadySaved = false;
 let currentGameSession = null;
 
-// FPS variables
 let lastTime = 0;
 const targetFPS = 60;
 const frameTime = 1000 / targetFPS;
 let deltaTime = 0;
 
-// Load game images
 const octopusImage = new Image();
 let octopusImageLoaded = false;
 
@@ -38,10 +33,9 @@ let crabImagesLoaded = {
     green: false
 };
 
-// Set image sources
 octopusImage.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png';
-octopusImage.onload = () => { octopusImageLoaded = true; console.log('🐙 Octopus image loaded'); };
-octopusImage.onerror = () => { octopusImageLoaded = false; console.log('❌ Octopus image failed'); };
+octopusImage.onload = () => { octopusImageLoaded = true; console.log('ðŸ™ Octopus image loaded'); };
+octopusImage.onerror = () => { octopusImageLoaded = false; console.log('âŒ Octopus image failed'); };
 
 crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
 crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
@@ -52,18 +46,16 @@ crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/ima
 Object.keys(crabImages).forEach(color => {
     crabImages[color].onload = () => { 
         crabImagesLoaded[color] = true; 
-        console.log(`🦀 ${color} crab loaded`);
+        console.log(`ðŸ¦€ ${color} crab loaded`);
     };
     crabImages[color].onerror = () => { 
         crabImagesLoaded[color] = false; 
-        console.log(`❌ ${color} crab failed`);
+        console.log(`âŒ ${color} crab failed`);
     };
 });
 
-// Canvas and game objects
 let canvas, ctx;
 
-// Game objects
 const player = {
     x: 370,
     y: 520,
@@ -78,7 +70,6 @@ let invaderBullets = [];
 let particles = [];
 let ripples = [];
 
-// Game settings
 const invaderRows = 5;
 const invaderCols = 10;
 const invaderWidth = 35;
@@ -87,21 +78,18 @@ let invaderSpeed = 1;
 let invaderDirection = 1;
 let invaderDropDistance = 25;
 
-// Controls
 const keys = {};
 let lastShotTime = 0;
 const shotCooldown = 300;
 
-// Initialize canvas
 function initCanvas() {
     canvas = document.getElementById('gameCanvas');
     if (canvas) {
         ctx = canvas.getContext('2d');
-        console.log('✅ Canvas initialized');
+        console.log('âœ… Canvas initialized');
     }
 }
 
-// Create bubbles effect
 function createBubbles() {
     const bubblesContainer = document.querySelector('.bubbles');
     if (!bubblesContainer) return;
@@ -125,7 +113,6 @@ function createBubbles() {
     }, 500);
 }
 
-// Keyboard events
 document.addEventListener('keydown', (e) => {
     keys[e.code] = true;
     
@@ -148,7 +135,6 @@ document.addEventListener('keyup', (e) => {
     keys[e.code] = false;
 });
 
-// Create crabs
 function createInvaders() {
     invaders = [];
     const startX = 50;
@@ -179,7 +165,6 @@ function createInvaders() {
     }
 }
 
-// Create player bullet
 function createBullet() {
     const now = Date.now();
     if (now - lastShotTime > shotCooldown) {
@@ -196,7 +181,6 @@ function createBullet() {
     }
 }
 
-// Create crab bullet
 function createInvaderBullet(invader) {
     const fireRate = 0.0008 * level;
     if (Math.random() < fireRate) {
@@ -211,7 +195,6 @@ function createInvaderBullet(invader) {
     }
 }
 
-// Create explosion particles
 function createExplosion(x, y, color, isOctopus = false) {
     const particleCount = isOctopus ? 15 : 12;
     for (let i = 0; i < particleCount; i++) {
@@ -229,7 +212,6 @@ function createExplosion(x, y, color, isOctopus = false) {
     }
 }
 
-// Create water ripple
 function createRipple(x, y) {
     ripples.push({
         x: x,
@@ -240,7 +222,6 @@ function createRipple(x, y) {
     });
 }
 
-// Update player
 function updatePlayer(deltaTime) {
     const moveSpeed = player.speed * deltaTime;
     
@@ -255,9 +236,7 @@ function updatePlayer(deltaTime) {
     }
 }
 
-// Update bullets
 function updateBullets(deltaTime) {
-    // Player bullets
     bullets = bullets.filter(bullet => {
         bullet.y -= bullet.speed * deltaTime;
         bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
@@ -265,7 +244,6 @@ function updateBullets(deltaTime) {
         return bullet.y > -bullet.height;
     });
 
-    // Crab bullets
     invaderBullets = invaderBullets.filter(bullet => {
         bullet.y += bullet.speed * deltaTime;
         bullet.wobble += 0.2 * deltaTime;
@@ -274,7 +252,6 @@ function updateBullets(deltaTime) {
     });
 }
 
-// Update crabs
 function updateInvaders(deltaTime) {
     let shouldDrop = false;
     let aliveInvaders = invaders.filter(inv => inv.alive);
@@ -316,7 +293,6 @@ function updateInvaders(deltaTime) {
     }
 }
 
-// Update particles and effects
 function updateParticles(deltaTime) {
     particles = particles.filter(particle => {
         particle.x += particle.vx * deltaTime;
@@ -333,9 +309,7 @@ function updateParticles(deltaTime) {
     });
 }
 
-// Check collisions
 function checkCollisions() {
-    // Player bullets vs crabs
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = invaders.length - 1; j >= 0; j--) {
             if (invaders[j].alive && 
@@ -367,7 +341,6 @@ function checkCollisions() {
         }
     }
 
-    // Crab bullets vs player
     for (let i = invaderBullets.length - 1; i >= 0; i--) {
         if (invaderBullets[i].x < player.x + player.width &&
             invaderBullets[i].x + invaderBullets[i].width > player.x &&
@@ -386,7 +359,6 @@ function checkCollisions() {
     }
 }
 
-// Get crab color
 function getCrabColor(type) {
     switch(type) {
         case 'violet': return '#9966ff';
@@ -398,7 +370,6 @@ function getCrabColor(type) {
     }
 }
 
-// Draw player
 function drawPlayer() {
     const centerX = player.x + player.width / 2;
     const centerY = player.y + player.height / 2;
@@ -428,14 +399,12 @@ function drawPlayer() {
         ctx.globalAlpha = 1;
         
     } else {
-        // Fallback - draw simple octopus
         ctx.fillStyle = '#00ddff';
         ctx.font = '50px Arial';
-        ctx.fillText('🐙', player.x, player.y + 40);
+        ctx.fillText('ðŸ™', player.x, player.y + 40);
     }
 }
 
-// Draw crabs
 function drawInvaders() {
     for (let invader of invaders) {
         if (invader.alive) {
@@ -460,19 +429,15 @@ function drawInvaders() {
                 ctx.restore();
                 
             } else {
-                // Fallback - draw emoji crab
                 ctx.font = '25px Arial';
-                ctx.fillText('🦀', invader.x, invader.y + 20 + bobbing);
+                ctx.fillText('ðŸ¦€', invader.x, invader.y + 20 + bobbing);
             }
         }
     }
 }
 
-// Draw bullets
 function drawBullets() {
-    // Player bullets
     for (let bullet of bullets) {
-        // Draw trail
         ctx.strokeStyle = 'rgba(102, 102, 255, 0.6)';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -487,7 +452,6 @@ function drawBullets() {
         ctx.stroke();
         ctx.globalAlpha = 1;
         
-        // Draw bullet
         ctx.fillStyle = '#6666ff';
         ctx.beginPath();
         ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, 4, 0, Math.PI * 2);
@@ -502,7 +466,6 @@ function drawBullets() {
         ctx.shadowBlur = 0;
     }
 
-    // Crab bullets - RED COLOR
     for (let bullet of invaderBullets) {
         ctx.strokeStyle = '#ff4444';
         ctx.lineWidth = 2;
@@ -517,7 +480,6 @@ function drawBullets() {
     }
 }
 
-// Draw particles
 function drawParticles() {
     for (let particle of particles) {
         let alpha = particle.life / particle.maxLife;
@@ -530,7 +492,6 @@ function drawParticles() {
     }
 }
 
-// Draw ripples
 function drawRipples() {
     for (let ripple of ripples) {
         ctx.strokeStyle = `rgba(0, 221, 255, ${ripple.life / 30})`;
@@ -541,7 +502,6 @@ function drawRipples() {
     }
 }
 
-// Draw UI overlays
 function drawUI() {
     if (gameState === 'paused') {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -555,7 +515,6 @@ function drawUI() {
     }
 }
 
-// Main game loop
 function gameLoop(currentTime) {
     if (lastTime === 0) lastTime = currentTime;
     const rawDeltaTime = currentTime - lastTime;
@@ -612,31 +571,30 @@ function updateUI() {
     if (levelEl) levelEl.textContent = level;
 }
 
-// Start game function
 async function startGame() {
     try {
-        console.log('🚀 START GAME CALLED!');
+        console.log('ðŸš€ START GAME CALLED!');
         
         if (!canvas) {
             initCanvas();
         }
         
         if (!window.walletConnector) {
-            console.log('❌ No wallet connector');
+            console.log('âŒ No wallet connector');
             alert('Wallet connector not found. Please refresh the page.');
             return;
         }
         
-        console.log('✅ Wallet connector found');
+        console.log('âœ… Wallet connector found');
         
         if (!walletConnector.connected) {
-            console.log('💼 Wallet not connected, showing modal...');
+            console.log('ðŸ'¼ Wallet not connected, showing modal...');
             window.pendingGameStart = true;
             walletConnector.showWalletModal();
             return;
         }
         
-        console.log('✅ Wallet connected, starting game...');
+        console.log('âœ… Wallet connected, starting game...');
         
         hasPaidFee = false;
         scoreAlreadySaved = false;
@@ -650,23 +608,22 @@ async function startGame() {
             hasPaidFee = true;
             currentGameSession = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             hideLoading();
-            console.log('✅ Payment completed');
+            console.log('âœ… Payment completed');
         } else {
-            console.log('🎮 Playing offline');
+            console.log('ðŸŽ® Playing offline');
         }
         
         actuallyStartGame();
         
     } catch (error) {
         hideLoading();
-        console.error('❌ Error starting game:', error);
+        console.error('âŒ Error starting game:', error);
         alert('Error: ' + error.message);
     }
 }
 
-// Actually start the game
 function actuallyStartGame() {
-    console.log('🎮 Actually starting game...');
+    console.log('ðŸŽ® Actually starting game...');
     
     gameState = 'playing';
     score = 0;
@@ -694,7 +651,7 @@ function actuallyStartGame() {
     document.body.classList.remove('game-over-active');
     
     gameLoop(performance.now());
-    console.log('✅ Game started successfully!');
+    console.log('âœ… Game started successfully!');
 }
 
 function showGameOver() {
@@ -711,7 +668,6 @@ function showGameOver() {
         if (blockchainSection) {
             blockchainSection.style.display = 'block';
             
-            // Reset save form
             const saveButton = document.getElementById('saveScoreButton');
             const playerName = document.getElementById('playerName');
             const saveStatus = document.getElementById('save-status');
@@ -728,7 +684,6 @@ function showGameOver() {
     }
 }
 
-// Restart game
 function restartGame() {
     document.body.classList.remove('game-over-active');
     
@@ -742,7 +697,6 @@ function restartGame() {
     scoreAlreadySaved = false;
 }
 
-// Save score to blockchain
 async function saveScoreToBlockchain() {
     const playerNameEl = document.getElementById('playerName');
     const playerName = playerNameEl ? playerNameEl.value.trim() : '';
@@ -796,7 +750,6 @@ async function saveScoreToBlockchain() {
     }
 }
 
-// Utility functions
 function showLoading(message) {
     const loading = document.createElement('div');
     loading.id = 'loading-indicator';
@@ -815,14 +768,12 @@ function hideLoading() {
     }
 }
 
-// Make functions globally available
 window.startGame = startGame;
 window.restartGame = restartGame;
 window.saveScoreToBlockchain = saveScoreToBlockchain;
 
-// Initialize when page loads
 window.addEventListener('load', () => {
-    console.log('🎮 Full game loaded and ready!');
+    console.log('ðŸŽ® Full game loaded and ready!');
     
     initCanvas();
     
@@ -833,11 +784,11 @@ window.addEventListener('load', () => {
     
     setTimeout(() => {
         if (window.walletConnector) {
-            console.log('✅ WalletConnector ready:', walletConnector.connected);
+            console.log('âœ… WalletConnector ready:', walletConnector.connected);
         } else {
-            console.log('❌ WalletConnector not found');
+            console.log('âŒ WalletConnector not found');
         }
     }, 1000);
 });
 
-console.log('✅ Full game.js loaded successfully!');
+console.log('âœ… Full game.js loaded successfully!');
