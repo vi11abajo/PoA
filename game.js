@@ -784,4 +784,11 @@ window.addEventListener('load', () => {
     
     setTimeout(() => {
         if (window.walletConnector) {
-            console.log('✅ WalletConnector ready:', walletConnector.connecte
+            console.log('✅ WalletConnector ready:', walletConnector.connected);
+        } else {
+            console.log('❌ WalletConnector not found');
+        }
+    }, 1000);
+});
+
+console.log('✅ Full game.js loaded successfully!');
