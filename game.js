@@ -223,8 +223,6 @@ function createRipple(x, y) {
 }
 
 function updatePlayer(deltaTime) {
-    if (!canvas) return;
-    
     const moveSpeed = player.speed * deltaTime;
     
     if (keys['ArrowLeft'] && player.x > 0) {
@@ -239,8 +237,6 @@ function updatePlayer(deltaTime) {
 }
 
 function updateBullets(deltaTime) {
-    if (!canvas) return;
-    
     bullets = bullets.filter(bullet => {
         bullet.y -= bullet.speed * deltaTime;
         bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
@@ -257,8 +253,6 @@ function updateBullets(deltaTime) {
 }
 
 function updateInvaders(deltaTime) {
-    if (!canvas) return;
-    
     let shouldDrop = false;
     let aliveInvaders = invaders.filter(inv => inv.alive);
 
@@ -522,8 +516,6 @@ function drawUI() {
 }
 
 function gameLoop(currentTime) {
-    if (!currentTime) currentTime = performance.now();
-    
     if (lastTime === 0) lastTime = currentTime;
     const rawDeltaTime = currentTime - lastTime;
     lastTime = currentTime;
@@ -556,15 +548,13 @@ function gameLoop(currentTime) {
         return;
     }
 
-    if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawPlayer();
-        drawInvaders();
-        drawBullets();
-        drawParticles();
-        drawRipples();
-        drawUI();
-    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawPlayer();
+    drawInvaders();
+    drawBullets();
+    drawParticles();
+    drawRipples();
+    drawUI();
 
     if (gameState === 'playing' || gameState === 'paused') {
         requestAnimationFrame(gameLoop);
@@ -591,15 +581,16 @@ async function startGame() {
         
         if (!window.walletConnector) {
             console.log('❌ No wallet connector');
-            actuallyStartGame();
+            alert('Wallet connector not found. Please refresh the page.');
             return;
         }
         
         console.log('✅ Wallet connector found');
         
         if (!walletConnector.connected) {
-            console.log('💼 Wallet not connected, starting offline...');
-            actuallyStartGame();
+            console.log('💼 Wallet not connected, showing modal...');
+            window.pendingGameStart = true;
+            walletConnector.showWalletModal();
             return;
         }
         
@@ -627,8 +618,7 @@ async function startGame() {
     } catch (error) {
         hideLoading();
         console.error('❌ Error starting game:', error);
-        console.log('🎮 Starting offline mode due to error');
-        actuallyStartGame();
+        alert('Error: ' + error.message);
     }
 }
 
@@ -647,17 +637,8 @@ function actuallyStartGame() {
     particles = [];
     ripples = [];
     
-    if (!canvas) {
-        initCanvas();
-    }
-    
-    if (canvas) {
-        player.x = canvas.width / 2 - 30;
-        player.y = canvas.height - 80;
-    } else {
-        player.x = 370;
-        player.y = 520;
-    }
+    player.x = canvas.width / 2 - 30;
+    player.y = canvas.height - 80;
     
     createInvaders();
     
@@ -669,7 +650,7 @@ function actuallyStartGame() {
     
     document.body.classList.remove('game-over-active');
     
-    requestAnimationFrame(gameLoop);
+    gameLoop(performance.now());
     console.log('✅ Game started successfully!');
 }
 
@@ -803,11 +784,4 @@ window.addEventListener('load', () => {
     
     setTimeout(() => {
         if (window.walletConnector) {
-            console.log('✅ WalletConnector ready:', walletConnector.connected);
-        } else {
-            console.log('❌ WalletConnector not found');
-        }
-    }, 1000);
-});
-
-console.log('✅ Full game.js loaded successfully!');
+            console.log('✅ WalletConnector ready:', walletConnector.connecte
