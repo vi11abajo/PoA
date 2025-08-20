@@ -1,3 +1,4 @@
+
 class WalletConnector {
     constructor() {
         this.web3 = null;
@@ -311,10 +312,12 @@ class WalletConnector {
             this.account = accounts[0];
             this.walletType = walletType;
             
+            
             const chainId = await this.web3.eth.getChainId();
             if (chainId.toString() !== this.config.CHAIN_ID) {
                 await this.switchNetwork();
             }
+            
             
             this.contract = new this.web3.eth.Contract(this.contractABI, this.config.CONTRACT_ADDRESS);
             
@@ -322,6 +325,7 @@ class WalletConnector {
             this.updateConnectionStatus();
             this.hideWalletModal();
             this.showSuccess('Wallet connected successfully!');
+            
             
             if (window.pendingGameStart) {
                 window.pendingGameStart = false;
@@ -536,6 +540,7 @@ class WalletConnector {
         }
     }
 }
+
 
 console.log('🚀 Creating global WalletConnector...');
 window.walletConnector = new WalletConnector();
