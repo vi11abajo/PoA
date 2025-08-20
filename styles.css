@@ -375,7 +375,6 @@ button:disabled {
     z-index: 10;
 }
 
-/* Скрываем кнопку лидерборда когда показано game over окно */
 .game-over-active .main-leaderboard-button {
     display: none;
 }
