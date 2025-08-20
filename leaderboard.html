@@ -224,7 +224,6 @@
             font-size: 18px;
         }
 
-        /* Scrollbar styling */
         .leaderboard-content::-webkit-scrollbar {
             width: 8px;
         }
@@ -278,14 +277,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏆 PHAROS INVADERS LEADERBOARD</h1>
+            <h1>ðŸ† PHAROS INVADERS LEADERBOARD</h1>
             <p>Top 100 Cosmic Warriors of the Ocean Depths</p>
-            <a href="index.html" class="back-button">← Back to Game</a>
+            <a href="index.html" class="back-button">â† Back to Game</a>
         </div>
         
         <div class="leaderboard-content">
             <div class="stats" id="gameStats">
-                <!-- Stats will be loaded here -->
             </div>
             
             <div id="loadingIndicator" class="loading">
@@ -309,32 +307,26 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboardBody">
-                        <!-- Leaderboard data will be loaded here -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Web3 Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
     
-    <!-- ВАЖНО: Сначала конфиг, потом wallet connector -->
     <script src="game-config.js"></script>
 
     <script>
-        // Initialize wallet connector (but don't require connection for viewing leaderboard)
         let walletConnector;
 
         async function initWalletConnector() {
-            // Create a simplified wallet connector just for reading data
             walletConnector = {
                 config: {
                     NETWORK_NAME: 'Pharos Testnet',
                     RPC_URL: 'https://testnet.dplabs-internal.com',
                     CHAIN_ID: '688688',
                     CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
-                    // Используем GAME_CONFIG если он загружен, иначе fallback
                     GAME_FEE: (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) ? GAME_CONFIG.GAME_FEE : '0.001'
                 },
                 contractABI: [
@@ -370,7 +362,6 @@
                 ]
             };
             
-            // Initialize Web3 with public RPC (read-only)
             try {
                 walletConnector.web3 = new Web3(walletConnector.config.RPC_URL);
                 walletConnector.contract = new walletConnector.web3.eth.Contract(
@@ -411,12 +402,10 @@
 
         async function loadLeaderboard() {
             try {
-                // Show loading
                 document.getElementById('loadingIndicator').style.display = 'block';
                 document.getElementById('errorMessage').style.display = 'none';
                 document.getElementById('leaderboardTable').style.display = 'none';
                 
-                // Load top 100 scores
                 const topScores = await walletConnector.contract.methods.getTopScores(100).call();
                 
                 if (topScores.length === 0) {
@@ -426,13 +415,12 @@
                     return;
                 }
 
-                // Build leaderboard table
                 const tbody = document.getElementById('leaderboardBody');
                 tbody.innerHTML = '';
                 
                 topScores.forEach((record, index) => {
                     const rank = index + 1;
-                    const medals = ['🥇', '🥈', '🥉'];
+                    const medals = ['ðŸ¥‡', 'ðŸ¥ˆ', 'ðŸ¥‰'];
                     const medal = rank <= 3 ? medals[rank - 1] : '';
                     const maskedAddress = maskAddress(record.player);
                     const isTop3 = rank <= 3;
@@ -454,11 +442,9 @@
                     tbody.appendChild(row);
                 });
                 
-                // Hide loading and show table
                 document.getElementById('loadingIndicator').style.display = 'none';
                 document.getElementById('leaderboardTable').style.display = 'block';
                 
-                // Load stats
                 await loadGameStats();
                 
             } catch (error) {
@@ -468,20 +454,17 @@
             }
         }
 
-        // Mask wallet address function
         function maskAddress(address) {
             if (!address || address.length < 10) return address;
             return `${address.slice(0, 6)}***${address.slice(-6)}`;
         }
 
-        // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Initialize and load data when page loads
         window.addEventListener('load', async () => {
             console.log('Page loaded, GAME_CONFIG:', typeof GAME_CONFIG !== 'undefined' ? GAME_CONFIG : 'not loaded');
             
@@ -495,7 +478,6 @@
             }
         });
 
-        // Auto-refresh every 30 seconds
         setInterval(async () => {
             if (walletConnector && walletConnector.contract) {
                 try {
