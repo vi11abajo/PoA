@@ -454,12 +454,6 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
-    async payGameFee() {
-        try {
-            if (!this.connected || !this.contract) {
-                throw new Error('Wallet not connected');
-            }
-            
             console.log('💰 Paying game fee:', this.config.GAME_FEE, 'PHRS');
             
             const feeInWei = this.web3.utils.toWei(this.config.GAME_FEE, 'ether');
@@ -487,68 +481,6 @@ class WalletConnector {
             
         } catch (error) {
             console.error('❌ Payment error:', error);
-            
-            if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
-                throw new Error(error.message || 'Insufficient funds in wallet');
-            } else if (error.message.includes('User denied') || error.message.includes('rejected')) {
-                throw new Error('Transaction cancelled by user');
-            } else {
-                throw new Error(`Payment failed: ${error.message || 'Unknown error'}`);
-            }
-        }
-    }
-    
-    async saveScore(score, playerName) {
-        try {
-            if (!this.connected || !this.contract) {
-                throw new Error('Wallet not connected');
-            }
-            
-            const gasEstimate = await this.contract.methods
-                .recordScore(score, playerName)
-                .estimateGas({ from: this.account });
-
-            const tx = await this.contract.methods
-                .recordScore(score, playerName)
-                .send({
-                    from: this.account,
-                    gas: Math.round(gasEstimate * 1.2)
-                });
-
-            console.log('✅ Score saved! TX:', tx.transactionHash);
-            return tx.transactionHash;
-            
-        } catch (error) {
-            console.error('❌ Save score error:', error);
-            throw error;
-        }
-    }config.GAME_FEE, 'PHRS');
-            
-            const feeInWei = this.web3.utils.toWei(this.config.GAME_FEE, 'ether');
-            
-            const balance = await this.web3.eth.getBalance(this.account);
-            const balanceInEther = this.web3.utils.fromWei(balance, 'ether');
-            
-            if (parseFloat(balanceInEther) < parseFloat(this.config.GAME_FEE)) {
-                throw new Error(`Insufficient balance. You have ${balanceInEther} PHRS, but need ${this.config.GAME_FEE} PHRS`);
-            }
-            
-            const gasEstimate = await this.contract.methods.startGame().estimateGas({
-                from: this.account,
-                value: feeInWei
-            });
-
-            const tx = await this.contract.methods.startGame().send({
-                from: this.account,
-                value: feeInWei,
-                gas: Math.round(gasEstimate * 1.2)
-            });
-
-            console.log('âœ… Game fee paid! TX:', tx.transactionHash);
-            return true;
-            
-        } catch (error) {
-            console.error('âŒ Payment error:', error);
             
             if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
                 throw new Error(error.message || 'Insufficient funds in wallet');
