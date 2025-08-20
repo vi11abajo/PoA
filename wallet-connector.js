@@ -1,5 +1,3 @@
-// wallet-connector.js - Simplified wallet connector
-
 class WalletConnector {
     constructor() {
         this.web3 = null;
@@ -55,7 +53,7 @@ class WalletConnector {
             }
         ];
         
-        console.log('🔗 Creating WalletConnector...');
+        console.log('ðŸ"— Creating WalletConnector...');
         this.init();
     }
     
@@ -64,7 +62,7 @@ class WalletConnector {
         this.createWalletModal();
         this.updateConnectionStatus();
         this.isInitialized = true;
-        console.log('✅ WalletConnector initialized');
+        console.log('âœ… WalletConnector initialized');
     }
     
     createWalletButton() {
@@ -233,7 +231,7 @@ class WalletConnector {
         `;
         
         document.body.appendChild(walletButton);
-        console.log('✅ Wallet button created');
+        console.log('âœ… Wallet button created');
     }
     
     createWalletModal() {
@@ -244,7 +242,7 @@ class WalletConnector {
         modal.className = 'wallet-modal';
         modal.innerHTML = `
             <div class="wallet-modal-content">
-                <button class="close-modal" onclick="walletConnector.hideWalletModal()">×</button>
+                <button class="close-modal" onclick="walletConnector.hideWalletModal()">Ã—</button>
                 <h3>Connect Your Wallet</h3>
                 <div id="wallet-message" class="wallet-message"></div>
                 
@@ -261,7 +259,7 @@ class WalletConnector {
         `;
         
         document.body.appendChild(modal);
-        console.log('✅ Wallet modal created');
+        console.log('âœ… Wallet modal created');
     }
     
     showWalletModal() {
@@ -313,13 +311,11 @@ class WalletConnector {
             this.account = accounts[0];
             this.walletType = walletType;
             
-            // Check network
             const chainId = await this.web3.eth.getChainId();
             if (chainId.toString() !== this.config.CHAIN_ID) {
                 await this.switchNetwork();
             }
             
-            // Initialize contract
             this.contract = new this.web3.eth.Contract(this.contractABI, this.config.CONTRACT_ADDRESS);
             
             this.connected = true;
@@ -327,7 +323,6 @@ class WalletConnector {
             this.hideWalletModal();
             this.showSuccess('Wallet connected successfully!');
             
-            // Continue pending game start
             if (window.pendingGameStart) {
                 window.pendingGameStart = false;
                 setTimeout(() => {
@@ -337,7 +332,7 @@ class WalletConnector {
                 }, 1000);
             }
             
-            console.log('✅ Wallet connected:', this.account);
+            console.log('âœ… Wallet connected:', this.account);
             
         } catch (error) {
             console.error('Connection error:', error);
@@ -352,7 +347,7 @@ class WalletConnector {
         this.connected = false;
         this.walletType = null;
         this.updateConnectionStatus();
-        console.log('💔 Wallet disconnected');
+        console.log('ðŸ'" Wallet disconnected');
     }
     
     async switchNetwork() {
@@ -435,7 +430,7 @@ class WalletConnector {
             
             modal.innerHTML = `
                 <div class="wallet-modal-content">
-                    <h3>🚀 Start Blockchain Game</h3>
+                    <h3>ðŸš€ Start Blockchain Game</h3>
                     <p style="margin: 15px 0;">Entry Fee: <strong>${this.config.GAME_FEE} PHRS</strong></p>
                     <p style="font-size: 14px; opacity: 0.8;">Your score will be recorded on the Pharos blockchain</p>
                     <button onclick="confirmGameStart(true)" style="margin: 10px; padding: 12px 20px; background: #00ddff; color: #001122; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Pay & Start</button>
@@ -459,7 +454,7 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
-            console.log('💰 Paying game fee:', this.config.GAME_FEE, 'PHRS');
+            console.log('ðŸ'° Paying game fee:', this.config.GAME_FEE, 'PHRS');
             
             const feeInWei = this.web3.utils.toWei(this.config.GAME_FEE, 'ether');
             
@@ -481,11 +476,11 @@ class WalletConnector {
                 gas: Math.round(gasEstimate * 1.2)
             });
 
-            console.log('✅ Game fee paid! TX:', tx.transactionHash);
+            console.log('âœ… Game fee paid! TX:', tx.transactionHash);
             return true;
             
         } catch (error) {
-            console.error('❌ Payment error:', error);
+            console.error('âŒ Payment error:', error);
             
             if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
                 throw new Error(error.message || 'Insufficient funds in wallet');
@@ -514,11 +509,11 @@ class WalletConnector {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Score saved! TX:', tx.transactionHash);
+            console.log('âœ… Score saved! TX:', tx.transactionHash);
             return tx.transactionHash;
             
         } catch (error) {
-            console.error('❌ Save score error:', error);
+            console.error('âŒ Save score error:', error);
             throw error;
         }
     }
@@ -536,12 +531,11 @@ class WalletConnector {
             }));
             
         } catch (error) {
-            console.error('❌ Get scores error:', error);
+            console.error('âŒ Get scores error:', error);
             return [];
         }
     }
 }
 
-// Create global instance
-console.log('🚀 Creating global WalletConnector...');
+console.log('ðŸš€ Creating global WalletConnector...');
 window.walletConnector = new WalletConnector();
