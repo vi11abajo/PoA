@@ -1,0 +1,121 @@
+// 👑 PHAROS INVADERS - BOSS CONFIGURATION
+// Настройки всех боссов в игре
+
+const BOSS_CONFIG = {
+    // 🎯 ОБЩИЕ НАСТРОЙКИ БОССОВ
+    BOSS_LEVELS: [3, 6, 9, 12, 15],  // Уровни на которых появляются боссы
+    BASE_BOSS_HP: 50,                // Здоровье первого босса
+    BOSS_HP_INCREASE: 25,            // Прирост здоровья каждого следующего босса
+    
+    // 🎨 РАЗМЕРЫ И ПОЗИЦИЯ
+    BOSS_WIDTH: 120,                 // Ширина босса
+    BOSS_HEIGHT: 100,                // Высота босса
+    BOSS_START_Y: 80,                // Начальная Y позиция (сверху)
+    
+    // ⚡ ДВИЖЕНИЕ БОССА
+    BOSS_SPEED: 2,                   // Скорость движения босса
+    BOSS_MOVEMENT_RANGE: 600,        // Дальность движения влево-вправо
+    BOSS_VERTICAL_BOB: 15,           // Амплитуда вертикального покачивания
+    BOSS_BOB_SPEED: 0.02,            // Скорость покачивания
+    
+    // 🔫 СТРЕЛЬБА БОССА
+    BOSS_FIRE_RATE: 0.008,           // Частота стрельбы босса (чем больше, тем чаще)
+    BOSS_BULLET_SPEED: 4,            // Скорость пуль босса
+    BOSS_BULLET_SIZE: 12,            // Размер пуль босса
+    BOSS_MULTI_SHOT: true,           // Стреляет ли босс несколькими пулями
+    BOSS_SHOTS_COUNT: 3,             // Количество пуль за выстрел
+    BOSS_SHOT_SPREAD: 0.3,           // Разброс пуль (радианы)
+    
+    // 🎭 АНИМАЦИЯ И ЭФФЕКТЫ
+    BOSS_ANIMATION_SPEED: 0.05,      // Скорость анимации
+    BOSS_DAMAGE_FLASH_TIME: 300,     // Время мигания при получении урона (мс)
+    BOSS_DEATH_ANIMATION_TIME: 2000, // Время анимации смерти (мс)
+    
+    // 💰 НАГРАДЫ
+    BOSS_SCORE_MULTIPLIER: 10,       // Множитель очков за убийство босса
+    BOSS_BASE_SCORE: 1000,           // Базовые очки за первого босса
+    
+    // 🖼️ ИЗОБРАЖЕНИЯ БОССОВ
+    BOSS_IMAGES: {
+        1: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 1 (3 уровень)
+        2: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 2 (6 уровень) - пока та же картинка
+        3: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 3 (9 уровень) - пока та же картинка
+        4: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 4 (12 уровень) - пока та же картинка
+        5: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png'   // Босс 5 (15 уровень) - пока та же картинка
+    },
+    
+    // 🎨 ЦВЕТА БОССОВ (для партиклов и эффектов)
+    BOSS_COLORS: {
+        1: '#33cc66',  // Зеленый
+        2: '#3366ff',  // Синий
+        3: '#ffdd33',  // Желтый
+        4: '#ff3333',  // Красный
+        5: '#9966ff'   // Фиолетовый
+    },
+    
+    // 🏷️ ИМЕНА БОССОВ
+    BOSS_NAMES: {
+        1: 'Crab Guardian',
+        2: 'Ocean Destroyer', 
+        3: 'Deep Sea Terror',
+        4: 'Abyssal Lord',
+        5: 'Kraken King'
+    }
+};
+
+// 🧮 ФУНКЦИИ ДЛЯ РАСЧЕТА ПАРАМЕТРОВ БОССА
+
+// Получить здоровье босса по его номеру
+function getBossHP(bossNumber) {
+    return BOSS_CONFIG.BASE_BOSS_HP + (bossNumber - 1) * BOSS_CONFIG.BOSS_HP_INCREASE;
+}
+
+// Получить очки за убийство босса
+function getBossScore(bossNumber) {
+    return BOSS_CONFIG.BOSS_BASE_SCORE * bossNumber * BOSS_CONFIG.BOSS_SCORE_MULTIPLIER;
+}
+
+// Проверить, является ли уровень боссовым
+function isBossLevel(level) {
+    return BOSS_CONFIG.BOSS_LEVELS.includes(level);
+}
+
+// Получить номер босса по уровню
+function getBossNumber(level) {
+    const index = BOSS_CONFIG.BOSS_LEVELS.indexOf(level);
+    return index !== -1 ? index + 1 : 0;
+}
+
+// Получить изображение босса
+function getBossImage(bossNumber) {
+    return BOSS_CONFIG.BOSS_IMAGES[bossNumber] || BOSS_CONFIG.BOSS_IMAGES[1];
+}
+
+// Получить цвет босса
+function getBossColor(bossNumber) {
+    return BOSS_CONFIG.BOSS_COLORS[bossNumber] || BOSS_CONFIG.BOSS_COLORS[1];
+}
+
+// Получить имя босса
+function getBossName(bossNumber) {
+    return BOSS_CONFIG.BOSS_NAMES[bossNumber] || 'Unknown Boss';
+}
+
+// 📝 ПРИМЕРЫ НАСТРОЕК:
+
+// 🟢 ЛЕГКИЕ БОССЫ:
+// BASE_BOSS_HP: 30, BOSS_HP_INCREASE: 15, BOSS_FIRE_RATE: 0.005
+
+// 🔴 СЛОЖНЫЕ БОССЫ:
+// BASE_BOSS_HP: 80, BOSS_HP_INCREASE: 40, BOSS_FIRE_RATE: 0.015, BOSS_SHOTS_COUNT: 5
+
+// ⚡ БЫСТРЫЕ БОССЫ:
+// BOSS_SPEED: 4, BOSS_BULLET_SPEED: 6, BOSS_ANIMATION_SPEED: 0.1
+
+// 🐌 МЕДЛЕННЫЕ ТАНКИ:
+// BOSS_SPEED: 1, BASE_BOSS_HP: 100, BOSS_HP_INCREASE: 50
+
+// 💥 АГРЕССИВНЫЕ БОССЫ:
+// BOSS_FIRE_RATE: 0.02, BOSS_SHOTS_COUNT: 7, BOSS_SHOT_SPREAD: 0.5
+
+console.log('👑 Boss config loaded:', BOSS_CONFIG);
