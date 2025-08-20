@@ -1,4 +1,4 @@
-console.log('ðŸŽ® Loading full game.js...');
+console.log('🎮 Loading full game.js...');
 
 let gameState = 'start';
 let score = 0;
@@ -34,8 +34,8 @@ let crabImagesLoaded = {
 };
 
 octopusImage.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png';
-octopusImage.onload = () => { octopusImageLoaded = true; console.log('ðŸ™ Octopus image loaded'); };
-octopusImage.onerror = () => { octopusImageLoaded = false; console.log('âŒ Octopus image failed'); };
+octopusImage.onload = () => { octopusImageLoaded = true; console.log('🐙 Octopus image loaded'); };
+octopusImage.onerror = () => { octopusImageLoaded = false; console.log('❌ Octopus image failed'); };
 
 crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
 crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
@@ -46,11 +46,11 @@ crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/ima
 Object.keys(crabImages).forEach(color => {
     crabImages[color].onload = () => { 
         crabImagesLoaded[color] = true; 
-        console.log(`ðŸ¦€ ${color} crab loaded`);
+        console.log(`🦀 ${color} crab loaded`);
     };
     crabImages[color].onerror = () => { 
         crabImagesLoaded[color] = false; 
-        console.log(`âŒ ${color} crab failed`);
+        console.log(`❌ ${color} crab failed`);
     };
 });
 
@@ -86,7 +86,7 @@ function initCanvas() {
     canvas = document.getElementById('gameCanvas');
     if (canvas) {
         ctx = canvas.getContext('2d');
-        console.log('âœ… Canvas initialized');
+        console.log('✅ Canvas initialized');
     }
 }
 
@@ -401,7 +401,7 @@ function drawPlayer() {
     } else {
         ctx.fillStyle = '#00ddff';
         ctx.font = '50px Arial';
-        ctx.fillText('ðŸ™', player.x, player.y + 40);
+        ctx.fillText('🐙', player.x, player.y + 40);
     }
 }
 
@@ -430,7 +430,7 @@ function drawInvaders() {
                 
             } else {
                 ctx.font = '25px Arial';
-                ctx.fillText('ðŸ¦€', invader.x, invader.y + 20 + bobbing);
+                ctx.fillText('🦀', invader.x, invader.y + 20 + bobbing);
             }
         }
     }
@@ -573,28 +573,28 @@ function updateUI() {
 
 async function startGame() {
     try {
-        console.log('ðŸš€ START GAME CALLED!');
+        console.log('🚀 START GAME CALLED!');
         
         if (!canvas) {
             initCanvas();
         }
         
         if (!window.walletConnector) {
-            console.log('âŒ No wallet connector');
+            console.log('❌ No wallet connector');
             alert('Wallet connector not found. Please refresh the page.');
             return;
         }
         
-        console.log('âœ… Wallet connector found');
+        console.log('✅ Wallet connector found');
         
         if (!walletConnector.connected) {
-            console.log('ðŸ'¼ Wallet not connected, showing modal...');
+            console.log('💼 Wallet not connected, showing modal...');
             window.pendingGameStart = true;
             walletConnector.showWalletModal();
             return;
         }
         
-        console.log('âœ… Wallet connected, starting game...');
+        console.log('✅ Wallet connected, starting game...');
         
         hasPaidFee = false;
         scoreAlreadySaved = false;
@@ -608,22 +608,22 @@ async function startGame() {
             hasPaidFee = true;
             currentGameSession = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             hideLoading();
-            console.log('âœ… Payment completed');
+            console.log('✅ Payment completed');
         } else {
-            console.log('ðŸŽ® Playing offline');
+            console.log('🎮 Playing offline');
         }
         
         actuallyStartGame();
         
     } catch (error) {
         hideLoading();
-        console.error('âŒ Error starting game:', error);
+        console.error('❌ Error starting game:', error);
         alert('Error: ' + error.message);
     }
 }
 
 function actuallyStartGame() {
-    console.log('ðŸŽ® Actually starting game...');
+    console.log('🎮 Actually starting game...');
     
     gameState = 'playing';
     score = 0;
@@ -651,7 +651,7 @@ function actuallyStartGame() {
     document.body.classList.remove('game-over-active');
     
     gameLoop(performance.now());
-    console.log('âœ… Game started successfully!');
+    console.log('✅ Game started successfully!');
 }
 
 function showGameOver() {
@@ -773,7 +773,7 @@ window.restartGame = restartGame;
 window.saveScoreToBlockchain = saveScoreToBlockchain;
 
 window.addEventListener('load', () => {
-    console.log('ðŸŽ® Full game loaded and ready!');
+    console.log('🎮 Full game loaded and ready!');
     
     initCanvas();
     
@@ -784,11 +784,11 @@ window.addEventListener('load', () => {
     
     setTimeout(() => {
         if (window.walletConnector) {
-            console.log('âœ… WalletConnector ready:', walletConnector.connected);
+            console.log('✅ WalletConnector ready:', walletConnector.connected);
         } else {
-            console.log('âŒ WalletConnector not found');
+            console.log('❌ WalletConnector not found');
         }
     }, 1000);
 });
 
-console.log('âœ… Full game.js loaded successfully!');
+console.log('✅ Full game.js loaded successfully!');
