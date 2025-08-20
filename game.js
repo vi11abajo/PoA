@@ -1,4 +1,6 @@
+
 console.log('🎮 Loading full game.js...');
+
 
 let gameState = 'start';
 let score = 0;
@@ -9,10 +11,12 @@ let hasPaidFee = false;
 let scoreAlreadySaved = false;
 let currentGameSession = null;
 
+
 let lastTime = 0;
 const targetFPS = 60;
 const frameTime = 1000 / targetFPS;
 let deltaTime = 0;
+
 
 const octopusImage = new Image();
 let octopusImageLoaded = false;
@@ -32,6 +36,7 @@ let crabImagesLoaded = {
     blue: false,
     green: false
 };
+
 
 octopusImage.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png';
 octopusImage.onload = () => { octopusImageLoaded = true; console.log('🐙 Octopus image loaded'); };
@@ -54,7 +59,9 @@ Object.keys(crabImages).forEach(color => {
     };
 });
 
+
 let canvas, ctx;
+
 
 const player = {
     x: 370,
@@ -70,6 +77,7 @@ let invaderBullets = [];
 let particles = [];
 let ripples = [];
 
+
 const invaderRows = 5;
 const invaderCols = 10;
 const invaderWidth = 35;
@@ -78,9 +86,11 @@ let invaderSpeed = 1;
 let invaderDirection = 1;
 let invaderDropDistance = 25;
 
+
 const keys = {};
 let lastShotTime = 0;
 const shotCooldown = 300;
+
 
 function initCanvas() {
     canvas = document.getElementById('gameCanvas');
@@ -89,6 +99,7 @@ function initCanvas() {
         console.log('✅ Canvas initialized');
     }
 }
+
 
 function createBubbles() {
     const bubblesContainer = document.querySelector('.bubbles');
@@ -113,6 +124,7 @@ function createBubbles() {
     }, 500);
 }
 
+
 document.addEventListener('keydown', (e) => {
     keys[e.code] = true;
     
@@ -134,6 +146,7 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
     keys[e.code] = false;
 });
+
 
 function createInvaders() {
     invaders = [];
@@ -165,6 +178,7 @@ function createInvaders() {
     }
 }
 
+
 function createBullet() {
     const now = Date.now();
     if (now - lastShotTime > shotCooldown) {
@@ -181,6 +195,7 @@ function createBullet() {
     }
 }
 
+
 function createInvaderBullet(invader) {
     const fireRate = 0.0008 * level;
     if (Math.random() < fireRate) {
@@ -194,6 +209,7 @@ function createInvaderBullet(invader) {
         });
     }
 }
+
 
 function createExplosion(x, y, color, isOctopus = false) {
     const particleCount = isOctopus ? 15 : 12;
@@ -212,6 +228,7 @@ function createExplosion(x, y, color, isOctopus = false) {
     }
 }
 
+
 function createRipple(x, y) {
     ripples.push({
         x: x,
@@ -221,6 +238,7 @@ function createRipple(x, y) {
         life: 30
     });
 }
+
 
 function updatePlayer(deltaTime) {
     const moveSpeed = player.speed * deltaTime;
@@ -236,7 +254,9 @@ function updatePlayer(deltaTime) {
     }
 }
 
+
 function updateBullets(deltaTime) {
+    
     bullets = bullets.filter(bullet => {
         bullet.y -= bullet.speed * deltaTime;
         bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
@@ -244,6 +264,7 @@ function updateBullets(deltaTime) {
         return bullet.y > -bullet.height;
     });
 
+    
     invaderBullets = invaderBullets.filter(bullet => {
         bullet.y += bullet.speed * deltaTime;
         bullet.wobble += 0.2 * deltaTime;
@@ -251,6 +272,7 @@ function updateBullets(deltaTime) {
         return bullet.y < canvas.height;
     });
 }
+
 
 function updateInvaders(deltaTime) {
     let shouldDrop = false;
@@ -293,6 +315,7 @@ function updateInvaders(deltaTime) {
     }
 }
 
+
 function updateParticles(deltaTime) {
     particles = particles.filter(particle => {
         particle.x += particle.vx * deltaTime;
@@ -309,7 +332,9 @@ function updateParticles(deltaTime) {
     });
 }
 
+
 function checkCollisions() {
+    // Player bullets vs crabs
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = invaders.length - 1; j >= 0; j--) {
             if (invaders[j].alive && 
@@ -341,6 +366,7 @@ function checkCollisions() {
         }
     }
 
+    
     for (let i = invaderBullets.length - 1; i >= 0; i--) {
         if (invaderBullets[i].x < player.x + player.width &&
             invaderBullets[i].x + invaderBullets[i].width > player.x &&
@@ -359,6 +385,7 @@ function checkCollisions() {
     }
 }
 
+
 function getCrabColor(type) {
     switch(type) {
         case 'violet': return '#9966ff';
@@ -369,6 +396,7 @@ function getCrabColor(type) {
         default: return '#cc3333';
     }
 }
+
 
 function drawPlayer() {
     const centerX = player.x + player.width / 2;
@@ -399,11 +427,13 @@ function drawPlayer() {
         ctx.globalAlpha = 1;
         
     } else {
+        // Fallback - draw simple octopus
         ctx.fillStyle = '#00ddff';
         ctx.font = '50px Arial';
         ctx.fillText('🐙', player.x, player.y + 40);
     }
 }
+
 
 function drawInvaders() {
     for (let invader of invaders) {
@@ -429,6 +459,7 @@ function drawInvaders() {
                 ctx.restore();
                 
             } else {
+                // Fallback - draw emoji crab
                 ctx.font = '25px Arial';
                 ctx.fillText('🦀', invader.x, invader.y + 20 + bobbing);
             }
@@ -436,8 +467,11 @@ function drawInvaders() {
     }
 }
 
+
 function drawBullets() {
+    // Player bullets
     for (let bullet of bullets) {
+        // Draw trail
         ctx.strokeStyle = 'rgba(102, 102, 255, 0.6)';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -452,6 +486,7 @@ function drawBullets() {
         ctx.stroke();
         ctx.globalAlpha = 1;
         
+        // Draw bullet
         ctx.fillStyle = '#6666ff';
         ctx.beginPath();
         ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, 4, 0, Math.PI * 2);
@@ -466,6 +501,7 @@ function drawBullets() {
         ctx.shadowBlur = 0;
     }
 
+    
     for (let bullet of invaderBullets) {
         ctx.strokeStyle = '#ff4444';
         ctx.lineWidth = 2;
@@ -480,6 +516,7 @@ function drawBullets() {
     }
 }
 
+
 function drawParticles() {
     for (let particle of particles) {
         let alpha = particle.life / particle.maxLife;
@@ -492,6 +529,7 @@ function drawParticles() {
     }
 }
 
+
 function drawRipples() {
     for (let ripple of ripples) {
         ctx.strokeStyle = `rgba(0, 221, 255, ${ripple.life / 30})`;
@@ -501,6 +539,7 @@ function drawRipples() {
         ctx.stroke();
     }
 }
+
 
 function drawUI() {
     if (gameState === 'paused') {
@@ -514,6 +553,7 @@ function drawUI() {
         ctx.fillText('Press P to continue', canvas.width/2, canvas.height/2 + 50);
     }
 }
+
 
 function gameLoop(currentTime) {
     if (lastTime === 0) lastTime = currentTime;
@@ -571,6 +611,7 @@ function updateUI() {
     if (levelEl) levelEl.textContent = level;
 }
 
+
 async function startGame() {
     try {
         console.log('🚀 START GAME CALLED!');
@@ -622,6 +663,7 @@ async function startGame() {
     }
 }
 
+
 function actuallyStartGame() {
     console.log('🎮 Actually starting game...');
     
@@ -668,6 +710,7 @@ function showGameOver() {
         if (blockchainSection) {
             blockchainSection.style.display = 'block';
             
+            // Reset save form
             const saveButton = document.getElementById('saveScoreButton');
             const playerName = document.getElementById('playerName');
             const saveStatus = document.getElementById('save-status');
@@ -684,6 +727,7 @@ function showGameOver() {
     }
 }
 
+
 function restartGame() {
     document.body.classList.remove('game-over-active');
     
@@ -696,6 +740,7 @@ function restartGame() {
     gameState = 'start';
     scoreAlreadySaved = false;
 }
+
 
 async function saveScoreToBlockchain() {
     const playerNameEl = document.getElementById('playerName');
@@ -750,6 +795,7 @@ async function saveScoreToBlockchain() {
     }
 }
 
+
 function showLoading(message) {
     const loading = document.createElement('div');
     loading.id = 'loading-indicator';
@@ -768,9 +814,11 @@ function hideLoading() {
     }
 }
 
+
 window.startGame = startGame;
 window.restartGame = restartGame;
 window.saveScoreToBlockchain = saveScoreToBlockchain;
+
 
 window.addEventListener('load', () => {
     console.log('🎮 Full game loaded and ready!');
