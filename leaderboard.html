@@ -224,6 +224,7 @@
             font-size: 18px;
         }
 
+        
         .leaderboard-content::-webkit-scrollbar {
             width: 8px;
         }
@@ -284,6 +285,7 @@
         
         <div class="leaderboard-content">
             <div class="stats" id="gameStats">
+                <!-- Stats will be loaded here -->
             </div>
             
             <div id="loadingIndicator" class="loading">
@@ -307,26 +309,32 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboardBody">
+                        
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <!-- Web3 Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    
     
     <script src="game-config.js"></script>
 
     <script>
+        
         let walletConnector;
 
         async function initWalletConnector() {
+            
             walletConnector = {
                 config: {
                     NETWORK_NAME: 'Pharos Testnet',
                     RPC_URL: 'https://testnet.dplabs-internal.com',
                     CHAIN_ID: '688688',
                     CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
+                    
                     GAME_FEE: (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_FEE) ? GAME_CONFIG.GAME_FEE : '0.001'
                 },
                 contractABI: [
@@ -362,6 +370,7 @@
                 ]
             };
             
+           
             try {
                 walletConnector.web3 = new Web3(walletConnector.config.RPC_URL);
                 walletConnector.contract = new walletConnector.web3.eth.Contract(
@@ -402,10 +411,12 @@
 
         async function loadLeaderboard() {
             try {
+                
                 document.getElementById('loadingIndicator').style.display = 'block';
                 document.getElementById('errorMessage').style.display = 'none';
                 document.getElementById('leaderboardTable').style.display = 'none';
                 
+              
                 const topScores = await walletConnector.contract.methods.getTopScores(100).call();
                 
                 if (topScores.length === 0) {
@@ -415,6 +426,7 @@
                     return;
                 }
 
+                
                 const tbody = document.getElementById('leaderboardBody');
                 tbody.innerHTML = '';
                 
@@ -442,8 +454,10 @@
                     tbody.appendChild(row);
                 });
                 
+                
                 document.getElementById('loadingIndicator').style.display = 'none';
                 document.getElementById('leaderboardTable').style.display = 'block';
+                
                 
                 await loadGameStats();
                 
@@ -454,17 +468,20 @@
             }
         }
 
+        
         function maskAddress(address) {
             if (!address || address.length < 10) return address;
             return `${address.slice(0, 6)}***${address.slice(-6)}`;
         }
 
+        
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
+        
         window.addEventListener('load', async () => {
             console.log('Page loaded, GAME_CONFIG:', typeof GAME_CONFIG !== 'undefined' ? GAME_CONFIG : 'not loaded');
             
@@ -478,6 +495,7 @@
             }
         });
 
+        
         setInterval(async () => {
             if (walletConnector && walletConnector.contract) {
                 try {
