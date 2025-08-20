@@ -277,9 +277,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>ðŸ† PHAROS INVADERS LEADERBOARD</h1>
+            <h1>🏆 PHAROS INVADERS LEADERBOARD</h1>
             <p>Top 100 Cosmic Warriors of the Ocean Depths</p>
-            <a href="index.html" class="back-button">â† Back to Game</a>
+            <a href="index.html" class="back-button">← Back to Game</a>
         </div>
         
         <div class="leaderboard-content">
@@ -420,7 +420,7 @@
                 
                 topScores.forEach((record, index) => {
                     const rank = index + 1;
-                    const medals = ['ðŸ¥‡', 'ðŸ¥ˆ', 'ðŸ¥‰'];
+                    const medals = ['🥇', '🥈', '🥉'];
                     const medal = rank <= 3 ? medals[rank - 1] : '';
                     const maskedAddress = maskAddress(record.player);
                     const isTop3 = rank <= 3;
