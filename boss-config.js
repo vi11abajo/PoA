@@ -39,29 +39,29 @@ const BOSS_CONFIG = {
 
     // 🖼️ ИЗОБРАЖЕНИЯ БОССОВ
     BOSS_IMAGES: {
-        1: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 1 (3 уровень)
-        2: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 2 (6 уровень) - пока та же картинка
-        3: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 3 (9 уровень) - пока та же картинка
-        4: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 4 (12 уровень) - пока та же картинка
-        5: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png'   // Босс 5 (15 уровень) - пока та же картинка
+        1: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',  // Босс 1 (3 уровень) - Зеленый
+        2: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossBlue.png',   // Босс 2 (6 уровень) - Синий
+        3: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossYellow.png', // Босс 3 (9 уровень) - Желтый
+        4: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossRed.png',    // Босс 4 (12 уровень) - Красный
+        5: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossViolet.png'  // Босс 5 (15 уровень) - Фиолетовый
     },
 
     // 🎨 ЦВЕТА БОССОВ (для партиклов и эффектов)
     BOSS_COLORS: {
-        1: '#33cc66',  // Зеленый
-        2: '#3366ff',  // Синий
-        3: '#ffdd33',  // Желтый
-        4: '#ff3333',  // Красный
-        5: '#9966ff'   // Фиолетовый
+        1: '#33cc66',  // Зеленый (соответствует crabBOSSGreen)
+        2: '#3366ff',  // Синий (соответствует crabBossBlue)
+        3: '#ffdd33',  // Желтый (соответствует crabBossYellow)
+        4: '#ff3333',  // Красный (соответствует crabBossRed)
+        5: '#9966ff'   // Фиолетовый (соответствует crabBossViolet)
     },
 
-    // 🏷️ ИМЕНА БОССОВ
+    // 🏷️ ИМЕНА БОССОВ - Эпичные титулы
     BOSS_NAMES: {
-        1: 'Boss 1',
-        2: 'Boss 2',
-        3: 'Boss 3',
-        4: 'Boss 4',
-        5: 'Boss 5'
+        1: 'Emerald Warlord',     // Изумрудный Полководец (зеленый, 3 уровень)
+        2: 'Azure Leviathan',     // Лазурный Левиафан (синий, 6 уровень)
+        3: 'Solar Kraken',        // Солнечный Кракен (желтый, 9 уровень)
+        4: 'Crimson Behemoth',    // Багровый Бегемот (красный, 12 уровень)
+        5: 'Void Sovereign'       // Повелитель Пустоты (фиолетовый, 15 уровень)
     }
 };
 

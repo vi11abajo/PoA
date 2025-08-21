@@ -211,8 +211,8 @@ function createBullet() {
 
 // Create crab bullet
 function createInvaderBullet(invader) {
-    // Применяем настройку частоты стрельбы крабов из конфига
-    const baseFireRate = 0.0008 * level;
+    // ОБНОВЛЕНО: Применяем логарифмический рост вместо линейного
+    const baseFireRate = 0.0008 * Math.log(level + 1); // Логарифмический рост
     const adjustedFireRate = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_FIRE_RATE)
         ? baseFireRate * (GAME_CONFIG.CRAB_FIRE_RATE / 100)
         : baseFireRate;
