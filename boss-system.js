@@ -72,20 +72,21 @@ function createBoss(level) {
         // Состояние
         state: BOSS_STATES.APPEARING,
         lastShotTime: 0,
+        nextShotDelay: getRandomShotDelay(), // НОВОЕ: рандомная задержка до следующего выстрела
         damageFlashTime: 0,
         deathStartTime: 0,
-        
+
         // Эффекты
         scale: 1.0,
         alpha: 1.0,
         flashAlpha: 0,
-        
+
         // Изображение
         image: bossImages[bossNumber],
         color: getBossColor(bossNumber),
         name: getBossName(bossNumber)
     };
-    
+
     console.log(`👑 Boss created: ${currentBoss.name} (HP: ${currentBoss.maxHP})`);
     return currentBoss;
 }
@@ -93,36 +94,36 @@ function createBoss(level) {
 // Обновление босса
 function updateBoss(deltaTime) {
     if (!currentBoss) return;
-    
+
     const boss = currentBoss;
     const canvas = document.getElementById('gameCanvas');
-    
+
     // Обновляем анимацию
     boss.animationFrame += BOSS_CONFIG.BOSS_ANIMATION_SPEED * deltaTime;
     boss.bobOffset += BOSS_CONFIG.BOSS_BOB_SPEED * deltaTime;
-    
+
     // Обновляем состояние в зависимости от фазы
     switch (boss.state) {
         case BOSS_STATES.APPEARING:
             updateBossAppearing(boss, deltaTime);
             break;
-            
+
         case BOSS_STATES.FIGHTING:
             updateBossFighting(boss, deltaTime, canvas);
             break;
-            
+
         case BOSS_STATES.DAMAGED:
             updateBossDamaged(boss, deltaTime, canvas);
             break;
-            
+
         case BOSS_STATES.DYING:
             updateBossDying(boss, deltaTime);
             break;
     }
-    
+
     // Обновляем пули босса
     updateBossBullets(deltaTime);
-    
+
     // Обновляем частицы босса
     updateBossParticles(deltaTime);
 }
@@ -132,18 +133,18 @@ function updateBossAppearing(boss, deltaTime) {
     // Медленно опускаем босса вниз
     const appearSpeed = 100 * deltaTime;
     boss.y += appearSpeed;
-    
+
     // Эффект появления
     boss.scale = Math.min(1.0, boss.scale + 0.02 * deltaTime);
     boss.alpha = Math.min(1.0, boss.alpha + 0.03 * deltaTime);
-    
+
     // Когда достиг нужной позиции - переходим в режим боя
     if (boss.y >= boss.baseY) {
         boss.y = boss.baseY;
         boss.state = BOSS_STATES.FIGHTING;
         boss.scale = 1.0;
         boss.alpha = 1.0;
-        
+
         // Создаем эффект приземления
         createBossLandingEffect(boss);
         console.log(`👑 ${boss.name} has entered the battle!`);
@@ -154,7 +155,7 @@ function updateBossAppearing(boss, deltaTime) {
 function updateBossFighting(boss, deltaTime, canvas) {
     // Горизонтальное движение
     boss.x += boss.speed * boss.direction * deltaTime;
-    
+
     // Проверяем границы и меняем направление
     if (boss.x <= 0) {
         boss.x = 0;
@@ -163,19 +164,19 @@ function updateBossFighting(boss, deltaTime, canvas) {
         boss.x = canvas.width - boss.width;
         boss.direction = -1;
     }
-    
+
     // Вертикальное покачивание
     const bobbing = Math.sin(boss.bobOffset) * BOSS_CONFIG.BOSS_VERTICAL_BOB;
     boss.y = boss.baseY + bobbing;
-    
+
     // Стрельба
     updateBossShooting(boss);
-    
+
     // Убираем эффект мигания от урона
     if (boss.damageFlashTime > 0) {
         boss.damageFlashTime -= deltaTime;
         boss.flashAlpha = Math.max(0, boss.damageFlashTime / BOSS_CONFIG.BOSS_DAMAGE_FLASH_TIME);
-        
+
         if (boss.damageFlashTime <= 0) {
             boss.state = BOSS_STATES.FIGHTING;
             boss.flashAlpha = 0;
@@ -187,7 +188,7 @@ function updateBossFighting(boss, deltaTime, canvas) {
 function updateBossDamaged(boss, deltaTime, canvas) {
     // Продолжаем движение, но медленнее
     boss.x += boss.speed * 0.5 * boss.direction * deltaTime;
-    
+
     // Проверяем границы
     if (boss.x <= 0) {
         boss.x = 0;
@@ -196,15 +197,18 @@ function updateBossDamaged(boss, deltaTime, canvas) {
         boss.x = canvas.width - boss.width;
         boss.direction = -1;
     }
-    
+
     // Вертикальное покачивание
     const bobbing = Math.sin(boss.bobOffset) * BOSS_CONFIG.BOSS_VERTICAL_BOB;
     boss.y = boss.baseY + bobbing;
-    
+
+    // ИСПРАВЛЕНО: Босс продолжает стрелять даже при получении урона
+    updateBossShooting(boss);
+
     // Эффект мигания
     boss.damageFlashTime -= deltaTime;
     boss.flashAlpha = Math.max(0, boss.damageFlashTime / BOSS_CONFIG.BOSS_DAMAGE_FLASH_TIME);
-    
+
     if (boss.damageFlashTime <= 0) {
         boss.state = BOSS_STATES.FIGHTING;
         boss.flashAlpha = 0;
@@ -214,13 +218,13 @@ function updateBossDamaged(boss, deltaTime, canvas) {
 // Фаза смерти
 function updateBossDying(boss, deltaTime) {
     const deathProgress = (Date.now() - boss.deathStartTime) / BOSS_CONFIG.BOSS_DEATH_ANIMATION_TIME;
-    
+
     if (deathProgress < 1.0) {
         // Анимация смерти
         boss.scale = Math.max(0.1, 1.0 - deathProgress * 0.5);
         boss.alpha = Math.max(0, 1.0 - deathProgress);
         boss.y += 50 * deltaTime; // Медленно падает
-        
+
         // Создаем частицы взрыва
         if (Math.random() < 0.3) {
             createBossDeathParticles(boss);
@@ -229,26 +233,37 @@ function updateBossDying(boss, deltaTime) {
         // Босс умер
         boss.state = BOSS_STATES.DEAD;
         currentBoss = null;
-        
+
         // Создаем финальный взрыв
         createBossFinalExplosion(boss);
-        
+
         console.log(`👑 ${boss.name} has been defeated!`);
     }
 }
 
-// Система стрельбы босса
+// НОВАЯ ФУНКЦИЯ: Генерация рандомной задержки между выстрелами
+function getRandomShotDelay() {
+    const minDelay = BOSS_CONFIG.BOSS_SHOT_MIN_DELAY || 2000;
+    const maxDelay = BOSS_CONFIG.BOSS_SHOT_MAX_DELAY || 5000;
+    return minDelay + Math.random() * (maxDelay - minDelay);
+}
+
+// Система стрельбы босса - ОБНОВЛЕНО с рандомными интервалами
 function updateBossShooting(boss) {
     const now = Date.now();
-    const shotCooldown = 1000 / BOSS_CONFIG.BOSS_FIRE_RATE; // Конвертируем в миллисекунды
-    
-    if (now - boss.lastShotTime > shotCooldown) {
+
+    // Проверяем, пришло ли время стрелять
+    if (now - boss.lastShotTime >= boss.nextShotDelay) {
         if (BOSS_CONFIG.BOSS_MULTI_SHOT) {
             createBossMultiShot(boss);
         } else {
             createBossSingleShot(boss);
         }
+
         boss.lastShotTime = now;
+        boss.nextShotDelay = getRandomShotDelay(); // Устанавливаем новую рандомную задержку
+
+        console.log(`👑 Boss fired! Next shot in ${boss.nextShotDelay}ms`); // Отладка
     }
 }
 
@@ -256,7 +271,7 @@ function updateBossShooting(boss) {
 function createBossSingleShot(boss) {
     const bulletX = boss.x + boss.width / 2 - BOSS_CONFIG.BOSS_BULLET_SIZE / 2;
     const bulletY = boss.y + boss.height;
-    
+
     bossBullets.push({
         x: bulletX,
         y: bulletY,
@@ -276,12 +291,12 @@ function createBossMultiShot(boss) {
     const centerY = boss.y + boss.height;
     const shotCount = BOSS_CONFIG.BOSS_SHOTS_COUNT;
     const spread = BOSS_CONFIG.BOSS_SHOT_SPREAD;
-    
+
     for (let i = 0; i < shotCount; i++) {
         const angle = (i - (shotCount - 1) / 2) * spread;
         const vx = Math.sin(angle) * BOSS_CONFIG.BOSS_BULLET_SPEED;
         const vy = Math.cos(angle) * BOSS_CONFIG.BOSS_BULLET_SPEED;
-        
+
         bossBullets.push({
             x: centerX - BOSS_CONFIG.BOSS_BULLET_SIZE / 2,
             y: centerY,
@@ -301,15 +316,15 @@ function updateBossBullets(deltaTime) {
     bossBullets = bossBullets.filter(bullet => {
         bullet.x += bullet.vx * deltaTime;
         bullet.y += bullet.vy * deltaTime;
-        
+
         // Добавляем след
         bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height/2});
         if (bullet.trail.length > 6) bullet.trail.shift();
-        
+
         // Удаляем если вышла за экран
         const canvas = document.getElementById('gameCanvas');
-        return bullet.y < canvas.height + 50 && 
-               bullet.x > -50 && 
+        return bullet.y < canvas.height + 50 &&
+               bullet.x > -50 &&
                bullet.x < canvas.width + 50;
     });
 }
@@ -319,29 +334,29 @@ function damageBoss(damage) {
     if (!currentBoss || currentBoss.state === BOSS_STATES.DYING || currentBoss.state === BOSS_STATES.DEAD) {
         return false;
     }
-    
+
     currentBoss.currentHP -= damage;
     currentBoss.state = BOSS_STATES.DAMAGED;
     currentBoss.damageFlashTime = BOSS_CONFIG.BOSS_DAMAGE_FLASH_TIME;
     currentBoss.flashAlpha = 1.0;
-    
+
     // Создаем частицы попадания
     createBossHitParticles(currentBoss);
-    
+
     console.log(`👑 Boss took ${damage} damage! HP: ${currentBoss.currentHP}/${currentBoss.maxHP}`);
-    
+
     // Проверяем смерть
     if (currentBoss.currentHP <= 0) {
         currentBoss.currentHP = 0;
         currentBoss.state = BOSS_STATES.DYING;
         currentBoss.deathStartTime = Date.now();
-        
+
         // Очищаем пули босса
         bossBullets = [];
-        
+
         return true; // Босс убит
     }
-    
+
     return false; // Босс еще жив
 }
 
@@ -350,60 +365,62 @@ function checkBossCollisions(playerBullets) {
     if (!currentBoss || currentBoss.state === BOSS_STATES.DYING || currentBoss.state === BOSS_STATES.DEAD) {
         return {bulletsToRemove: [], bossKilled: false, scoreGained: 0};
     }
-    
+
     const bulletsToRemove = [];
     let bossKilled = false;
     let scoreGained = 0;
-    
+
     // Проверяем попадания пуль игрока в босса
     for (let i = playerBullets.length - 1; i >= 0; i--) {
         const bullet = playerBullets[i];
-        
+
         if (bullet.x < currentBoss.x + currentBoss.width &&
             bullet.x + bullet.width > currentBoss.x &&
             bullet.y < currentBoss.y + currentBoss.height &&
             bullet.y + bullet.height > currentBoss.y) {
-            
+
             // Попадание!
             bulletsToRemove.push(i);
-            
+
             if (damageBoss(1)) {
                 // Босс убит
                 bossKilled = true;
                 scoreGained = getBossScore(currentBoss.bossNumber);
             }
-            
+
             break; // Одна пуля = один урон
         }
     }
-    
+
     return {bulletsToRemove, bossKilled, scoreGained};
 }
 
 // Проверка коллизий пуль босса с игроком
 function checkBossBulletsCollision(player) {
     const bulletsToRemove = [];
-    
+
     for (let i = bossBullets.length - 1; i >= 0; i--) {
         const bullet = bossBullets[i];
-        
+
         if (bullet.x < player.x + player.width &&
             bullet.x + bullet.width > player.x &&
             bullet.y < player.y + player.height &&
             bullet.y + bullet.height > player.y) {
-            
+
             bulletsToRemove.push(i);
+            // Сразу удаляем пулю из массива
+            bossBullets.splice(i, 1);
         }
     }
-    
-    return bulletsToRemove;
+
+    return bulletsToRemove.length > 0; // Возвращаем true если было попадание
 }
 
 // Создание эффекта приземления
 function createBossLandingEffect(boss) {
     const centerX = boss.x + boss.width / 2;
     const centerY = boss.y + boss.height;
-    
+
     for (let i = 0; i < 20; i++) {
         bossParticles.push({
             x: centerX,
@@ -423,7 +440,7 @@ function createBossLandingEffect(boss) {
 function createBossHitParticles(boss) {
     const centerX = boss.x + boss.width / 2;
     const centerY = boss.y + boss.height / 2;
-    
+
     for (let i = 0; i < 8; i++) {
         bossParticles.push({
             x: centerX + (Math.random() - 0.5) * boss.width * 0.6,
@@ -443,7 +460,7 @@ function createBossHitParticles(boss) {
 function createBossDeathParticles(boss) {
     const centerX = boss.x + boss.width / 2;
     const centerY = boss.y + boss.height / 2;
-    
+
     for (let i = 0; i < 5; i++) {
         bossParticles.push({
             x: centerX + (Math.random() - 0.5) * boss.width,
@@ -463,7 +480,7 @@ function createBossDeathParticles(boss) {
 function createBossFinalExplosion(boss) {
     const centerX = boss.x + boss.width / 2;
     const centerY = boss.y + boss.height / 2;
-    
+
     for (let i = 0; i < 50; i++) {
         bossParticles.push({
             x: centerX,
@@ -493,7 +510,7 @@ function updateBossParticles(deltaTime) {
 // Получение состояния босса для UI
 function getBossStatus() {
     if (!currentBoss) return null;
-    
+
     return {
         name: currentBoss.name,
         currentHP: currentBoss.currentHP,
