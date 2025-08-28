@@ -23,6 +23,7 @@
             color: #00ddff;
             overflow: hidden;
             position: relative;
+            padding-top: 0;
         }
 
         .pharos-logo {
@@ -32,6 +33,11 @@
             z-index: 10;
         }
 
+        .pharos-logo a {
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
         .pharos-logo img {
             height: 40px;
             width: auto;
@@ -39,14 +45,14 @@
             transition: all 0.3s ease;
         }
 
-        .pharos-logo img:hover {
+        .pharos-logo a:hover img {
             filter: drop-shadow(0 0 25px rgba(0, 221, 255, 1));
             transform: scale(1.05);
         }
 
         .main-leaderboard-button {
             position: absolute;
-            top: 20px;
+            top: 25px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
@@ -65,6 +71,38 @@
             backdrop-filter: blur(10px);
             padding: 20px;
             min-width: 500px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+            color: #00ddff;
+            border: 2px solid #00ddff;
+            padding: 6px;
+            font-family: 'Arial', sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+            backdrop-filter: blur(10px);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .nav-button.connected {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(102, 255, 179, 0.3));
+            border-color: #00ff88;
+            color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
         }
 
         .ui {
@@ -196,12 +234,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        .controls {
-            margin-top: 20px;
-            text-align: center;
-            color: #66ccff;
-            font-size: 14px;
-        }
 
         .bubbles {
             position: absolute;
@@ -239,12 +271,23 @@
 </head>
 <body>
     <div class="pharos-logo">
-        <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png" alt="Pharos Network">
+        <a href="https://testnet.pharosnetwork.xyz/experience?inviteCode=8WEiXzSig6n7hrTH" target="_blank">
+            <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png" alt="Pharos Network">
+        </a>
     </div>
     
     <div class="main-leaderboard-button">
         <button onclick="window.location.href='leaderboard.html';" style="padding: 10px 20px; font-size: 14px; margin: 0;">
             🏆 Leaderboard
+        </button>
+        <button onclick="window.location.href='tournament-lobby.html';" style="padding: 10px 20px; font-size: 14px; margin: 0 0 0 10px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.3)); border-color: #ffd700; color: #ffd700;">
+            ⚔️ Tournament
+        </button>
+    </div>
+    
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+        <button class="nav-button" id="walletButton" onclick="handleWalletToggle()">
+            <span id="walletStatus">💼 Connect Wallet</span>
         </button>
     </div>
     
@@ -287,11 +330,6 @@
             <button onclick="restartGame()">NEW BATTLE</button>
         </div>
     </div>
-    
-    <div class="controls">
-        <p>← → Swimming | SPACE Plasma Attack | P Pause</p>
-        <p style="opacity: 0.7;">Pharos Network - Fastest EVM Layer-1</p>
-    </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
@@ -301,6 +339,45 @@
     <script src="boss-renderer.js"></script>
     <script src="wallet-connector.js"></script>
     <script src="game.js"></script>
+
+    <script>
+        // Функция для переключения кошелька
+        window.handleWalletToggle = async function() {
+            if (window.walletConnector) {
+                if (window.walletConnector.connected) {
+                    // Если кошелек подключен, отключаем его
+                    window.walletConnector.disconnect();
+                } else {
+                    // Если кошелек не подключен, показываем модал
+                    await window.walletConnector.showWalletModal();
+                }
+            } else {
+                console.error('Wallet connector not available');
+            }
+        };
+
+        // Обновление статуса кошелька
+        function updateWalletStatus() {
+            const walletButton = document.getElementById('walletButton');
+            const walletStatus = document.getElementById('walletStatus');
+            
+            if (window.walletConnector && window.walletConnector.connected && window.walletConnector.account) {
+                walletButton.classList.add('connected');
+                const shortAddress = `${window.walletConnector.account.slice(0, 6)}...${window.walletConnector.account.slice(-4)}`;
+                walletStatus.textContent = shortAddress;
+            } else {
+                walletButton.classList.remove('connected');
+                walletStatus.textContent = '💼 Connect Wallet';
+            }
+        }
+
+        // Проверяем статус кошелька каждые 2 секунды
+        setInterval(updateWalletStatus, 2000);
+        
+        // Обновляем при загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateWalletStatus);
+    </script>
+
 </body>
 <footer style="position: fixed; bottom: 0; width: 100%; background: #1e2a44; padding: 20px; text-align: center; z-index: 1000;">
     <p>Made by vi11abajo | <a href="https://twitter.com/IIIDARt" target="_blank" style="color: #00d4ff; text-decoration: none;">Follow on X</a></p>

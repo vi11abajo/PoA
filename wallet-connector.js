@@ -1,4 +1,3 @@
-
 class WalletConnector {
     constructor() {
         this.web3 = null;
@@ -222,17 +221,9 @@ class WalletConnector {
         `;
         document.head.appendChild(style);
         
-        const walletButton = document.createElement('div');
-        walletButton.id = 'wallet-button';
-        walletButton.className = 'wallet-button';
-        walletButton.innerHTML = `
-            <button onclick="walletConnector.showWalletModal()">
-                <span id="wallet-status">Connect Wallet</span>
-            </button>
-        `;
-        
-        document.body.appendChild(walletButton);
-        console.log('✅ Wallet button created');
+        // УДАЛЕНО: Дублированная кнопка кошелька из wallet-connector.js
+        // Используем только кнопку из tournament-lobby.html
+        console.log('🔧 Skipping wallet button creation - using existing button from tournament-lobby.html');
     }
     
     createWalletModal() {
@@ -501,6 +492,35 @@ class WalletConnector {
             if (!this.connected || !this.contract) {
                 throw new Error('Wallet not connected');
             }
+            
+            // 🔒 ВАЛИДАЦИЯ ДАННЫХ
+            // Проверка счёта
+            if (!Number.isInteger(score) || score < 0 || score > 9999999) {
+                throw new Error('Invalid score value');
+            }
+            
+            // Проверка имени
+            if (!playerName || typeof playerName !== 'string') {
+                throw new Error('Player name is required');
+            }
+            
+            // Санитизация имени - только буквы, цифры и пробелы
+            playerName = playerName.trim().replace(/[^a-zA-Z0-9\s]/g, '');
+            
+            if (playerName.length < 1 || playerName.length > 20) {
+                throw new Error('Player name must be 1-20 characters');
+            }
+            
+            // Проверка на подозрительные паттерны в имени
+            const suspiciousPatterns = ['script', 'onclick', 'onerror', '<', '>', 'javascript:'];
+            const lowerName = playerName.toLowerCase();
+            for (let pattern of suspiciousPatterns) {
+                if (lowerName.includes(pattern)) {
+                    throw new Error('Invalid characters in player name');
+                }
+            }
+            
+            console.log(`🔒 Validated score: ${score}, name: ${playerName}`);
             
             const gasEstimate = await this.contract.methods
                 .recordScore(score, playerName)

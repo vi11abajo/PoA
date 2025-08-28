@@ -1,0 +1,976 @@
+/* 🏆 PHAROS INVADERS - TOURNAMENT STYLES */
+/* Стили для турнирной системы + модальное игровое окно */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #001122 0%, #003366 30%, #0066aa 70%, #00aadd 100%);
+    min-height: 100vh;
+    font-family: 'Arial', sans-serif;
+    color: #00ddff;
+    padding: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 170, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ===== ОСНОВНАЯ СТРУКТУРА ===== */
+
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 7px;
+    min-height: calc(100vh - 85px);
+}
+
+/* ===== НАВИГАЦИЯ ===== */
+
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 10px;
+    margin-bottom: 10px;
+}
+
+.nav-button {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+    color: #00ddff;
+    border: 2px solid #00ddff;
+    padding: 6px;
+    font-family: 'Arial', sans-serif;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+    backdrop-filter: blur(10px);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.nav-button:hover {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+    box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+.nav-button.connected {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(102, 255, 179, 0.3));
+    border-color: #00ff88;
+    color: #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+}
+
+/* ===== HEADER ===== */
+
+.header {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(0, 17, 34, 0.9) 0%, rgba(0, 51, 102, 0.8) 100%);
+    border: 3px solid #00ddff;
+    border-radius: 15px;
+    padding: 6px;
+    text-align: center;
+    margin-bottom: 6px;
+    box-shadow: 0 0 40px rgba(0, 221, 255, 0.6);
+    position: relative;
+    height: fit-content;
+}
+
+.header h1 {
+    font-size: 33px; /* 29px + 15% = 33.35px */
+    margin-bottom: 8px;
+    text-shadow: 0 0 30px rgba(0, 221, 255, 1);
+    background: linear-gradient(45deg, #ffd700, #ffed4a, #f39c12);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header p {
+    font-size: 16px; /* 14px + 15% = 16.1px */
+    opacity: 0.8;
+    margin-bottom: 16px;
+}
+
+/* ===== АДМИН ПАНЕЛЬ ===== */
+
+.admin-panel {
+    background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 140, 0, 0.05));
+    border: 3px solid #ff8800;
+    border-radius: 15px;
+    padding: 6px;
+    margin-top: 16px;
+    display: none;
+}
+
+.admin-panel h4 {
+    color: #ff8800;
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+}
+
+.admin-controls {
+    display: flex;
+    gap: 8px; /* УМЕНЬШЕНО: было 10px, стало 8px (-20%) */
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.admin-button {
+    background: linear-gradient(135deg, rgba(255, 136, 0, 0.2), rgba(255, 165, 0, 0.3));
+    color: #ff8800;
+    border: 2px solid #ff8800;
+    padding: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+    flex: 1;
+}
+
+.admin-button:hover {
+    background: linear-gradient(135deg, rgba(255, 136, 0, 0.4), rgba(255, 165, 0, 0.5));
+    box-shadow: 0 0 20px rgba(255, 136, 0, 0.6);
+    transform: translateY(-2px);
+}
+
+.admin-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ===== ПАНЕЛИ ===== */
+
+.panel {
+    background: linear-gradient(135deg, rgba(0, 17, 34, 0.9) 0%, rgba(0, 51, 102, 0.8) 100%);
+    border: 3px solid #00ddff;
+    border-radius: 15px;
+    padding: 6px;
+    box-shadow: 0 0 40px rgba(0, 221, 255, 0.6);
+    backdrop-filter: blur(10px);
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel h3 {
+    color: #00ddff;
+    margin-bottom: 15px;
+    font-size: 21px; /* 18px + 15% = 20.7px */
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* ===== ТУРНИРНАЯ ИНФОРМАЦИЯ ===== */
+
+.info-item {
+    margin-bottom: 12px;
+    padding: 6px;
+    background: rgba(0, 221, 255, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #00ddff;
+}
+
+.info-label {
+    font-size: 14px; /* 12px + 15% = 13.8px */
+    color: #66ccff;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    font-size: 18px; /* 16px + 15% = 18.4px */
+    font-weight: bold;
+    color: #00ddff;
+}
+
+/* ===== СТАТУС СЕКЦИЯ ===== */
+
+.status-section {
+    margin-top: 6px;
+    padding-top: 6px;
+}
+
+.status-title {
+    color: #00ddff;
+    margin-bottom: 6px;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-badge {
+    background: rgba(255, 102, 102, 0.2);
+    border: 2px solid #ff6666;
+    color: #ff6666;
+    padding: 6px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-badge.registered {
+    background: rgba(0, 255, 136, 0.2);
+    border-color: #00ff88;
+    color: #00ff88;
+}
+
+/* ===== ИНДИКАТОРЫ ПОПЫТОК ===== */
+
+.attempt-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.attempt-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px; /* 12px + 15% = 13.8px */
+    border: 2px solid #666;
+    background: rgba(102, 102, 102, 0.2);
+    color: #666;
+}
+
+.attempt-dot.completed {
+    background: rgba(0, 255, 136, 0.2);
+    border-color: #00ff88;
+    color: #00ff88;
+}
+
+.attempt-dot.current {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: #ffd700;
+    color: #ffd700;
+    animation: pulse-gold 2s infinite;
+}
+
+@keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+}
+
+/* ===== ТУРНИРНЫЙ СТАТУС ===== */
+
+.tournament-status {
+    text-align: center;
+    padding: 6px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+}
+
+.tournament-status.not-started {
+    background: rgba(255, 102, 102, 0.2);
+    border: 2px solid #ff6666;
+    color: #ff6666;
+}
+
+.tournament-status.active {
+    background: rgba(0, 255, 136, 0.2);
+    border: 2px solid #00ff88;
+    color: #00ff88;
+}
+
+.tournament-status.ended {
+    background: rgba(102, 102, 102, 0.2);
+    border: 2px solid #666;
+    color: #666;
+}
+
+/* ===== ТАЙМЕР ТУРНИРА ===== */
+
+.tournament-timer {
+    text-align: center;
+    padding: 6px;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 140, 0, 0.05));
+    border: 2px solid #ff8800;
+    border-radius: 12px;
+}
+
+.tournament-timer h4 {
+    color: #ff8800;
+    margin-bottom: 10px;
+    font-size: 18px; /* 16px + 15% = 18.4px */
+}
+
+.timer-display {
+    font-size: 32px; /* 28px + 15% = 32.2px */
+    font-weight: bold;
+    color: #ff8800;
+    text-shadow: 0 0 20px rgba(255, 136, 0, 0.8);
+    font-family: 'Courier New', monospace;
+}
+
+.timer-display.warning {
+    color: #ff4444;
+    text-shadow: 0 0 20px rgba(255, 68, 68, 0.8);
+    animation: pulse-red 1s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ===== ПРИЗОВОЙ ФОНД ===== */
+
+.prize-pool {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.total-prize {
+    font-size: 41px; /* 36px + 15% = 41.4px */
+    font-weight: bold;
+    color: #ffd700;
+    margin: 15px 0;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+}
+
+.prize-breakdown {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.prize-tier {
+    background: rgba(0, 221, 255, 0.1);
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 221, 255, 0.3);
+}
+
+.prize-tier .place {
+    font-size: 23px; /* 20px + 15% = 23px */
+    margin-bottom: 4px;
+}
+
+.prize-tier .percentage {
+    color: #66ccff;
+    font-size: 14px; /* 12px + 15% = 13.8px */
+    margin-bottom: 4px;
+}
+
+.prize-tier .amount {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+}
+
+/* ===== ЛИДЕРБОРД ===== */
+
+.leaderboard-section {
+    margin-top: 20px;
+}
+
+.leaderboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.leaderboard-header h3 {
+    margin: 0;
+    color: #00ddff;
+    font-size: 21px; /* 18px + 15% = 20.7px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.refresh-button {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+    color: #00ddff;
+    border: 2px solid #00ddff;
+    padding: 6px;
+    font-size: 14px; /* 12px + 15% = 13.8px */
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: absolute;
+    right: 0;
+}
+
+.refresh-button:hover {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+    transform: translateY(-1px);
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.leaderboard-table th {
+    background: rgba(0, 221, 255, 0.2);
+    color: #00ddff;
+    padding: 6px;
+    text-align: left;
+    border-bottom: 2px solid rgba(0, 221, 255, 0.5);
+    font-size: 15px; /* 13px + 15% = 14.95px */
+}
+
+.leaderboard-table td {
+    padding: 6px;
+    border-bottom: 1px solid rgba(0, 221, 255, 0.2);
+    font-size: 14px; /* 12px + 15% = 13.8px */
+}
+
+.leaderboard-table tr:nth-child(even) {
+    background: rgba(0, 221, 255, 0.05);
+}
+
+.leaderboard-table tr.top-3 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05)) !important;
+}
+
+.rank-cell {
+    text-align: center;
+    font-weight: bold;
+    min-width: 60px;
+}
+
+.name-cell {
+    font-weight: bold;
+    color: #66ccff;
+}
+
+.score-cell {
+    text-align: right;
+    font-weight: bold;
+    color: #00ff88;
+}
+
+.prize-cell {
+    text-align: right;
+    color: #ffd700;
+    font-size: 14px; /* 12px + 15% = 13.8px */
+}
+
+.medal {
+    font-size: 21px; /* 18px + 15% = 20.7px */
+    margin-right: 8px;
+}
+
+/* ===== КНОПКИ ===== */
+
+.action-button {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+    color: #00ddff;
+    border: 2px solid #00ddff;
+    padding: 6px;
+    font-family: 'Arial', sans-serif;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+    margin-top: 15px;
+    width: 100%;
+}
+
+.action-button:hover {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+    box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.action-button.tournament-play {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.3));
+    border-color: #ffd700;
+    color: #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.action-button.tournament-play:hover {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 215, 0, 0.5));
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+}
+
+/* ===== МОДАЛЬНОЕ ИГРОВОЕ ОКНО ===== */
+
+.game-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(10px);
+}
+
+.game-modal.active {
+    display: flex;
+}
+
+.game-modal-content {
+    position: relative;
+    background: linear-gradient(135deg, rgba(0, 17, 34, 0.95) 0%, rgba(0, 51, 102, 0.9) 100%);
+    border: 3px solid #ffd700;
+    border-radius: 20px;
+    padding: 6px;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+    animation: modalAppear 0.3s ease-out;
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow: auto;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.game-canvas-container {
+    position: relative;
+    display: inline-block;
+}
+
+#tournamentGameCanvas {
+    display: block;
+    background: linear-gradient(180deg,
+        rgba(0, 17, 34, 0.9) 0%,
+        rgba(0, 34, 68, 0.8) 30%,
+        rgba(0, 51, 102, 0.7) 70%,
+        rgba(0, 102, 170, 0.6) 100%);
+    border-radius: 15px;
+    border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #ffd700;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.close-modal:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: rotate(90deg);
+}
+
+/* ===== UI В ИГРЕ ===== */
+
+.ui {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 21px; /* 18px + 15% = 20.7px */
+    z-index: 10;
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.9);
+    background: rgba(0, 17, 34, 0.8);
+    padding: 6px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+/* ===== GAME OVER В ТУРНИРЕ ===== */
+
+.game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 100;
+    background: linear-gradient(135deg, rgba(0, 17, 34, 0.95) 0%, rgba(0, 51, 102, 0.9) 100%);
+    padding: 6px;
+    border: 3px solid #ffd700;
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+    backdrop-filter: blur(15px);
+    max-width: 90%;
+    min-width: 400px;
+    color: #ffd700;
+    font-size: 21px; /* 18px + 15% = 20.7px */
+}
+
+.game-over h2 {
+    color: #ffd700;
+    margin-bottom: 15px;
+    font-size: 28px; /* 24px + 15% = 27.6px */
+}
+
+.blockchain-section {
+    margin-top: 20px;
+    padding: 6px;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.blockchain-section h3 {
+    color: #ffd700;
+    margin-bottom: 15px;
+    font-size: 21px; /* 18px + 15% = 20.7px */
+}
+
+.blockchain-section input {
+    width: 100%;
+    max-width: 300px;
+    padding: 6px;
+    margin: 10px 0;
+    border: 2px solid #ffd700;
+    border-radius: 5px;
+    background: rgba(0, 17, 34, 0.8);
+    color: #ffd700;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+}
+
+.blockchain-section input::placeholder {
+    color: rgba(255, 215, 0, 0.6);
+}
+
+/* ===== ИНДИКАТОРЫ ЗАГРУЗКИ ===== */
+
+.loading {
+    text-align: center;
+    padding: 6px;
+    color: #00ddff;
+    font-size: 18px; /* 16px + 15% = 18.4px */
+}
+
+.loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 17, 34, 0.95);
+    color: #00ddff;
+    padding: 6px;
+    border-radius: 15px;
+    z-index: 10001;
+    border: 2px solid #00ddff;
+    box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+    text-align: center;
+    display: none;
+}
+
+.spinner {
+    border: 3px solid rgba(0, 221, 255, 0.3);
+    border-top: 3px solid #00ddff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===== КОНТРОЛЫ ===== */
+
+.controls {
+    margin-top: 20px;
+    text-align: center;
+    color: #66ccff;
+    font-size: 16px; /* 14px + 15% = 16.1px */
+    padding: 6px;
+    background: rgba(0, 221, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 221, 255, 0.3);
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+
+@media (max-width: 1024px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        min-height: auto;
+    }
+
+    .header {
+        padding: 6px;
+        margin-bottom: 5px;
+    }
+
+    .header h1 {
+        font-size: 30px; /* 26px + 15% = 29.9px */
+    }
+
+    .header p {
+        font-size: 15px; /* 13px + 15% = 14.95px */
+    }
+
+    .prize-breakdown {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .total-prize {
+        font-size: 37px; /* 32px + 15% = 36.8px */
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 7px;
+        min-height: 100vh;
+    }
+
+    .main-container {
+        gap: 4px;
+        margin: 0;
+        min-height: auto;
+    }
+
+    .panel {
+        padding: 6px;
+    }
+
+    .header {
+        padding: 6px;
+        margin-bottom: 5px;
+    }
+
+    .header h1 {
+        font-size: 25px; /* 22px + 15% = 25.3px */
+    }
+
+    .header p {
+        font-size: 14px; /* 12px + 15% = 13.8px */
+    }
+
+    .info-item {
+        padding: 6px;
+    }
+
+    .info-value {
+        font-size: 16px; /* 14px + 15% = 16.1px */
+    }
+
+    .total-prize {
+        font-size: 30px; /* 26px + 15% = 29.9px */
+    }
+
+    .timer-display {
+        font-size: 28px; /* 24px + 15% = 27.6px */
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 6px;
+        font-size: 13px; /* 11px + 15% = 12.65px */
+    }
+
+    .action-button {
+        padding: 6px;
+        font-size: 15px; /* 13px + 15% = 14.95px */
+    }
+
+    .admin-controls {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .admin-button {
+        flex: none;
+        padding: 6px;
+        font-size: 14px; /* 12px + 15% = 13.8px */
+    }
+
+    .game-modal-content {
+        padding: 6px;
+        margin: 8px;
+    }
+
+    #tournamentGameCanvas {
+        width: 100%;
+        height: auto;
+        max-width: 600px;
+    }
+
+    .game-over {
+        min-width: 280px;
+        padding: 6px;
+        font-size: 16px; /* 14px + 15% = 16.1px */
+    }
+
+    .game-over h2 {
+        font-size: 21px; /* 18px + 15% = 20.7px */
+    }
+}
+
+@media (max-width: 480px) {
+    .top-nav {
+        flex-direction: column;
+        gap: 4px;
+        padding: 5px 0;
+        margin-bottom: 7px;
+    }
+
+    body {
+        padding: 5px;
+        min-height: 100vh;
+    }
+
+    .header {
+        padding: 6px;
+    }
+
+    .header h1 {
+        font-size: 21px; /* 18px + 15% = 20.7px */
+    }
+
+    .nav-button {
+        padding: 8px 12px;
+        font-size: 13px; /* 11px + 15% = 12.65px */
+    }
+
+    .top-nav {
+        padding: 4px 0;
+        margin-bottom: 5px;
+    }
+
+    .attempt-indicators {
+        gap: 4px;
+    }
+
+    .attempt-dot {
+        width: 24px;
+        height: 24px;
+        font-size: 13px; /* 11px + 15% = 12.65px */
+    }
+
+    .prize-tier .place {
+        font-size: 21px; /* 18px + 15% = 20.7px */
+    }
+
+    .total-prize {
+        font-size: 25px; /* 22px + 15% = 25.3px */
+    }
+
+    .timer-display {
+        font-size: 23px; /* 20px + 15% = 23px */
+    }
+
+    .game-over {
+        min-width: 260px;
+        padding: 6px;
+    }
+
+    .panel {
+        padding: 6px;
+    }
+
+    .action-button {
+        padding: 6px;
+        font-size: 14px; /* 12px + 15% = 13.8px */
+    }
+}
+
+/* === ОПТИМИЗАЦИЯ ДЛЯ БОЛЬШИХ ЭКРАНОВ === */
+
+@media (min-width: 1366px) {
+    .main-container {
+        min-height: calc(100vh - 100px);
+    }
+}
+
+@media (min-width: 1920px) {
+    .main-container {
+        min-height: calc(100vh - 120px);
+    }
+
+    body {
+        padding: 10px;
+    }
+}
+
+/* ===== СКРОЛЛБАРЫ ===== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 221, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 221, 255, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 221, 255, 0.8);
+}

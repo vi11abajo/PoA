@@ -97,7 +97,14 @@ function drawBossHealthBar(ctx) {
     const boss = window.BOSS_SYSTEM.getCurrentBoss();
     if (!boss || boss.state === 'dead') return;
 
-    const canvas = document.getElementById('gameCanvas');
+    const canvas = window.canvas ||
+               document.getElementById('gameCanvas') ||
+               document.getElementById('tournamentGameCanvas');
+
+        if (!canvas) {
+            console.error('❌ Canvas not found in drawBossHealthBar');
+            return;
+        }
     const barWidth = 300;
     const barHeight = 20;
     const barX = canvas.width / 2 - barWidth / 2;
@@ -266,7 +273,14 @@ function drawBossParticles(ctx) {
 function drawBossWarning(ctx, level) {
     if (!isBossLevel(level)) return;
 
-    const canvas = document.getElementById('gameCanvas');
+    const canvas = window.canvas ||
+                   document.getElementById('gameCanvas') ||
+                   document.getElementById('tournamentGameCanvas');
+
+    if (!canvas) {
+        console.error('❌ Canvas not found in drawBossHealthBar');
+        return;
+    }
     const bossNumber = getBossNumber(level);
     const bossName = getBossName(bossNumber);
 
@@ -304,7 +318,14 @@ function drawBossIndicator(ctx) {
     const boss = window.BOSS_SYSTEM.getCurrentBoss();
     if (!boss) return;
 
-    const canvas = document.getElementById('gameCanvas');
+    const canvas = window.canvas ||
+                   document.getElementById('gameCanvas') ||
+                   document.getElementById('tournamentGameCanvas');
+
+    if (!canvas) {
+        console.error('❌ Canvas not found in drawBossHealthBar');
+        return;
+    }
 
     // Мини-карта в правом верхнем углу
     const miniMapSize = 80;

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharos Invaders - Tournament</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/favicon.png">
+    <link rel="stylesheet" href="tournament-styles.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <a href="index.html" class="nav-button">← Back to Single Player</a>
+        <button class="nav-button" id="walletButton" onclick="handleWalletToggle()">
+            <span id="walletStatus">Connect Wallet</span>
+        </button>
+    </div>
+
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏆 TOURNAMENT LOBBY</h1>
+            <p>Compete for the ultimate prize in Pharos Invaders!</p>
+
+            <!-- Tournament Status -->
+            <div class="tournament-status not-started" id="tournamentStatus">
+                🚫 Tournament Not Started
+            </div>
+
+            <!-- Tournament Info -->
+            <div class="tournament-info-header">
+                <h3>📊 Tournament Info</h3>
+                <div class="info-items-horizontal">
+                    <div class="info-item">
+                        <div class="info-label">ENTRY FEE</div>
+                        <div class="info-value" id="entryFee">0.005 PHRS</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">DURATION</div>
+                        <div class="info-value">10 Minutes</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">MAX ATTEMPTS</div>
+                        <div class="info-value">3 Games</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Panel: Player Status -->
+        <div class="panel">
+            <!-- Status Section -->
+            <div class="status-section">
+                <div class="status-title">Your Status</div>
+
+                <button class="action-button" id="registerButton" onclick="handleRegisterForTournament()" disabled>
+                    Tournament Not Started
+                </button>
+
+                <!-- Поле ввода Discord username (обязательное после регистрации) -->
+                <div class="player-name-section" id="playerNameSection" style="display: none; margin: 15px 0;">
+                    <div class="player-name-title" style="color: #66ccff; font-weight: bold; margin-bottom: 8px;">
+                        💬 Enter your Discord username
+                    </div>
+                    <input type="text" 
+                           id="playerNameInput" 
+                           placeholder="Your Discord username..." 
+                           maxlength="32"
+                           required
+                           style="width: 100%; padding: 6px; border: 2px solid #00ddff; border-radius: 5px; background: rgba(0, 17, 34, 0.8); color: #00ddff; font-size: 16px; text-align: center;">
+                    <button class="action-button" 
+                            id="savePlayerNameBtn" 
+                            onclick="handleSavePlayerName()" 
+                            style="margin-top: 8px; background: rgba(0, 255, 136, 0.2); border-color: #00ff88; color: #00ff88;">
+                        💾 Save Username
+                    </button>
+                    <div class="player-name-info" style="font-size: 12px; color: #ff6666; margin-top: 5px; text-align: center;">
+                        ⚠️ Discord username is required to play
+                    </div>
+                </div>
+
+                <!-- 🔥 ИСПРАВЛЕННЫЕ индикаторы попыток -->
+                <div class="attempt-indicators" id="attemptIndicators" style="text-align: center; margin: 15px 0;">
+                    <span style="color: #66ccff; margin-right: 10px;">Attempts:</span>
+                    <div class="attempt-dot">1</div>
+                    <div class="attempt-dot">2</div>
+                    <div class="attempt-dot">3</div>
+                </div>
+
+                <button class="action-button tournament-play" id="playButton" onclick="handlePlayTournamentGame()" disabled>
+                    🎮 Play Game
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Panel: Prize Pool & Leaderboard -->
+        <div class="panel">
+            <!-- Tournament Timer -->
+            <div class="tournament-timer" id="tournamentTimer" style="display: none;">
+                <h4>⏰ Time Remaining</h4>
+                <div class="timer-display" id="timerDisplay">10:00</div>
+            </div>
+
+            <!-- Prize Pool Section -->
+            <div class="prize-pool">
+                <h3>💰 Prize Pool</h3>
+                <div class="total-prize" id="totalPrize">0 PHRS</div>
+
+                <div class="prize-breakdown">
+                    <div class="prize-tier">
+                        <div class="place">🥇</div>
+                        <div class="percentage">60%</div>
+                        <div class="amount" id="firstPrize">0 PHRS</div>
+                    </div>
+                    <div class="prize-tier">
+                        <div class="place">🥈</div>
+                        <div class="percentage">25%</div>
+                        <div class="amount" id="secondPrize">0 PHRS</div>
+                    </div>
+                    <div class="prize-tier">
+                        <div class="place">🥉</div>
+                        <div class="percentage">5%</div>
+                        <div class="amount" id="thirdPrize">0 PHRS</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div class="leaderboard-section">
+                <div class="leaderboard-header">
+                    <h3>🏆 Live Leaderboard</h3>
+                    <button class="refresh-button" id="refreshButton" onclick="window.tournamentLobby.updateData()">
+                        🔄
+                    </button>
+                </div>
+
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-cell">Rank</th>
+                            <th>Player Name</th>
+                            <th>Address</th>
+                            <th class="score-cell">Score</th>
+                            <th class="prize-cell">Prize</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 6px;">
+                                No scores yet
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Footer -->
+    <div class="admin-footer">
+        <div class="admin-panel" id="adminPanel" style="display: none;">
+            <h4>🔧 Admin Controls</h4>
+            <div class="admin-controls">
+                <button class="admin-button" id="startTournamentBtn" onclick="handleStartTournament()">
+                    🚀 Start Tournament (10 min)
+                </button>
+                <button class="admin-button" id="endTournamentBtn" onclick="handleEndTournament()">
+                    🏁 End Tournament
+                </button>
+                <button class="admin-button" id="distributePrizesBtn" onclick="handleDistributePrizes()">
+                    💰 Distribute Prizes
+                </button>
+            </div>
+        </div>
+    </div>
+
+            <!-- Scripts - 🔥 ПРАВИЛЬНЫЙ ПОРЯДОК ЗАГРУЗКИ -->
+
+        <!-- 1. ВНЕШНИЕ БИБЛИОТЕКИ (первыми) -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+
+        <!-- 2. КОНФИГУРАЦИИ (основа для всех остальных) -->
+        <script src="tournament-config.js"></script>
+  <script src="../game-config.js"></script>
+<script src="../boss-config.js"></script>
+
+        <!-- 3. УТИЛИТЫ (используются везде) -->
+        <script src="tournament-utils.js"></script>
+
+        <!-- 4. ОСНОВНЫЕ СИСТЕМЫ ИГРЫ (в порядке зависимостей) -->
+<script src="../boss-system.js"></script>
+<script src="../boss-renderer.js"></script>
+<script src="../wallet-connector.js"></script>
+<script src="../game.js"></script>
+
+        <!-- 5. ТУРНИРНАЯ ИНФРАСТРУКТУРА (классы и хранилище) -->
+        <script src="tournament-storage-class.js"></script>
+        <script src="tournament-leaderboard.js"></script>
+        <script src="tournament-manager.js"></script>
+        <script src="tournament-wallet-connector.js"></script>
+
+        <!-- 6. АДАПТЕР (перехватывает функции game.js) -->
+        <script src="tournament-adapter.js"></script>
+        <script src="tournament-game.js"></script>
+        <!-- 7. UI КОМПОНЕНТЫ (используют все вышеперечисленное) -->
+        <script src="tournament-ui.js"></script>
+
+        <!-- 8. ОСНОВНОЙ ФАЙЛ ЛОББИ (последним - использует ВСЁ) -->
+        <script src="tournament-lobby.js"></script>
+
+    <style>
+        /* Дополнительные стили для исправления проблем */
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 17, 34, 0.95);
+            color: #00ddff;
+            padding: 6px;
+            border-radius: 15px;
+            z-index: 1001;
+            border: 2px solid #00ddff;
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+            text-align: center;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 221, 255, 0.3);
+            border-top: 3px solid #00ddff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 6px;
+            border-radius: 10px;
+            z-index: 10001;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-error {
+            background: #ff4444;
+            color: white;
+        }
+
+        .notification-success {
+            background: #44ff44;
+            color: white;
+        }
+
+        .notification-info {
+            background: #00ddff;
+            color: #001122;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Исправления для мобильных устройств */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 6px;
+            }
+
+            .header {
+                margin-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .admin-controls {
+                flex-direction: column;
+            }
+
+            .prize-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 🔥 ИСПРАВЛЕННЫЕ стили для attempt-indicators */
+        .attempt-indicators {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 6px;
+            background: rgba(0, 221, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 221, 255, 0.3);
+        }
+
+        .attempt-indicators span {
+            color: #66ccff;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* 🔥 ИСПРАВЛЕННЫЕ стили для точек попыток */
+        .attempt-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid #666;
+            background: rgba(102, 102, 102, 0.2);
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .attempt-dot.completed {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+        }
+
+        .attempt-dot.current {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+            color: #ffd700;
+            animation: pulse-gold 2s infinite;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+                transform: scale(1.05);
+            }
+        }
+
+        /* Стиль для кнопки без попыток */
+        .action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: rgba(102, 102, 102, 0.2);
+            border-color: #666;
+            color: #666;
+        }
+
+        .action-button.no-attempts {
+            background: rgba(255, 68, 68, 0.2);
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        /* Стили для Tournament Info в header */
+        .tournament-info-header {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .tournament-info-header h3 {
+            margin-bottom: 10px;
+            color: #00ddff;
+            font-size: 18px; /* 16px + 15% = 18.4px */
+        }
+
+        .info-items-horizontal {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .info-items-horizontal .info-item {
+            text-align: center;
+            min-width: 110px;
+        }
+
+        .info-items-horizontal .info-label {
+            font-size: 13px; /* 11px + 15% = 12.65px */
+            color: #66ccff;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .info-items-horizontal .info-value {
+            font-size: 16px; /* 14px + 15% = 16.1px */
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .info-items-horizontal {
+                gap: 12px;
+            }
+
+            .info-items-horizontal .info-item {
+                min-width: 90px;
+            }
+        }
+
+        /* Убран фиксированный отступ - теперь админ панель в потоке документа */
+
+        /* Стили для админ панели в потоке документа */
+        .admin-footer {
+            width: 100%;
+            max-width: 1200px;
+            margin: 15px auto 0;
+            padding: 0 6px 6px;
+        }
+
+        .admin-footer .admin-panel {
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.15), rgba(255, 140, 0, 0.1));
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 20px rgba(255, 136, 0, 0.4);
+            border-radius: 15px;
+        }
+
+        .admin-footer .admin-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .admin-footer .admin-button {
+            flex: 0 1 auto;
+            min-width: 180px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-footer {
+                padding: 0 6px 15px;
+                margin: 10px auto 0;
+            }
+
+            .admin-footer .admin-controls {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .admin-footer .admin-button {
+                min-width: auto;
+            }
+
+            .admin-footer .admin-panel {
+                padding: 6px;
+            }
+
+            .admin-footer .admin-panel h4 {
+                font-size: 14px; /* 12px + 15% = 13.8px */
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+
+    <!-- 🔥 ОТЛАДОЧНАЯ ИНФОРМАЦИЯ -->
+    <script>
+
+        // Информация о версии и исправлениях
+        console.log('🏆 Tournament Lobby v2.0 - FIXED ATTEMPT COUNTING');
+        console.log('🔥 Key improvements:');
+        console.log('  - Fixed double attempt counting');
+        console.log('  - Added TournamentStorage for proper data management');
+        console.log('  - Clear localStorage on tournament registration');
+        console.log('  - Proper 3/3 attempt limit enforcement');
+        console.log('  - Better debug functions');
+
+        // Проверка загрузки критичных модулей
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const checks = {
+                    'TournamentLobby': typeof window.tournamentLobby !== 'undefined',
+                    'TournamentStorage': typeof window.TournamentStorage !== 'undefined',
+                    'TournamentLeaderboard': typeof window.TournamentLeaderboard !== 'undefined',
+                    'Debug Functions': typeof window.debugTournamentLobby !== 'undefined'
+                };
+
+                console.log('🔍 Module Loading Check:', checks);
+
+                const allLoaded = Object.values(checks).every(Boolean);
+                if (allLoaded) {
+                    console.log('✅ All critical modules loaded successfully');
+                } else {
+                    console.error('❌ Some modules failed to load');
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

@@ -49,7 +49,7 @@ function createBoss(level) {
     
     currentBoss = {
         // Базовые параметры
-        x: canvas.width / 2 - BOSS_CONFIG.BOSS_WIDTH / 2,
+        x: this.canvas.width / 2 - BOSS_CONFIG.BOSS_WIDTH / 2,
         y: -BOSS_CONFIG.BOSS_HEIGHT, // Начинаем сверху экрана
         width: BOSS_CONFIG.BOSS_WIDTH,
         height: BOSS_CONFIG.BOSS_HEIGHT,
@@ -96,7 +96,21 @@ function updateBoss(deltaTime) {
     if (!currentBoss) return;
 
     const boss = currentBoss;
-    const canvas = document.getElementById('gameCanvas');
+
+    // ИСПРАВЛЕНО: Получаем canvas из DOM или window
+    let canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        canvas = document.getElementById('tournamentGameCanvas');
+    }
+    if (!canvas && window.canvas) {
+        canvas = window.canvas;
+    }
+
+    // Проверяем наличие canvas
+    if (!canvas) {
+        console.error('❌ Canvas not found in updateBoss');
+        return;
+    }
 
     // Обновляем анимацию
     boss.animationFrame += BOSS_CONFIG.BOSS_ANIMATION_SPEED * deltaTime;
@@ -313,6 +327,20 @@ function createBossMultiShot(boss) {
 
 // Обновление пуль босса
 function updateBossBullets(deltaTime) {
+    // ИСПРАВЛЕНО: Получаем canvas безопасно
+    let canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        canvas = document.getElementById('tournamentGameCanvas');
+    }
+    if (!canvas && window.canvas) {
+        canvas = window.canvas;
+    }
+
+    if (!canvas) {
+        console.error('❌ Canvas not found in updateBossBullets');
+        return;
+    }
+
     bossBullets = bossBullets.filter(bullet => {
         bullet.x += bullet.vx * deltaTime;
         bullet.y += bullet.vy * deltaTime;
@@ -322,7 +350,6 @@ function updateBossBullets(deltaTime) {
         if (bullet.trail.length > 6) bullet.trail.shift();
 
         // Удаляем если вышла за экран
-        const canvas = document.getElementById('gameCanvas');
         return bullet.y < canvas.height + 50 &&
                bullet.x > -50 &&
                bullet.x < canvas.width + 50;

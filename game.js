@@ -1,6 +1,10 @@
-// game.js - FULL GAME RESTORED WITH CONFIG SPEED SETTINGS
+// game.js - FULL GAME RESTORED WITH CONFIG SPEED SETTINGS + TOURNAMENT MODE
 
 console.log('🎮 Loading full game.js...');
+
+// 🏆 ТУРНИРНЫЙ РЕЖИМ - добавлено в начало
+let tournamentMode = false;
+let tournamentData = null;
 
 // Game variables
 let gameState = 'start';
@@ -86,7 +90,7 @@ const invaderRows = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.INVADERS_
 const invaderCols = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.INVADERS_COLS) ? GAME_CONFIG.INVADERS_COLS : 10;
 const invaderWidth = 35;
 const invaderHeight = 30;
-let invaderSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_BASE) ? GAME_CONFIG.CRAB_SPEED_BASE : 1; // Используем настройку из конфига
+let invaderSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_BASE) ? GAME_CONFIG.CRAB_SPEED_BASE : 1;
 let invaderDirection = 1;
 let invaderDropDistance = 25;
 
@@ -95,12 +99,81 @@ const keys = {};
 let lastShotTime = 0;
 const shotCooldown = 300;
 
-// Initialize canvas
+// 🔐 ФУНКЦИЯ РАСЧЕТА МАКСИМАЛЬНО ВОЗМОЖНОГО СЧЕТА
+// Фиксированные максимальные значения для каждого уровня (без буферов)
+function calculateMaxScore() {
+    const maxScores = {
+        1: 3000,
+        2: 6000,
+        3: 16000,    // boss 1
+        4: 19000,
+        5: 22000,
+        6: 42000,    // boss 2
+        7: 45000,
+        8: 48000,
+        9: 78000,    // boss 3
+        10: 81000,
+        11: 84000,
+        12: 124000,  // boss 4
+        13: 127000,
+        14: 130000,
+        15: 180000   // boss 5
+    };
+    
+    return maxScores[level] || 180000;
+}
+
+// 🔐 ФУНКЦИЯ ЛОГИРОВАНИЯ ИГРОВЫХ СОБЫТИЙ
+function logGameEvent(eventType, data) {
+    if (!window.gameEventLog) {
+        window.gameEventLog = [];
+    }
+
+    window.gameEventLog.push({
+        type: eventType,
+        data: data,
+        timestamp: Date.now(),
+        level: level,
+        score: score
+    });
+
+    if (window.gameEventLog.length > 100) {
+        window.gameEventLog.shift();
+    }
+}
+
 function initCanvas() {
+    // Сначала пробуем найти основной canvas
     canvas = document.getElementById('gameCanvas');
+
+    // Если не найден, ищем турнирный canvas
+    if (!canvas) {
+        canvas = document.getElementById('tournamentGameCanvas');
+        console.log('🏺 Using tournament canvas');
+    }
+
+    // Если ничего не найдено, создаем canvas
+    if (!canvas) {
+        console.log('❌ No canvas found, creating one...');
+        canvas = document.createElement('canvas');
+        canvas.id = 'gameCanvas';
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // Добавляем canvas в модальное окно если оно есть
+        const gameModal = document.querySelector('.tournament-game-modal');
+        if (gameModal) {
+            gameModal.appendChild(canvas);
+        } else {
+            document.body.appendChild(canvas);
+        }
+    }
+
     if (canvas) {
         ctx = canvas.getContext('2d');
-        console.log('✅ Canvas initialized');
+        console.log('✅ Canvas initialized:', canvas.id, canvas.width + 'x' + canvas.height);
+    } else {
+        console.error('❌ Failed to initialize canvas');
     }
 }
 
@@ -185,13 +258,11 @@ function createInvaders() {
 // Create player bullet
 function createBullet() {
     const now = Date.now();
-    // Применяем настройку скорости стрельбы из конфига
     const adjustedCooldown = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.PLAYER_FIRE_RATE)
         ? shotCooldown * (100 / GAME_CONFIG.PLAYER_FIRE_RATE)
         : shotCooldown;
 
     if (now - lastShotTime > adjustedCooldown) {
-        // Применяем настройку скорости пуль игрока
         const bulletSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.PLAYER_BULLET_SPEED)
             ? 8 * (GAME_CONFIG.PLAYER_BULLET_SPEED / 100)
             : 8;
@@ -211,14 +282,12 @@ function createBullet() {
 
 // Create crab bullet
 function createInvaderBullet(invader) {
-    // ОБНОВЛЕНО: Применяем логарифмический рост вместо линейного
-    const baseFireRate = 0.0008 * Math.log(level + 1); // Логарифмический рост
+    const baseFireRate = 0.0008 * Math.log(level + 1);
     const adjustedFireRate = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_FIRE_RATE)
         ? baseFireRate * (GAME_CONFIG.CRAB_FIRE_RATE / 100)
         : baseFireRate;
 
     if (Math.random() < adjustedFireRate) {
-        // Применяем настройку скорости пуль крабов
         const bulletSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_BULLET_SPEED)
             ? 2.5 * (GAME_CONFIG.CRAB_BULLET_SPEED / 100)
             : 2.5;
@@ -265,7 +334,6 @@ function createRipple(x, y) {
 
 // Update player
 function updatePlayer(deltaTime) {
-    // Применяем настройку скорости игрока из конфига
     const playerSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.PLAYER_SPEED)
         ? player.speed * (GAME_CONFIG.PLAYER_SPEED / 100)
         : player.speed;
@@ -284,7 +352,6 @@ function updatePlayer(deltaTime) {
 
 // Update bullets
 function updateBullets(deltaTime) {
-    // Player bullets
     bullets = bullets.filter(bullet => {
         bullet.y -= bullet.speed * deltaTime;
         bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
@@ -292,7 +359,6 @@ function updateBullets(deltaTime) {
         return bullet.y > -bullet.height;
     });
 
-    // Crab bullets
     invaderBullets = invaderBullets.filter(bullet => {
         bullet.y += bullet.speed * deltaTime;
         bullet.wobble += 0.2 * deltaTime;
@@ -301,20 +367,18 @@ function updateBullets(deltaTime) {
     });
 }
 
-// Update crabs - ОБНОВЛЕНО С НОВЫМИ НАСТРОЙКАМИ СКОРОСТИ
+// Update crabs
 function updateInvaders(deltaTime) {
     let shouldDrop = false;
     let aliveInvaders = invaders.filter(inv => inv.alive);
 
-    // НОВАЯ ФОРМУЛА: используем настройки из конфига
     const killMultiplier = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_KILL_MULTIPLIER)
         ? GAME_CONFIG.CRAB_SPEED_KILL_MULTIPLIER
-        : 0.00125; // Уменьшено в 20 раз с 0.025
+        : 0.00125;
 
     const totalInvaders = invaderRows * invaderCols;
     const speedMultiplier = 1 + (totalInvaders - aliveInvaders.length) * killMultiplier;
 
-    // Применяем общий множитель скорости крабов из конфига
     const crabSpeedModifier = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED)
         ? GAME_CONFIG.CRAB_SPEED / 100
         : 1;
@@ -374,27 +438,22 @@ function updateParticles(deltaTime) {
 
 // Check collisions
 function checkCollisions() {
-    // НОВОЕ: Коллизии с боссом (приоритет над обычными крабами)
     if (bossActive && window.BOSS_SYSTEM) {
         const bossCollision = window.BOSS_SYSTEM.checkBossCollisions(bullets);
 
-        // Удаляем пули, попавшие в босса
         for (let i = bossCollision.bulletsToRemove.length - 1; i >= 0; i--) {
             bullets.splice(bossCollision.bulletsToRemove[i], 1);
         }
 
-        // Если босс убит
         if (bossCollision.bossKilled) {
             score += bossCollision.scoreGained;
             bossActive = false;
             console.log(`👑 Boss defeated! Score gained: ${bossCollision.scoreGained}`);
         }
 
-        // Проверяем коллизии пуль босса с игроком
         const playerHit = window.BOSS_SYSTEM.checkBossBulletsCollision(player);
         if (playerHit) {
-            createExplosion(player.x + player.width/2, player.y + player.height/2,
-                          '#6666ff', true);
+            createExplosion(player.x + player.width/2, player.y + player.height/2, '#6666ff', true);
             lives--;
 
             if (lives <= 0) {
@@ -404,7 +463,6 @@ function checkCollisions() {
         }
     }
 
-    // Player bullets vs crabs (только если босс не активен)
     if (!bossActive) {
         for (let i = bullets.length - 1; i >= 0; i--) {
             for (let j = invaders.length - 1; j >= 0; j--) {
@@ -429,7 +487,6 @@ function checkCollisions() {
                         'green': 20
                     }[invaders[j].type];
 
-                    // Применяем множитель очков из конфига
                     if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.SCORE_MULTIPLIER) {
                         points = Math.round(points * (GAME_CONFIG.SCORE_MULTIPLIER / 100));
                     }
@@ -437,13 +494,19 @@ function checkCollisions() {
                     score += points;
                     invaders[j].alive = false;
                     bullets.splice(i, 1);
+
+                    logGameEvent('crab_killed', {
+                        crabType: invaders[j].type,
+                        points: points,
+                        position: {x: invaders[j].x, y: invaders[j].y}
+                    });
+
                     break;
                 }
             }
         }
     }
 
-    // Crab bullets vs player (только если босс не активен)
     if (!bossActive) {
         for (let i = invaderBullets.length - 1; i >= 0; i--) {
             if (invaderBullets[i].x < player.x + player.width &&
@@ -451,8 +514,7 @@ function checkCollisions() {
                 invaderBullets[i].y < player.y + player.height &&
                 invaderBullets[i].y + invaderBullets[i].height > player.y) {
 
-                createExplosion(player.x + player.width/2, player.y + player.height/2,
-                              '#6666ff', true);
+                createExplosion(player.x + player.width/2, player.y + player.height/2, '#6666ff', true);
                 invaderBullets.splice(i, 1);
                 lives--;
 
@@ -487,13 +549,7 @@ function drawPlayer() {
         ctx.shadowBlur = 15;
 
         const imageSize = 70;
-        ctx.drawImage(
-            octopusImage,
-            centerX - imageSize/2,
-            centerY - imageSize/2,
-            imageSize,
-            imageSize
-        );
+        ctx.drawImage(octopusImage, centerX - imageSize/2, centerY - imageSize/2, imageSize, imageSize);
 
         ctx.restore();
 
@@ -506,7 +562,6 @@ function drawPlayer() {
         ctx.globalAlpha = 1;
 
     } else {
-        // Fallback - draw simple octopus
         ctx.fillStyle = '#00ddff';
         ctx.font = '50px Arial';
         ctx.fillText('🐙', player.x, player.y + 40);
@@ -527,18 +582,12 @@ function drawInvaders() {
                 ctx.shadowBlur = 5;
 
                 const imageSize = 40;
-                ctx.drawImage(
-                    crabImages[invader.type],
-                    centerX - imageSize/2,
-                    centerY - imageSize/2 + bobbing,
-                    imageSize,
-                    imageSize
-                );
+                ctx.drawImage(crabImages[invader.type], centerX - imageSize/2,
+                             centerY - imageSize/2 + bobbing, imageSize, imageSize);
 
                 ctx.restore();
 
             } else {
-                // Fallback - draw emoji crab
                 ctx.font = '25px Arial';
                 ctx.fillText('🦀', invader.x, invader.y + 20 + bobbing);
             }
@@ -548,9 +597,7 @@ function drawInvaders() {
 
 // Draw bullets
 function drawBullets() {
-    // Player bullets
     for (let bullet of bullets) {
-        // Draw trail
         ctx.strokeStyle = 'rgba(102, 102, 255, 0.6)';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -565,7 +612,6 @@ function drawBullets() {
         ctx.stroke();
         ctx.globalAlpha = 1;
 
-        // Draw bullet
         ctx.fillStyle = '#6666ff';
         ctx.beginPath();
         ctx.arc(bullet.x + bullet.width/2, bullet.y + bullet.height/2, 4, 0, Math.PI * 2);
@@ -580,7 +626,6 @@ function drawBullets() {
         ctx.shadowBlur = 0;
     }
 
-    // Crab bullets - RED COLOR
     for (let bullet of invaderBullets) {
         ctx.strokeStyle = '#ff4444';
         ctx.lineWidth = 2;
@@ -648,7 +693,6 @@ function gameLoop(currentTime) {
         updateInvaders(deltaTime);
         updateParticles(deltaTime);
 
-        // НОВОЕ: Обновление босса
         if (bossActive && window.BOSS_SYSTEM) {
             window.BOSS_SYSTEM.updateBoss(deltaTime);
         }
@@ -657,63 +701,71 @@ function gameLoop(currentTime) {
 
         let aliveInvaders = invaders.filter(inv => inv.alive);
         if (aliveInvaders.length === 0 && !bossActive) {
-            level++;
+            const nextLevel = level + 1;
 
-            // ОБНОВЛЕНО: используем настройки из конфига для прироста скорости
             const gameSpeedIncrease = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_SPEED_LEVEL_INCREASE)
                 ? GAME_CONFIG.GAME_SPEED_LEVEL_INCREASE
                 : 0.07;
 
             const invaderSpeedIncrease = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_LEVEL_INCREASE)
                 ? GAME_CONFIG.CRAB_SPEED_LEVEL_INCREASE
-                : 0.25; // Уменьшено с 0.5 до 0.25
+                : 0.25;
 
             gameSpeed += gameSpeedIncrease;
             invaderSpeed += invaderSpeedIncrease;
 
-            // НОВОЕ: Проверяем, нужно ли создать босса
-            if (window.BOSS_SYSTEM && typeof isBossLevel === 'function' && isBossLevel(level)) {
+            if (window.BOSS_SYSTEM && typeof isBossLevel === 'function' && isBossLevel(nextLevel)) {
+                level = nextLevel;
                 console.log(`👑 Boss level ${level}! Creating boss...`);
-                window.BOSS_SYSTEM.createBoss(level);
-                bossActive = true;
 
-                // Очищаем обычных врагов и пули
-                invaders = [];
-                bullets = [];
-                invaderBullets = [];
+                if (!window.BOSS_SYSTEM.canvas && canvas) {
+                    window.BOSS_SYSTEM.canvas = canvas;
+                    window.BOSS_SYSTEM.ctx = ctx;
+                    console.log('🔧 Canvas passed to BOSS_SYSTEM before boss creation');
+                }
+
+                if (window.BOSS_SYSTEM.canvas) {
+                    window.BOSS_SYSTEM.createBoss(level);
+                    bossActive = true;
+                } else {
+                    console.error('❌ Cannot create boss: canvas not available');
+                    // Fallback: создаем обычный уровень
+                    createInvaders();
+                    level = nextLevel;
+                }
             } else {
-                // Создаем обычную волну крабов
+                level = nextLevel;
                 createInvaders();
-                bullets = [];
-                invaderBullets = [];
+                console.log(`🔥 Level ${level}!`);
             }
         }
 
         updateUI();
+
+        if (gameState === 'gameOver') {
+            showGameOver();
+            return;
+        }
     }
 
-    if (gameState === 'gameOver') {
-        showGameOver();
-        return;
-    }
+    // Clear and draw
+    if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawPlayer();
-
-    // НОВОЕ: Отрисовка системы боссов
-    if (bossActive && window.BOSS_RENDERER) {
-        window.BOSS_RENDERER.renderBossSystem(ctx);
-    } else {
-        // Рисуем обычных крабов только если босс не активен
+        drawPlayer();
         drawInvaders();
+        drawBullets();
+        drawParticles();
+        drawRipples();
+
+        if (bossActive && window.BOSS_RENDERER) {
+            window.BOSS_RENDERER.renderBossSystem(ctx);
+        }
+
+        drawUI();
     }
 
-    drawBullets();
-    drawParticles();
-    drawRipples();
-    drawUI();
-
-    if (gameState === 'playing' || gameState === 'paused') {
+    if (gameState === 'playing') {
         requestAnimationFrame(gameLoop);
     }
 }
@@ -726,9 +778,75 @@ function updateUI() {
     if (scoreEl) scoreEl.textContent = score;
     if (livesEl) livesEl.textContent = lives;
     if (levelEl) levelEl.textContent = level;
+
+    // 🔧 ДОБАВЬТЕ: Синхронизируем переменные с window
+    window.score = score;
+    window.level = level;
+    window.lives = lives;
+    window.bullets = bullets;
+    window.invaders = invaders;
 }
 
-// Start game function
+// 🏆 ТУРНИРНЫЕ ФУНКЦИИ
+
+function updateTournamentUI() {
+    const uiEl = document.querySelector('.ui');
+    if (uiEl && tournamentMode && tournamentData) {
+        uiEl.innerHTML += `
+            <div style="margin-top: 10px; padding: 8px; background: rgba(255, 215, 0, 0.2); border-radius: 5px;">
+                🏆 Tournament Mode<br>
+                Attempt: ${tournamentData.attempt}/${tournamentData.maxAttempts}
+            </div>
+        `;
+    }
+}
+
+async function submitTournamentScore() {
+    if (!tournamentMode || !tournamentData) {
+        alert('Not in tournament mode');
+        return;
+    }
+
+    const playerName = prompt('Enter your name (1-20 characters):');
+    if (!playerName) return;
+
+    try {
+        showLoading('Submitting tournament score...');
+
+        if (!window.tournamentManager) {
+            alert('Please include tournament-manager.js in your HTML');
+            hideLoading();
+            return;
+        }
+
+        await tournamentManager.connect(walletConnector);
+
+        const txHash = await tournamentManager.submitTournamentScore(
+            tournamentData.tournamentId,
+            score,
+            playerName
+        );
+
+        hideLoading();
+
+        alert(`✅ Score submitted successfully!\nTransaction: ${txHash.slice(0, 10)}...`);
+
+        localStorage.removeItem('tournamentMode');
+        window.location.href = 'tournament-lobby.html';
+
+    } catch (error) {
+        hideLoading();
+        console.error('❌ Failed to submit score:', error);
+        alert('Failed to submit score: ' + error.message);
+    }
+}
+
+function backToTournamentLobby() {
+    window.location.href = 'tournament-lobby.html';
+}
+
+// ОСНОВНЫЕ ФУНКЦИИ ИГРЫ
+
 async function startGame() {
     try {
         console.log('🚀 START GAME CALLED!');
@@ -737,6 +855,22 @@ async function startGame() {
             initCanvas();
         }
 
+        // 🏆 ТУРНИРНЫЙ РЕЖИМ - пропускаем оплату и модальные окна
+        if (tournamentMode) {
+            console.log('🏆 Starting tournament game...');
+            hasPaidFee = true;
+            currentGameSession = `tournament_${tournamentData.tournamentId}_${tournamentData.attempt}`;
+
+            logGameEvent('game_started', {
+                tournamentMode: tournamentMode,
+                timestamp: Date.now()
+            });
+
+            actuallyStartGame();
+            return;
+        }
+
+        // Для обычной игры проверяем wallet connector
         if (!window.walletConnector) {
             console.log('❌ No wallet connector');
             alert('Wallet connector not found. Please refresh the page.');
@@ -758,17 +892,24 @@ async function startGame() {
         scoreAlreadySaved = false;
         currentGameSession = null;
 
-        const shouldPayFee = await walletConnector.showGameStartModal();
+        // Проверяем, существует ли функция showGameStartModal
+        if (typeof walletConnector.showGameStartModal === 'function') {
+            const shouldPayFee = await walletConnector.showGameStartModal();
 
-        if (shouldPayFee) {
-            showLoading('Processing payment...');
-            await walletConnector.payGameFee();
-            hasPaidFee = true;
-            currentGameSession = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            hideLoading();
-            console.log('✅ Payment completed');
+            if (shouldPayFee) {
+                showLoading('Processing payment...');
+                await walletConnector.payGameFee();
+                hasPaidFee = true;
+                currentGameSession = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                hideLoading();
+                console.log('✅ Payment completed');
+            } else {
+                console.log('🎮 Playing offline');
+            }
         } else {
-            console.log('🎮 Playing offline');
+            // Если функция не существует, просто запускаем игру без оплаты
+            console.log('🎮 Starting game without payment modal (function not available)');
+            hasPaidFee = false;
         }
 
         actuallyStartGame();
@@ -780,7 +921,6 @@ async function startGame() {
     }
 }
 
-// Actually start the game
 function actuallyStartGame() {
     console.log('🎮 Actually starting game...');
 
@@ -789,17 +929,14 @@ function actuallyStartGame() {
     level = 1;
     gameSpeed = 1;
 
-    // ОБНОВЛЕНО: используем настройку базовой скорости из конфига
     invaderSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_BASE)
         ? GAME_CONFIG.CRAB_SPEED_BASE
         : 1;
 
-    // ОБНОВЛЕНО: используем настройку жизней из конфига
     lives = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.PLAYER_LIVES)
         ? GAME_CONFIG.PLAYER_LIVES
         : 5;
 
-    // НОВОЕ: Сброс системы боссов
     bossActive = false;
     if (window.BOSS_SYSTEM) {
         window.BOSS_SYSTEM.clearBossSystem();
@@ -813,7 +950,26 @@ function actuallyStartGame() {
     player.x = canvas.width / 2 - 30;
     player.y = canvas.height - 80;
 
+    // 🔧 ДОБАВЬТЕ ЭТОТ КОД ЗДЕСЬ:
+    // Экспортируем переменные и canvas в window для турнирного режима
+    window.canvas = canvas;
+    window.ctx = ctx;
+    window.score = score;
+    window.level = level;
+    window.lives = lives;
+    window.bullets = bullets;
+    window.invaders = invaders;
+
+    if (window.BOSS_SYSTEM && canvas) {
+        window.BOSS_SYSTEM.canvas = canvas;
+        window.BOSS_SYSTEM.ctx = ctx;
+        console.log('✅ Canvas passed to BOSS_SYSTEM');
+    }
+
     createInvaders();
+
+    // Обновим window.invaders после создания крабов
+    window.invaders = invaders;
 
     const startScreen = document.getElementById('startScreen');
     const gameOver = document.getElementById('gameOver');
@@ -837,11 +993,24 @@ function showGameOver() {
     if (finalScoreEl) finalScoreEl.textContent = score;
     if (gameOverEl) gameOverEl.style.display = 'block';
 
+    // 🏆 ТУРНИРНЫЙ РЕЖИМ
+    if (tournamentMode) {
+        if (blockchainSection) {
+            blockchainSection.innerHTML = `
+                <h3>🏆 Tournament Score: ${score}</h3>
+                <p>This score will be submitted to the tournament.</p>
+                <button onclick="submitTournamentScore()" style="margin: 15px;">Submit Score</button>
+                <button onclick="backToTournamentLobby()" style="margin: 15px;">Back to Lobby</button>
+            `;
+            blockchainSection.style.display = 'block';
+        }
+        return;
+    }
+
     if (window.walletConnector && walletConnector.connected && hasPaidFee && currentGameSession) {
         if (blockchainSection) {
             blockchainSection.style.display = 'block';
 
-            // Reset save form
             const saveButton = document.getElementById('saveScoreButton');
             const playerName = document.getElementById('playerName');
             const saveStatus = document.getElementById('save-status');
@@ -858,7 +1027,6 @@ function showGameOver() {
     }
 }
 
-// Restart game
 function restartGame() {
     document.body.classList.remove('game-over-active');
 
@@ -870,9 +1038,13 @@ function restartGame() {
 
     gameState = 'start';
     scoreAlreadySaved = false;
+
+    logGameEvent('game_restarted', {
+        tournamentMode: tournamentMode,
+        timestamp: Date.now()
+    });
 }
 
-// Save score to blockchain
 async function saveScoreToBlockchain() {
     const playerNameEl = document.getElementById('playerName');
     const playerName = playerNameEl ? playerNameEl.value.trim() : '';
@@ -894,6 +1066,14 @@ async function saveScoreToBlockchain() {
 
     if (scoreAlreadySaved) {
         alert('You have already saved your score for this game session!');
+        return;
+    }
+
+    // 🔐 ПРОВЕРКА ПОДОЗРИТЕЛЬНЫХ СЧЕТОВ
+    const maxTheoreticalScore = calculateMaxScore();
+    if (score > maxTheoreticalScore) {
+        console.warn(`⚠️ Suspicious score detected: ${score} > ${maxTheoreticalScore}`);
+        alert('Score validation failed. Please contact support if this is an error.');
         return;
     }
 
@@ -945,25 +1125,60 @@ function hideLoading() {
     }
 }
 
-// Make functions globally available
+// Экспорт функций
 window.startGame = startGame;
 window.restartGame = restartGame;
 window.saveScoreToBlockchain = saveScoreToBlockchain;
+window.submitTournamentScore = submitTournamentScore;
+window.backToTournamentLobby = backToTournamentLobby;
+window.calculateMaxScore = calculateMaxScore;
+window.logGameEvent = logGameEvent;
+window.updateTournamentUI = updateTournamentUI;
+window.actuallyStartGame = actuallyStartGame;
 
-// Initialize when page loads
+// Экспорт игровых переменных в window для турнирного режима
+window.score = score;
+window.level = level;
+window.lives = lives;
+window.bullets = bullets;
+window.invaders = invaders;
+window.canvas = canvas;
+window.ctx = ctx;
+
+// Инициализация при загрузке страницы
 window.addEventListener('load', () => {
     console.log('🎮 Full game loaded and ready!');
 
     initCanvas();
 
-    // НОВОЕ: Инициализация системы боссов
     if (window.BOSS_SYSTEM) {
         window.BOSS_SYSTEM.initBossSystem();
         console.log('✅ Boss system initialized');
     }
 
+    // 🏆 Проверяем турнирный режим
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tournament') === 'true') {
+        const savedTournamentData = localStorage.getItem('tournamentMode');
+        if (savedTournamentData) {
+            tournamentMode = true;
+            tournamentData = JSON.parse(savedTournamentData);
+            console.log('🏆 Tournament mode activated:', tournamentData);
+
+            updateTournamentUI();
+        }
+    }
+
     const startScreen = document.getElementById('startScreen');
-    if (startScreen) startScreen.style.display = 'block';
+    if (startScreen) {
+        if (tournamentMode && tournamentData) {
+            const h1 = startScreen.querySelector('h1');
+            const p = startScreen.querySelector('p');
+            if (h1) h1.innerHTML = '🏆 TOURNAMENT GAME 🏆';
+            if (p) p.innerHTML = `Attempt ${tournamentData.attempt} of ${tournamentData.maxAttempts}`;
+        }
+        startScreen.style.display = 'block';
+    }
 
     createBubbles();
 
@@ -976,4 +1191,5 @@ window.addEventListener('load', () => {
     }, 1000);
 });
 
-console.log('✅ Full game.js loaded successfully with config-based speed settings!');
+console.log('✅ Full game.js loaded successfully with tournament mode!');
+console.log('🔧 Game variables exported to window');
