@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://raw.githubusercontent.com; object-src 'none'; base-uri 'self';">
     <title>Pharos Invaders - Ocean Battle</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/favicon.png">
     <style>
@@ -183,6 +184,11 @@
             transform: translateY(-2px);
         }
 
+        button:hover img {
+            filter: drop-shadow(0 0 10px rgba(0, 221, 255, 0.8)) drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
+            transform: scale(1.05);
+        }
+
         .blockchain-section {
             margin-top: 20px;
             padding: 20px;
@@ -280,8 +286,9 @@
         <button onclick="window.location.href='leaderboard.html';" style="padding: 10px 20px; font-size: 14px; margin: 0;">
             🏆 Leaderboard
         </button>
-        <button onclick="window.location.href='tournament/tournament-lobby.html';" style="padding: 10px 20px; font-size: 14px; margin: 0 0 0 10px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.3)); border-color: #ffd700; color: #ffd700;">
+        <button onclick="window.location.href='tournament/tournament-lobby.html';" style="padding: 10px 30px 10px 20px; font-size: 14px; margin: 0 0 0 10px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.3)); border-color: #ffd700; color: #ffd700; position: relative;">
             ⚔️ Tournament
+            <img src="images/UA.png" alt="UA" style="position: absolute; top: -2px; right: -5px; height: 24px; width: auto; border-radius: 2px; transition: all 0.3s ease; filter: drop-shadow(0 0 5px rgba(0, 221, 255, 0.3));">
         </button>
     </div>
     
