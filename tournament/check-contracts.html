@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Contract Check</title>
+    <style>body { font-family: monospace; background: #001122; color: #00ddff; padding: 20px; }</style>
+</head>
+<body>
+    <h2>🔍 Quick Contract Existence Check</h2>
+    <div id="results"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.2.2/dist/web3.min.js"></script>
+    <script>
+        const CONTRACTS = {
+            'Tournament Contract': '0x454064eA4517A80b0388EEeFFFBf2Efb85a86061',
+            'Game Contract': '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e'
+        };
+        
+        const RPC_URL = 'https://testnet.dplabs-internal.com';
+        
+        async function checkContracts() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Checking contracts...</p>';
+            
+            const web3 = new Web3(RPC_URL);
+            
+            for (const [name, address] of Object.entries(CONTRACTS)) {
+                try {
+                    console.log(`Checking ${name} at ${address}...`);
+                    const code = await web3.eth.getCode(address);
+                    
+                    const exists = code !== '0x' && code !== '0x0';
+                    const status = exists ? '✅ EXISTS' : '❌ NOT FOUND';
+                    const color = exists ? '#00ff88' : '#ff4444';
+                    
+                    results.innerHTML += `<div style="color: ${color}; margin: 10px 0;">
+                        <strong>${name}</strong><br>
+                        ${address}<br>
+                        ${status} (code length: ${code.length})<br>
+                    </div>`;
+                    
+                } catch (error) {
+                    results.innerHTML += `<div style="color: #ff4444; margin: 10px 0;">
+                        <strong>${name}</strong><br>
+                        ${address}<br>
+                        ERROR: ${error.message}<br>
+                    </div>`;
+                }
+            }
+            
+            // Предложение решений
+            results.innerHTML += `
+                <div style="margin-top: 30px; border-top: 1px solid #00ddff; padding-top: 20px;">
+                    <h3>🛠 Next Steps:</h3>
+                    <p>1. If neither contract exists → Deploy contracts first</p>
+                    <p>2. If only Game Contract exists → Use it for tournament too</p>
+                    <p>3. If only Tournament Contract exists → Use it and update wallet-connector.js</p>
+                    <p>4. Open <strong>debug-contract.html</strong> for detailed testing</p>
+                </div>
+            `;
+        }
+        
+        // Запуск проверки
+        checkContracts();
+    </script>
+</body>
+</html>

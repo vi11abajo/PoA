@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Tournament Contract</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #001122;
+            color: #00ddff;
+            padding: 20px;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ddff;
+            border-radius: 8px;
+        }
+        button {
+            background: #00ddff;
+            color: #001122;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .error { color: #ff4444; }
+        .success { color: #00ff88; }
+        .warning { color: #ffaa00; }
+        #log {
+            background: #000;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        input {
+            background: #001122;
+            color: #00ddff;
+            border: 1px solid #00ddff;
+            padding: 5px;
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Contract Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>Network & Contract Info</h3>
+        <div>Network: <span id="network-info">-</span></div>
+        <div>Chain ID: <span id="chain-id">-</span></div>
+        <div>Account: <span id="account-info">-</span></div>
+        <div>Contract: <input id="contract-address" value="0x454064eA4517A80b0388EEeFFFBf2Efb85a86061"></div>
+        <button onclick="checkNetwork()">Check Network</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>Contract Diagnostics</h3>
+        <button onclick="checkContractExists()">Check Contract Exists</button>
+        <button onclick="checkContractCode()">Get Contract Code</button>
+        <button onclick="tryDirectCall()">Try Direct Call</button>
+        <button onclick="testWithDirectRPC()">Test via Direct RPC</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>MetaMask Diagnostics</h3>
+        <button onclick="resetMetaMask()">Reset MetaMask State</button>
+        <button onclick="switchNetwork()">Force Switch Network</button>
+        <button onclick="testPermissions()">Test Permissions</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.2.2/dist/web3.min.js"></script>
+    <script>
+        const CONFIG = {
+            NETWORK_NAME: 'Pharos Testnet',
+            RPC_URL: 'https://testnet.dplabs-internal.com',
+            CHAIN_ID: '688688',
+            CHAIN_ID_HEX: '0xa7c5c'
+        };
+
+        let web3 = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logDiv.innerHTML += `<span class="${className}">${timestamp}: ${message}</span><br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        async function checkNetwork() {
+            try {
+                if (!window.ethereum) {
+                    log('❌ MetaMask not found', 'error');
+                    return;
+                }
+
+                // Connect to MetaMask
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                web3 = new Web3(window.ethereum);
+                
+                const chainId = await web3.eth.getChainId();
+                const account = accounts[0];
+                
+                document.getElementById('account-info').textContent = account;
+                document.getElementById('chain-id').textContent = chainId + ' (0x' + chainId.toString(16) + ')';
+                
+                if (chainId.toString() === CONFIG.CHAIN_ID) {
+                    document.getElementById('network-info').textContent = CONFIG.NETWORK_NAME + ' ✅';
+                    log('✅ Connected to correct network: ' + CONFIG.NETWORK_NAME, 'success');
+                } else {
+                    document.getElementById('network-info').textContent = 'Wrong network ❌';
+                    log('❌ Wrong network. Expected: ' + CONFIG.CHAIN_ID + ', Got: ' + chainId, 'error');
+                    log('💡 Switch to Pharos Testnet manually or click "Force Switch Network"', 'warning');
+                }
+                
+            } catch (error) {
+                log('❌ Network check error: ' + error.message, 'error');
+            }
+        }
+
+        async function checkContractExists() {
+            try {
+                const contractAddress = document.getElementById('contract-address').value;
+                log('🔍 Checking if contract exists at: ' + contractAddress);
+                
+                if (!web3) {
+                    await checkNetwork();
+                }
+                
+                const code = await web3.eth.getCode(contractAddress);
+                log('📄 Contract code length: ' + code.length);
+                
+                if (code === '0x' || code === '0x0') {
+                    log('❌ NO CONTRACT FOUND! Address is empty', 'error');
+                    log('💡 This is likely the reason for circuit breaker', 'warning');
+                } else {
+                    log('✅ Contract exists! Code found.', 'success');
+                }
+                
+            } catch (error) {
+                log('❌ Contract check error: ' + error.message, 'error');
+            }
+        }
+
+        async function checkContractCode() {
+            try {
+                const contractAddress = document.getElementById('contract-address').value;
+                
+                if (!web3) {
+                    await checkNetwork();
+                }
+                
+                const code = await web3.eth.getCode(contractAddress);
+                log('📄 Full contract code:');
+                log(code.substring(0, 200) + '...', 'info');
+                
+                if (code.length > 10) {
+                    log('✅ Contract bytecode looks valid', 'success');
+                } else {
+                    log('❌ Invalid or empty contract', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ Get code error: ' + error.message, 'error');
+            }
+        }
+
+        async function tryDirectCall() {
+            try {
+                const contractAddress = document.getElementById('contract-address').value;
+                log('🧪 Attempting direct contract call...');
+                
+                if (!web3) {
+                    await checkNetwork();
+                }
+
+                // Простейший ABI для tournamentCounter
+                const simpleABI = [{
+                    "inputs": [],
+                    "name": "tournamentCounter",
+                    "outputs": [{"name": "", "type": "uint256"}],
+                    "stateMutability": "view",
+                    "type": "function"
+                }];
+
+                const contract = new web3.eth.Contract(simpleABI, contractAddress);
+                const result = await contract.methods.tournamentCounter().call();
+                
+                log('✅ Direct call SUCCESS! Tournament counter: ' + result, 'success');
+                
+            } catch (error) {
+                log('❌ Direct call FAILED: ' + error.message, 'error');
+                
+                if (error.message.includes('circuit breaker')) {
+                    log('🚨 CIRCUIT BREAKER confirmed active', 'error');
+                } else if (error.message.includes('revert')) {
+                    log('💡 Contract exists but method failed (normal behavior)', 'warning');
+                }
+            }
+        }
+
+        async function testWithDirectRPC() {
+            try {
+                log('🔗 Testing with direct RPC connection...');
+                
+                // Создаем прямое подключение к RPC
+                const directWeb3 = new Web3(CONFIG.RPC_URL);
+                const contractAddress = document.getElementById('contract-address').value;
+                
+                log('📡 Using RPC: ' + CONFIG.RPC_URL);
+                
+                const code = await directWeb3.eth.getCode(contractAddress);
+                log('📄 Contract code via direct RPC: ' + (code === '0x' ? 'NOT FOUND' : 'FOUND'));
+                
+                if (code !== '0x' && code !== '0x0') {
+                    // Пробуем вызов через прямой RPC
+                    const simpleABI = [{
+                        "inputs": [],
+                        "name": "tournamentCounter",
+                        "outputs": [{"name": "", "type": "uint256"}],
+                        "stateMutability": "view",
+                        "type": "function"
+                    }];
+
+                    const contract = new directWeb3.eth.Contract(simpleABI, contractAddress);
+                    const result = await contract.methods.tournamentCounter().call();
+                    
+                    log('✅ DIRECT RPC SUCCESS! Counter: ' + result, 'success');
+                    log('💡 This confirms contract is working. Issue is with MetaMask', 'warning');
+                } else {
+                    log('❌ Contract not found even via direct RPC', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ Direct RPC test failed: ' + error.message, 'error');
+            }
+        }
+
+        async function resetMetaMask() {
+            try {
+                log('🔄 Attempting MetaMask reset...');
+                
+                // Очистка кеша MetaMask
+                if (window.ethereum && window.ethereum.request) {
+                    // Попробуем переключить сеть туда-сюда
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x1' }] // Ethereum mainnet
+                    });
+                    
+                    setTimeout(async () => {
+                        await switchNetwork();
+                    }, 1000);
+                    
+                    log('💡 Switching networks to reset MetaMask state...', 'warning');
+                }
+                
+            } catch (error) {
+                log('❌ Reset failed: ' + error.message, 'error');
+                log('💡 Manual reset: MetaMask Settings -> Advanced -> Reset Account', 'warning');
+            }
+        }
+
+        async function switchNetwork() {
+            try {
+                log('🔄 Switching to Pharos Testnet...');
+                
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: CONFIG.CHAIN_ID_HEX }]
+                });
+                
+                log('✅ Network switched successfully', 'success');
+                
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    log('⚠️ Network not added, adding...', 'warning');
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: CONFIG.CHAIN_ID_HEX,
+                                chainName: CONFIG.NETWORK_NAME,
+                                rpcUrls: [CONFIG.RPC_URL],
+                                nativeCurrency: { name: 'PHRS', symbol: 'PHRS', decimals: 18 }
+                            }]
+                        });
+                        log('✅ Network added and switched', 'success');
+                    } catch (addError) {
+                        log('❌ Failed to add network: ' + addError.message, 'error');
+                    }
+                } else {
+                    log('❌ Switch network failed: ' + switchError.message, 'error');
+                }
+            }
+        }
+
+        async function testPermissions() {
+            try {
+                log('🔐 Testing MetaMask permissions...');
+                
+                const permissions = await window.ethereum.request({
+                    method: 'wallet_getPermissions'
+                });
+                
+                log('📋 Current permissions: ' + JSON.stringify(permissions, null, 2));
+                
+                // Тест получения аккаунтов
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                log('👤 Available accounts: ' + accounts.length);
+                
+            } catch (error) {
+                log('❌ Permissions test failed: ' + error.message, 'error');
+            }
+        }
+
+        // Автоматическая проверка при загрузке
+        window.onload = function() {
+            log('🚀 Debug tool loaded. Click "Check Network" to start.');
+        };
+    </script>
+</body>
+</html>
