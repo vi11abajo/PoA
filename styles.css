@@ -1,0 +1,468 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #001122 0%, #003366 30%, #0066aa 70%, #00aadd 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+    color: #00ddff;
+    overflow: hidden;
+    position: relative;
+}
+
+html, body {
+    overflow: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 170, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.pharos-logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+}
+
+.pharos-logo img {
+    height: 40px;
+    width: auto;
+    filter: drop-shadow(0 0 15px rgba(0, 221, 255, 0.8));
+    transition: all 0.3s ease;
+}
+
+.pharos-logo img:hover {
+    filter: drop-shadow(0 0 25px rgba(0, 221, 255, 1));
+    transform: scale(1.05);
+}
+
+.game-container {
+    position: relative;
+    border: 3px solid #00ddff;
+    border-radius: 20px;
+    box-shadow: 
+        0 0 40px rgba(0, 221, 255, 0.6),
+        inset 0 0 20px rgba(0, 221, 255, 0.1);
+    background: linear-gradient(135deg, 
+        rgba(0, 17, 34, 0.9) 0%, 
+        rgba(0, 51, 102, 0.8) 50%, 
+        rgba(0, 102, 170, 0.7) 100%);
+    backdrop-filter: blur(10px);
+}
+
+#gameCanvas {
+    display: block;
+    background: linear-gradient(180deg, 
+        rgba(0, 17, 34, 0.9) 0%, 
+        rgba(0, 34, 68, 0.8) 30%,
+        rgba(0, 51, 102, 0.7) 70%,
+        rgba(0, 102, 170, 0.6) 100%);
+    border-radius: 17px;
+}
+
+.ui {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 18px;
+    z-index: 10;
+    color: #00ddff;
+    text-shadow: 0 0 15px rgba(0, 221, 255, 0.9);
+    background: rgba(0, 17, 34, 0.7);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 221, 255, 0.3);
+}
+
+.controls {
+    margin-top: 20px;
+    text-align: center;
+    color: #66ccff;
+    font-size: 14px;
+    text-shadow: 0 0 10px rgba(102, 204, 255, 0.6);
+}
+
+.game-over, .start-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 100;
+    background: linear-gradient(135deg, 
+        rgba(0, 17, 34, 0.95) 0%, 
+        rgba(0, 51, 102, 0.9) 100%);
+    padding: 25px;
+    border: 3px solid #00ddff;
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
+    backdrop-filter: blur(15px);
+    max-width: 90vw;
+    min-width: 500px;
+    max-height: 85vh;
+    box-sizing: border-box;
+}
+
+.game-over {
+    color: #ff6666;
+    font-size: 24px;
+    display: none;
+}
+
+.start-screen {
+    color: #00ddff;
+    font-size: 20px;
+    min-width: 450px;
+}
+
+.start-screen h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 30px rgba(0, 221, 255, 1);
+    background: linear-gradient(45deg, #00ddff, #66ccff, #00aadd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .start-screen h1 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .start-screen h1 {
+        font-size: 20px;
+    }
+}
+
+button {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+    color: #00ddff;
+    border: 2px solid #00ddff;
+    padding: 15px 25px;
+    font-family: 'Arial', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 15px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+}
+
+button:hover {
+    background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+    box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.bubbles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.bubble {
+    position: absolute;
+    background: radial-gradient(circle, rgba(0, 221, 255, 0.3), rgba(102, 204, 255, 0.1));
+    border-radius: 50%;
+    animation: float 6s infinite ease-in-out;
+}
+
+@keyframes float {
+    0% { 
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% { 
+        transform: translateY(-100px) scale(1);
+        opacity: 0;
+    }
+}
+
+.water-ripple {
+    position: absolute;
+    border: 2px solid rgba(0, 221, 255, 0.6);
+    border-radius: 50%;
+    animation: ripple 2s infinite ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.blockchain-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(0, 221, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 221, 255, 0.3);
+    display: none;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.blockchain-section h3 {
+    margin-bottom: 15px;
+    color: #00ddff;
+    font-size: 18px;
+}
+
+.blockchain-section p {
+    font-size: 14px;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.blockchain-section input {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #00ddff;
+    border-radius: 5px;
+    background: rgba(0, 17, 34, 0.8);
+    color: #00ddff;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.blockchain-section input::placeholder {
+    color: rgba(0, 221, 255, 0.6);
+}
+
+#leaderboard-container {
+    margin-top: 15px;
+    text-align: left;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+#leaderboard-container ol {
+    padding-left: 20px;
+}
+
+#leaderboard-container li {
+    margin: 5px 0;
+    padding: 6px;
+    background: rgba(0, 221, 255, 0.1);
+    border-radius: 5px;
+    border-left: 3px solid #00ddff;
+}
+
+.loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 17, 34, 0.95);
+    color: #00ddff;
+    padding: 30px;
+    border-radius: 15px;
+    z-index: 1001;
+    border: 2px solid #00ddff;
+    box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+    text-align: center;
+}
+
+.spinner {
+    border: 3px solid rgba(0, 221, 255, 0.3);
+    border-top: 3px solid #00ddff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#save-status .success-message {
+    background: rgba(0, 255, 136, 0.2);
+    border: 1px solid #00ff88;
+    color: #00ff88;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.tx-copy-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.copy-btn {
+    background: rgba(0, 221, 255, 0.2);
+    border: 1px solid #00ddff;
+    color: #00ddff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+    background: rgba(0, 221, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.copy-btn.copied {
+    background: rgba(0, 255, 136, 0.2);
+    border-color: #00ff88;
+    color: #00ff88;
+}
+
+.main-leaderboard-button {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+/* Скрываем кнопку лидерборда когда показано game over окно */
+.game-over-active .main-leaderboard-button {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .game-over, .start-screen {
+        max-width: 95vw;
+        min-width: 350px;
+        padding: 20px;
+        font-size: 18px;
+    }
+    
+    .start-screen {
+        min-width: 320px;
+    }
+    
+    .game-over h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .game-over p {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .blockchain-section {
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .blockchain-section h3 {
+        font-size: 16px;
+    }
+    
+    .blockchain-section input {
+        max-width: 100%;
+    }
+    
+    .tx-copy-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .tx-copy-container span {
+        word-break: break-all;
+        text-align: center;
+        font-size: 10px;
+    }
+    
+    #leaderboard-container {
+        max-height: 150px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-over, .start-screen {
+        max-width: 95vw;
+        min-width: 300px;
+        padding: 15px;
+        font-size: 16px;
+    }
+    
+    .start-screen {
+        min-width: 280px;
+    }
+    
+    .game-over h2 {
+        font-size: 18px;
+    }
+    
+    .game-over p {
+        font-size: 14px;
+    }
+    
+    .blockchain-section {
+        padding: 12px;
+    }
+    
+    .blockchain-section h3 {
+        font-size: 14px;
+    }
+    
+    button {
+        padding: 12px 20px;
+        font-size: 14px;
+        margin: 8px;
+    }
+}

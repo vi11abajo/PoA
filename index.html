@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharos Invaders - Ocean Battle</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/favicon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #001122 0%, #003366 30%, #0066aa 70%, #00aadd 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            color: #00ddff;
+            overflow: hidden;
+            position: relative;
+            padding-top: 0;
+        }
+
+        .pharos-logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .pharos-logo a {
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .pharos-logo img {
+            height: 40px;
+            width: auto;
+            filter: drop-shadow(0 0 15px rgba(0, 221, 255, 0.8));
+            transition: all 0.3s ease;
+        }
+
+        .pharos-logo a:hover img {
+            filter: drop-shadow(0 0 25px rgba(0, 221, 255, 1));
+            transform: scale(1.05);
+        }
+
+        .main-leaderboard-button {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .game-over-active .main-leaderboard-button {
+            display: none;
+        }
+
+        .game-container {
+            position: relative;
+            border: 3px solid #00ddff;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 221, 255, 0.6);
+            background: linear-gradient(135deg, rgba(0, 17, 34, 0.9) 0%, rgba(0, 51, 102, 0.8) 50%, rgba(0, 102, 170, 0.7) 100%);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            min-width: 500px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+            color: #00ddff;
+            border: 2px solid #00ddff;
+            padding: 6px;
+            font-family: 'Arial', sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+            backdrop-filter: blur(10px);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .nav-button.connected {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(102, 255, 179, 0.3));
+            border-color: #00ff88;
+            color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+        }
+
+        .ui {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 18px;
+            z-index: 10;
+            color: #00ddff;
+            background: rgba(0, 17, 34, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 221, 255, 0.3);
+        }
+
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(180deg, rgba(0, 17, 34, 0.9) 0%, rgba(0, 34, 68, 0.8) 30%, rgba(0, 51, 102, 0.7) 70%, rgba(0, 102, 170, 0.6) 100%);
+            border-radius: 17px;
+        }
+
+        .game-over, .start-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 100;
+            background: linear-gradient(135deg, rgba(0, 17, 34, 0.95) 0%, rgba(0, 51, 102, 0.9) 100%);
+            padding: 25px;
+            border: 3px solid #00ddff;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 221, 255, 0.8);
+            backdrop-filter: blur(15px);
+            max-width: 90vw;
+            min-width: 500px;
+        }
+
+        .game-over {
+            color: #ff6666;
+            font-size: 24px;
+            display: none;
+        }
+
+        .start-screen {
+            color: #00ddff;
+            font-size: 20px;
+        }
+
+        .start-screen h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(0, 221, 255, 1);
+            background: linear-gradient(45deg, #00ddff, #66ccff, #00aadd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        button {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+            color: #00ddff;
+            border: 2px solid #00ddff;
+            padding: 15px 25px;
+            font-family: 'Arial', sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.4), rgba(102, 204, 255, 0.5));
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .blockchain-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 221, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 221, 255, 0.3);
+            display: none;
+        }
+
+        .blockchain-section input {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #00ddff;
+            border-radius: 5px;
+            background: rgba(0, 17, 34, 0.8);
+            color: #00ddff;
+            font-size: 14px;
+        }
+
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 17, 34, 0.95);
+            color: #00ddff;
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 1001;
+            border: 2px solid #00ddff;
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
+            text-align: center;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 221, 255, 0.3);
+            border-top: 3px solid #00ddff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+        .bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle, rgba(0, 221, 255, 0.3), rgba(102, 204, 255, 0.1));
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0% { 
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pharos-logo">
+        <a href="https://testnet.pharosnetwork.xyz/experience?inviteCode=8WEiXzSig6n7hrTH" target="_blank">
+            <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png" alt="Pharos Network">
+        </a>
+    </div>
+    
+    <div class="main-leaderboard-button">
+        <button onclick="window.location.href='leaderboard.html';" style="padding: 10px 20px; font-size: 14px; margin: 0;">
+            🏆 Leaderboard
+        </button>
+        <button onclick="window.location.href='tournament/tournament-lobby.html';" style="padding: 10px 20px; font-size: 14px; margin: 0 0 0 10px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.3)); border-color: #ffd700; color: #ffd700;">
+            ⚔️ Tournament
+        </button>
+    </div>
+    
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+        <button class="nav-button" id="walletButton" onclick="handleWalletToggle()">
+            <span id="walletStatus">💼 Connect Wallet</span>
+        </button>
+    </div>
+    
+    <div class="bubbles"></div>
+    
+    <div class="game-container">
+        <div class="ui">
+            <div>🏆 Score: <span id="score">0</span></div>
+            <div>💙 Lives: <span id="lives">5</span></div>
+            <div>🌊 Wave: <span id="level">1</span></div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="start-screen" id="startScreen">
+            <h1>🐙 PHAROS INVADERS 🦀</h1>
+            <p>Defend the ocean depths from the crab invasion!</p>
+            <p style="font-size: 16px; margin: 15px 0;">Futuristic cyborg octopus vs army of crabs</p>
+            <button onclick="startGame()">START BATTLE</button>
+            <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+                <p>Controls: ← → to move, SPACE to attack</p>
+                <p>Use plasma charges to win!</p>
+            </div>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            <h2>🌊 WASTED 🌊</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>The crabs have conquered the ocean!</p>
+            
+            <div class="blockchain-section" id="blockchainSection">
+                <h3>🏆 Save to Leaderboard</h3>
+                <p style="font-size: 14px; margin-bottom: 15px;">Record your score on the Pharos blockchain!</p>
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                <br>
+                <button onclick="saveScoreToBlockchain()" id="saveScoreButton">Save Score to Blockchain</button>
+                <div id="save-status"></div>
+            </div>
+            
+            <button onclick="restartGame()">NEW BATTLE</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    <script src="game-config.js"></script>
+    <script src="boss-config.js"></script>
+    <script src="boss-system.js"></script>
+    <script src="boss-renderer.js"></script>
+    <script src="wallet-connector.js"></script>
+    <script src="game.js"></script>
+
+    <script>
+        // Функция для переключения кошелька
+        window.handleWalletToggle = async function() {
+            if (window.walletConnector) {
+                if (window.walletConnector.connected) {
+                    // Если кошелек подключен, отключаем его
+                    window.walletConnector.disconnect();
+                } else {
+                    // Если кошелек не подключен, показываем модал
+                    await window.walletConnector.showWalletModal();
+                }
+            } else {
+                console.error('Wallet connector not available');
+            }
+        };
+
+        // Обновление статуса кошелька
+        function updateWalletStatus() {
+            const walletButton = document.getElementById('walletButton');
+            const walletStatus = document.getElementById('walletStatus');
+            
+            if (window.walletConnector && window.walletConnector.connected && window.walletConnector.account) {
+                walletButton.classList.add('connected');
+                const shortAddress = `${window.walletConnector.account.slice(0, 6)}...${window.walletConnector.account.slice(-4)}`;
+                walletStatus.textContent = shortAddress;
+            } else {
+                walletButton.classList.remove('connected');
+                walletStatus.textContent = '💼 Connect Wallet';
+            }
+        }
+
+        // Проверяем статус кошелька каждые 2 секунды
+        setInterval(updateWalletStatus, 2000);
+        
+        // Обновляем при загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateWalletStatus);
+    </script>
+
+</body>
+<footer style="position: fixed; bottom: 0; width: 100%; background: #1e2a44; padding: 20px; text-align: center; z-index: 1000;">
+    <p>Made by vi11abajo | <a href="https://twitter.com/IIIDARt" target="_blank" style="color: #00d4ff; text-decoration: none;">Follow on X</a></p>
+</footer>
+</html>
