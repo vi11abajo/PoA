@@ -16,13 +16,97 @@ let hasPaidFee = false;
 let scoreAlreadySaved = false;
 let currentGameSession = null;
 
+// Timer management for memory leak prevention
+const gameTimers = {
+    intervals: new Map(),
+    timeouts: new Set()
+};
+
+// Canvas rendering optimization
+const renderCache = {
+    lastPlayerShadow: null,
+    lastCrabShadow: null,
+    shadowsEnabled: true
+};
+
+// Collision detection optimization
+function fastCollisionCheck(rect1, rect2) {
+    return !(rect1.x >= rect2.x + rect2.width || 
+             rect2.x >= rect1.x + rect1.width ||
+             rect1.y >= rect2.y + rect2.height ||
+             rect2.y >= rect1.y + rect1.height);
+}
+
+function broadPhaseCollisionCheck(bullet, invader, threshold = 100) {
+    const dx = (bullet.x + bullet.width/2) - (invader.x + invader.width/2);
+    const dy = (bullet.y + bullet.height/2) - (invader.y + invader.height/2);
+    return (dx * dx + dy * dy) < threshold * threshold;
+}
+
+function createSafeInterval(callback, delay, name) {
+    const intervalId = setInterval(callback, delay);
+    if (name) {
+        gameTimers.intervals.set(name, intervalId);
+    }
+    return intervalId;
+}
+
+function createSafeTimeout(callback, delay) {
+    const timeoutId = setTimeout(() => {
+        callback();
+        gameTimers.timeouts.delete(timeoutId);
+    }, delay);
+    gameTimers.timeouts.add(timeoutId);
+    return timeoutId;
+}
+
+function clearAllGameTimers() {
+    // Clear all intervals
+    gameTimers.intervals.forEach((intervalId, name) => {
+        clearInterval(intervalId);
+    });
+    gameTimers.intervals.clear();
+    
+    // Clear all timeouts
+    gameTimers.timeouts.forEach(timeoutId => {
+        clearTimeout(timeoutId);
+    });
+    gameTimers.timeouts.clear();
+}
+
+// Optimized rendering functions
+function setPlayerShadow(ctx) {
+    if (renderCache.shadowsEnabled && renderCache.lastPlayerShadow !== '#00ddff') {
+        ctx.shadowColor = '#00ddff';
+        ctx.shadowBlur = 15;
+        renderCache.lastPlayerShadow = '#00ddff';
+    }
+}
+
+function setCrabShadow(ctx, color) {
+    if (renderCache.shadowsEnabled && renderCache.lastCrabShadow !== color) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 5;
+        renderCache.lastCrabShadow = color;
+    }
+}
+
+function clearShadow(ctx) {
+    if (renderCache.shadowsEnabled) {
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        renderCache.lastPlayerShadow = null;
+        renderCache.lastCrabShadow = null;
+    }
+}
+
 // НОВАЯ ПЕРЕМЕННАЯ: состояние босса
 let bossActive = false;
 
 // FPS variables
 let lastTime = 0;
-const targetFPS = 60;
-const frameTime = 1000 / targetFPS;
+const targetFPS = GAME_CONSTANTS.TARGET_FPS;
+const frameTime = GAME_CONSTANTS.FRAME_TIME;
 let deltaTime = 0;
 
 // Load game images
@@ -47,8 +131,8 @@ let crabImagesLoaded = {
 
 // Set image sources
 octopusImage.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png';
-octopusImage.onload = () => { octopusImageLoaded = true; console.log('🐙 Octopus image loaded'); };
-octopusImage.onerror = () => { octopusImageLoaded = false; console.log('❌ Octopus image failed'); };
+octopusImage.onload = () => { octopusImageLoaded = true; };
+octopusImage.onerror = () => { octopusImageLoaded = false; };
 
 crabImages.violet.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png';
 crabImages.red.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png';
@@ -59,11 +143,9 @@ crabImages.green.src = 'https://raw.githubusercontent.com/vi11abajo/PoA/main/ima
 Object.keys(crabImages).forEach(color => {
     crabImages[color].onload = () => {
         crabImagesLoaded[color] = true;
-        console.log(`🦀 ${color} crab loaded`);
     };
     crabImages[color].onerror = () => {
         crabImagesLoaded[color] = false;
-        console.log(`❌ ${color} crab failed`);
     };
 });
 
@@ -149,12 +231,10 @@ function initCanvas() {
     // Если не найден, ищем турнирный canvas
     if (!canvas) {
         canvas = document.getElementById('tournamentGameCanvas');
-        console.log('🏺 Using tournament canvas');
     }
 
     // Если ничего не найдено, создаем canvas
     if (!canvas) {
-        console.log('❌ No canvas found, creating one...');
         canvas = document.createElement('canvas');
         canvas.id = 'gameCanvas';
         canvas.width = 800;
@@ -171,7 +251,6 @@ function initCanvas() {
 
     if (canvas) {
         ctx = canvas.getContext('2d');
-        console.log('✅ Canvas initialized:', canvas.id, canvas.width + 'x' + canvas.height);
     } else {
         console.error('❌ Failed to initialize canvas');
     }
@@ -182,23 +261,23 @@ function createBubbles() {
     const bubblesContainer = document.querySelector('.bubbles');
     if (!bubblesContainer) return;
 
-    setInterval(() => {
+    createSafeInterval(() => {
         if (Math.random() < 0.3) {
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
             bubble.style.left = Math.random() * 100 + '%';
-            bubble.style.width = bubble.style.height = (Math.random() * 20 + 10) + 'px';
-            bubble.style.animationDelay = Math.random() * 2 + 's';
+            bubble.style.width = bubble.style.height = (Math.random() * GAME_CONSTANTS.UI.BUBBLE_MAX_SIZE + GAME_CONSTANTS.UI.BUBBLE_MIN_SIZE) + 'px';
+            bubble.style.animationDelay = Math.random() * GAME_CONSTANTS.UI.BUBBLE_MAX_DELAY + 's';
             bubble.style.animationDuration = (Math.random() * 4 + 4) + 's';
             bubblesContainer.appendChild(bubble);
 
-            setTimeout(() => {
+            createSafeTimeout(() => {
                 if (bubble.parentNode) {
                     bubble.remove();
                 }
-            }, 8000);
+            }, GAME_CONSTANTS.UI.BUBBLE_TIMEOUT);
         }
-    }, 500);
+    }, GAME_CONSTANTS.UI.BUBBLE_INTERVAL, 'bubbles');
 }
 
 // Keyboard events
@@ -448,7 +527,6 @@ function checkCollisions() {
         if (bossCollision.bossKilled) {
             score += bossCollision.scoreGained;
             bossActive = false;
-            console.log(`👑 Boss defeated! Score gained: ${bossCollision.scoreGained}`);
         }
 
         const playerHit = window.BOSS_SYSTEM.checkBossBulletsCollision(player);
@@ -464,13 +542,18 @@ function checkCollisions() {
     }
 
     if (!bossActive) {
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            for (let j = invaders.length - 1; j >= 0; j--) {
+        const bulletsToRemove = [];
+        const invadersToRemove = [];
+        
+        for (let i = 0; i < bullets.length; i++) {
+            let bulletHit = false;
+            
+            for (let j = 0; j < invaders.length && !bulletHit; j++) {
                 if (invaders[j].alive &&
-                    bullets[i].x < invaders[j].x + invaders[j].width &&
-                    bullets[i].x + bullets[i].width > invaders[j].x &&
-                    bullets[i].y < invaders[j].y + invaders[j].height &&
-                    bullets[i].y + bullets[i].height > invaders[j].y) {
+                    broadPhaseCollisionCheck(bullets[i], invaders[j]) &&
+                    fastCollisionCheck(bullets[i], invaders[j])) {
+                    
+                    bulletHit = true;
 
                     let crabColor = getCrabColor(invaders[j].type);
                     createExplosion(invaders[j].x + invaders[j].width/2,
@@ -480,11 +563,11 @@ function checkCollisions() {
                                invaders[j].y + invaders[j].height/2);
 
                     let points = {
-                        'violet': 100,
-                        'red': 80,
-                        'yellow': 60,
-                        'blue': 40,
-                        'green': 20
+                        'violet': GAME_CONSTANTS.SCORING.VIOLET_CRAB,
+                        'red': GAME_CONSTANTS.SCORING.RED_CRAB,
+                        'yellow': GAME_CONSTANTS.SCORING.YELLOW_CRAB,
+                        'blue': GAME_CONSTANTS.SCORING.BLUE_CRAB,
+                        'green': GAME_CONSTANTS.SCORING.GREEN_CRAB
                     }[invaders[j].type];
 
                     if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.SCORE_MULTIPLIER) {
@@ -493,17 +576,22 @@ function checkCollisions() {
 
                     score += points;
                     invaders[j].alive = false;
-                    bullets.splice(i, 1);
+                    bulletsToRemove.push(i);
+                    invadersToRemove.push(j);
 
                     logGameEvent('crab_killed', {
                         crabType: invaders[j].type,
                         points: points,
                         position: {x: invaders[j].x, y: invaders[j].y}
                     });
-
-                    break;
                 }
             }
+        }
+        
+        // Remove bullets and invaders in reverse order to maintain indices
+        bulletsToRemove.sort((a, b) => b - a);
+        for (let i of bulletsToRemove) {
+            bullets.splice(i, 1);
         }
     }
 
@@ -544,14 +632,10 @@ function drawPlayer() {
     const centerY = player.y + player.height / 2;
 
     if (octopusImageLoaded && octopusImage.complete) {
-        ctx.save();
-        ctx.shadowColor = '#00ddff';
-        ctx.shadowBlur = 15;
-
+        setPlayerShadow(ctx);
         const imageSize = 70;
         ctx.drawImage(octopusImage, centerX - imageSize/2, centerY - imageSize/2, imageSize, imageSize);
-
-        ctx.restore();
+        clearShadow(ctx);
 
         ctx.strokeStyle = '#00ddff';
         ctx.lineWidth = 2;
@@ -577,15 +661,10 @@ function drawInvaders() {
             const bobbing = Math.sin(invader.animFrame) * 2;
 
             if (crabImagesLoaded[invader.type] && crabImages[invader.type].complete) {
-                ctx.save();
-                ctx.shadowColor = getCrabColor(invader.type);
-                ctx.shadowBlur = 5;
-
+                setCrabShadow(ctx, getCrabColor(invader.type));
                 const imageSize = 40;
                 ctx.drawImage(crabImages[invader.type], centerX - imageSize/2,
                              centerY - imageSize/2 + bobbing, imageSize, imageSize);
-
-                ctx.restore();
 
             } else {
                 ctx.font = '25px Arial';
@@ -593,6 +672,9 @@ function drawInvaders() {
             }
         }
     }
+    
+    // Clear shadows after rendering all invaders
+    clearShadow(ctx);
 }
 
 // Draw bullets
@@ -716,12 +798,10 @@ function gameLoop(currentTime) {
 
             if (window.BOSS_SYSTEM && typeof isBossLevel === 'function' && isBossLevel(nextLevel)) {
                 level = nextLevel;
-                console.log(`👑 Boss level ${level}! Creating boss...`);
 
                 if (!window.BOSS_SYSTEM.canvas && canvas) {
                     window.BOSS_SYSTEM.canvas = canvas;
                     window.BOSS_SYSTEM.ctx = ctx;
-                    console.log('🔧 Canvas passed to BOSS_SYSTEM before boss creation');
                 }
 
                 if (window.BOSS_SYSTEM.canvas) {
@@ -736,7 +816,6 @@ function gameLoop(currentTime) {
             } else {
                 level = nextLevel;
                 createInvaders();
-                console.log(`🔥 Level ${level}!`);
             }
         }
 
@@ -849,7 +928,6 @@ function backToTournamentLobby() {
 
 async function startGame() {
     try {
-        console.log('🚀 START GAME CALLED!');
 
         if (!canvas) {
             initCanvas();
@@ -857,7 +935,6 @@ async function startGame() {
 
         // 🏆 ТУРНИРНЫЙ РЕЖИМ - пропускаем оплату и модальные окна
         if (tournamentMode) {
-            console.log('🏆 Starting tournament game...');
             hasPaidFee = true;
             currentGameSession = `tournament_${tournamentData.tournamentId}_${tournamentData.attempt}`;
 
@@ -872,21 +949,17 @@ async function startGame() {
 
         // Для обычной игры проверяем wallet connector
         if (!window.walletConnector) {
-            console.log('❌ No wallet connector');
             alert('Wallet connector not found. Please refresh the page.');
             return;
         }
 
-        console.log('✅ Wallet connector found');
 
         if (!walletConnector.connected) {
-            console.log('💼 Wallet not connected, showing modal...');
             window.pendingGameStart = true;
             walletConnector.showWalletModal();
             return;
         }
 
-        console.log('✅ Wallet connected, starting game...');
 
         hasPaidFee = false;
         scoreAlreadySaved = false;
@@ -902,13 +975,10 @@ async function startGame() {
                 hasPaidFee = true;
                 currentGameSession = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 hideLoading();
-                console.log('✅ Payment completed');
             } else {
-                console.log('🎮 Playing offline');
             }
         } else {
             // Если функция не существует, просто запускаем игру без оплаты
-            console.log('🎮 Starting game without payment modal (function not available)');
             hasPaidFee = false;
         }
 
@@ -922,7 +992,6 @@ async function startGame() {
 }
 
 function actuallyStartGame() {
-    console.log('🎮 Actually starting game...');
 
     gameState = 'playing';
     score = 0;
@@ -963,7 +1032,6 @@ function actuallyStartGame() {
     if (window.BOSS_SYSTEM && canvas) {
         window.BOSS_SYSTEM.canvas = canvas;
         window.BOSS_SYSTEM.ctx = ctx;
-        console.log('✅ Canvas passed to BOSS_SYSTEM');
     }
 
     createInvaders();
@@ -980,7 +1048,6 @@ function actuallyStartGame() {
     document.body.classList.remove('game-over-active');
 
     gameLoop(performance.now());
-    console.log('✅ Game started successfully!');
 }
 
 function showGameOver() {
@@ -1153,7 +1220,6 @@ window.addEventListener('load', () => {
 
     if (window.BOSS_SYSTEM) {
         window.BOSS_SYSTEM.initBossSystem();
-        console.log('✅ Boss system initialized');
     }
 
     // 🏆 Проверяем турнирный режим
@@ -1163,7 +1229,6 @@ window.addEventListener('load', () => {
         if (savedTournamentData) {
             tournamentMode = true;
             tournamentData = JSON.parse(savedTournamentData);
-            console.log('🏆 Tournament mode activated:', tournamentData);
 
             updateTournamentUI();
         }
@@ -1182,14 +1247,37 @@ window.addEventListener('load', () => {
 
     createBubbles();
 
-    setTimeout(() => {
+    createSafeTimeout(() => {
         if (window.walletConnector) {
-            console.log('✅ WalletConnector ready:', walletConnector.connected);
         } else {
-            console.log('❌ WalletConnector not found');
         }
-    }, 1000);
+    }, GAME_CONSTANTS.TIMEOUTS.TOURNAMENT_CHECK);
 });
+
+// Game cleanup function for proper shutdown
+function stopGame() {
+    gameState = 'end';
+    clearAllGameTimers();
+    
+    // Clear any game loops if they exist
+    if (window.gameInterval) {
+        clearInterval(window.gameInterval);
+        window.gameInterval = null;
+    }
+    if (window.gameLoopId) {
+        cancelAnimationFrame(window.gameLoopId);
+        window.gameLoopId = null;
+    }
+    
+    // Export for external access
+    window.stopGame = stopGame;
+}
+
+// Export timer management functions for external use
+window.createSafeInterval = createSafeInterval;
+window.createSafeTimeout = createSafeTimeout;
+window.clearAllGameTimers = clearAllGameTimers;
+window.stopGame = stopGame;
 
 console.log('✅ Full game.js loaded successfully with tournament mode!');
 console.log('🔧 Game variables exported to window');

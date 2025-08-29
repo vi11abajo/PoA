@@ -10,11 +10,20 @@ class TournamentManager {
         this.currentTournamentId = null;
         this.gameHash = null;
         this.attemptCount = 0;
+        
+        // 🗄️ Кеш для турнирной информации
+        this.cache = new Map();
+        this.cacheTimeout = TOURNAMENT_CONSTANTS.CACHE.DEFAULT_TTL;
+        
+        // 🔄 Батчинг blockchain запросов
+        this.batchQueue = [];
+        this.batchTimeout = null;
+        this.batchDelay = TOURNAMENT_CONSTANTS.CACHE.BATCH_DELAY;
 
         this.config = {
             NETWORK_NAME: 'Pharos Testnet',
             RPC_URL: 'https://testnet.dplabs-internal.com',
-            CHAIN_ID: '688688',
+            CHAIN_ID: TOURNAMENT_CONSTANTS.BLOCKCHAIN.PHAROS_TESTNET_CHAIN_ID,
             CONTRACT_ADDRESS: '0x454064eA4517A80b0388EEeFFFBf2Efb85a86061',
             ENTRY_FEE: '0.005'
         };
@@ -326,7 +335,6 @@ class TournamentManager {
             }
         ];
 
-        console.log('🏆 Tournament Manager initialized');
     }
 
     // Connect to Web3
@@ -345,7 +353,6 @@ class TournamentManager {
             this.connected = true;
 
             // Проверяем доступность контракта
-            console.log('🔍 Testing contract accessibility...');
             await this.testContractAccess();
 
             console.log('✅ Tournament contract connected');
@@ -360,14 +367,9 @@ class TournamentManager {
     // Тестирование доступности контракта
     async testContractAccess() {
         try {
-            console.log('🧪 Testing contract access...');
-            console.log('📍 Contract address:', this.config.CONTRACT_ADDRESS);
-            console.log('📍 Network:', this.config.NETWORK_NAME);
-            console.log('📍 RPC URL:', this.config.RPC_URL);
 
             // Проверяем код контракта
             const code = await this.web3.eth.getCode(this.config.CONTRACT_ADDRESS);
-            console.log('📍 Contract code length:', code.length);
             
             if (code === '0x' || code === '0x0') {
                 console.warn('⚠️ Contract not found at this address!');
@@ -376,7 +378,6 @@ class TournamentManager {
 
             // Пробуем простой read-only вызов
             const counter = await this.contract.methods.tournamentCounter().call();
-            console.log('✅ Contract accessible, tournament counter:', counter);
             return true;
 
         } catch (error) {
@@ -393,6 +394,134 @@ class TournamentManager {
             }
             
             return false;
+        }
+    }
+
+    // ========== CACHE FUNCTIONS ==========
+    
+    // Сохранить данные в кеш с временной меткой
+    setCacheData(key, data) {
+        this.cache.set(key, {
+            data: data,
+            timestamp: Date.now()
+        });
+    }
+    
+    // Получить данные из кеша (если не устарели)
+    getCacheData(key) {
+        const cached = this.cache.get(key);
+        if (!cached) {
+            return null;
+        }
+        
+        const age = Date.now() - cached.timestamp;
+        if (age > this.cacheTimeout) {
+            this.cache.delete(key);
+            return null;
+        }
+        return cached.data;
+    }
+    
+    // Очистить кеш для конкретного турнира (при обновлениях)
+    invalidateCache(tournamentId) {
+        const keysToDelete = [];
+        for (const key of this.cache.keys()) {
+            if (key.includes(`_${tournamentId}`)) {
+                keysToDelete.push(key);
+            }
+        }
+        keysToDelete.forEach(key => this.cache.delete(key));
+    }
+
+    // ========== BATCH FUNCTIONS ==========
+    
+    // Добавить запрос в батч
+    batchCall(contractMethod, ...args) {
+        return new Promise((resolve, reject) => {
+            this.batchQueue.push({
+                method: contractMethod,
+                args: args,
+                resolve: resolve,
+                reject: reject
+            });
+            
+            // Запускаем таймер если не запущен
+            if (!this.batchTimeout) {
+                this.batchTimeout = setTimeout(() => {
+                    this.processBatch();
+                }, this.batchDelay);
+            }
+        });
+    }
+    
+    // Обработать батч запросов
+    async processBatch() {
+        if (this.batchQueue.length === 0) {
+            this.batchTimeout = null;
+            return;
+        }
+        
+        const currentBatch = this.batchQueue.splice(0); // Берем все запросы
+        this.batchTimeout = null;
+        
+        
+        try {
+            // Выполняем все запросы параллельно
+            const promises = currentBatch.map(item => 
+                item.method(...item.args)
+            );
+            
+            const results = await Promise.allSettled(promises);
+            
+            // Возвращаем результаты каждому промису
+            currentBatch.forEach((item, index) => {
+                const result = results[index];
+                if (result.status === 'fulfilled') {
+                    item.resolve(result.value);
+                } else {
+                    item.reject(result.reason);
+                }
+            });
+            
+            
+        } catch (error) {
+            console.error('❌ Batch processing failed:', error);
+            currentBatch.forEach(item => item.reject(error));
+        }
+    }
+    
+    // Форсировать выполнение текущего батча
+    async flushBatch() {
+        if (this.batchTimeout) {
+            clearTimeout(this.batchTimeout);
+            await this.processBatch();
+        }
+    }
+    
+    // Загрузить данные нескольких турниров одновременно
+    async loadMultipleTournaments(tournamentIds) {
+        
+        try {
+            const results = await Promise.all(
+                tournamentIds.map(async id => {
+                    const [info, leaderboard] = await Promise.all([
+                        this.getTournamentInfo(id).catch(e => ({ error: e.message })),
+                        this.getTournamentLeaderboard(id).catch(e => [])
+                    ]);
+                    
+                    return {
+                        tournamentId: id,
+                        info,
+                        leaderboard
+                    };
+                })
+            );
+            
+            return results;
+            
+        } catch (error) {
+            console.error('❌ Failed to load multiple tournaments:', error);
+            throw error;
         }
     }
 
@@ -433,20 +562,22 @@ class TournamentManager {
                 );
             }
 
-            console.log('🎯 Attempting tournament registration...');
 
             // Method 1: Try standard contract call
             try {
-                console.log('📋 Method 1: Standard contract call');
                 const tx = await this.contract.methods
                     .registerForTournament(tournamentId, playerNameBytes32)
                     .send({
                         from: this.account,
                         value: info.entryFee,
-                        gas: 200000
+                        gas: TOURNAMENT_CONSTANTS.GAS.TOURNAMENT_REGISTRATION
                     });
                 
                 console.log('✅ Registration successful! TX:', tx.transactionHash);
+                
+                // Очищаем кеш информации о турнире (количество участников изменилось)
+                this.invalidateCache(tournamentId);
+                
                 return tx.transactionHash;
                 
             } catch (standardError) {
@@ -462,7 +593,6 @@ class TournamentManager {
 
             // Method 2: Try raw transaction
             try {
-                console.log('📋 Method 2: Raw transaction');
                 const methodId = '0x' + this.web3.utils.keccak256('registerForTournament(uint256,bytes32)').substring(2, 10);
                 const tournamentIdHex = this.web3.utils.padLeft(this.web3.utils.numberToHex(tournamentId), 64);
                 const data = methodId + tournamentIdHex.substring(2) + playerNameBytes32.substring(2);
@@ -472,7 +602,7 @@ class TournamentManager {
                     to: this.config.CONTRACT_ADDRESS,
                     value: info.entryFee,
                     data: data,
-                    gas: '0x30D40' // 200000
+                    gas: '0x30D40' // TOURNAMENT_CONSTANTS.GAS.TOURNAMENT_REGISTRATION
                 };
 
                 const txHash = await window.ethereum.request({
@@ -489,7 +619,6 @@ class TournamentManager {
 
             // Method 3: Try minimal ABI
             try {
-                console.log('📋 Method 3: Minimal ABI');
                 const minimalABI = [{
                     "name": "registerForTournament",
                     "type": "function",
@@ -541,7 +670,7 @@ class TournamentManager {
             }
 
             // Подробная диагностика
-            console.log('📋 Submit score parameters:', {
+            console.log('📊 Submitting score:', {
                 tournamentId: tournamentId,
                 score: score,
                 playerName: playerName,
@@ -604,10 +733,8 @@ class TournamentManager {
             }
             
             // Проверяем, зарегистрирован ли игрок
-            console.log('🔍 Checking player registration...');
             try {
                 const isRegistered = await this.isPlayerRegistered(tournamentId, this.account);
-                console.log('🔍 Player registration status:', isRegistered);
                 
                 if (!isRegistered) {
                     throw new Error(`Player ${this.account} is not registered for tournament ${tournamentId}`);
@@ -617,10 +744,8 @@ class TournamentManager {
             }
             
             // Проверяем количество попыток игрока
-            console.log('🔍 Checking player attempts...');
             try {
                 const playerAttempts = await this.getPlayerAttempts(tournamentId, this.account);
-                console.log('🔍 Player attempts from blockchain:', playerAttempts);
                 
                 if (playerAttempts >= 3) {
                     throw new Error(`Player ${this.account} has already used all attempts (${playerAttempts}/3) for tournament ${tournamentId}`);
@@ -633,7 +758,6 @@ class TournamentManager {
                     const playerScore = await this.contract.methods
                         .getPlayerScore(tournamentId, this.account)
                         .call();
-                    console.log('🔍 Direct contract player score info:', playerScore);
                 } catch (directError) {
                     console.warn('⚠️ Direct contract check failed:', directError.message);
                 }
@@ -675,9 +799,7 @@ class TournamentManager {
             
             // Проверяем еще раз попытки игрока перед отправкой
             try {
-                console.log('⚡ FINAL: Checking player attempts one more time...');
                 const finalAttempts = await this.getPlayerAttempts(tournamentId, this.account);
-                console.log('⚡ FINAL: Player attempts:', finalAttempts);
                 
                 if (finalAttempts >= 3) {
                     throw new Error(`FINAL CHECK FAILED: Player has ${finalAttempts}/3 attempts used`);
@@ -702,32 +824,11 @@ class TournamentManager {
                 console.warn('⚠️ Gas estimation error:', gasError.message);
             }
 
-            // КРИТИЧЕСКАЯ ТОЧКА: Точные параметры перед отправкой
-            console.log('🚨 FINAL TRANSACTION PARAMETERS:');
-            console.log('📊 Tournament ID (type, value):', typeof tournamentId, tournamentId);
-            console.log('🎯 Score (type, value):', typeof score, score);
-            console.log('👤 Player Name Bytes32 (type, value):', typeof playerNameBytes32, playerNameBytes32);
-            console.log('🔒 Game Hash (type, value):', typeof gameHash, gameHash);
-            console.log('⛽ Gas Limit:', gasLimit);
-            console.log('💰 From Account:', this.account);
-            console.log('🏦 Contract Address:', this.contract._address);
-            
-            // Проверим также типы данных и валидацию
-            console.log('✅ VALIDATION CHECKS:');
-            console.log('- Tournament ID is number:', !isNaN(tournamentId));
-            console.log('- Score is number:', !isNaN(score) && score >= 0);
-            console.log('- Player name bytes32 length:', playerNameBytes32.length);
-            console.log('- Game hash is valid hex:', gameHash.startsWith('0x'));
-            console.log('- Account is valid address:', this.web3.utils.isAddress(this.account));
-            
             // Проверим, существует ли метод submitScore в контракте
-            console.log('🔍 CONTRACT METHOD CHECK:');
             try {
                 const submitScoreMethod = this.contract.methods.submitScore;
-                console.log('- submitScore method exists:', typeof submitScoreMethod === 'function');
                 
                 // Попробуем сделать dry-run вызов для проверки параметров
-                console.log('🧪 Trying dry-run call...');
                 await this.contract.methods
                     .submitScore(tournamentId, score, playerNameBytes32, gameHash)
                     .call({ from: this.account });
@@ -755,6 +856,10 @@ class TournamentManager {
                 });
 
             console.log('✅ Score submitted! TX:', tx.transactionHash);
+            
+            // Очищаем кеш лидерборда и информации о турнире (данные изменились)
+            this.invalidateCache(tournamentId);
+            
             return tx.transactionHash;
 
         } catch (error) {
@@ -840,7 +945,6 @@ class TournamentManager {
                 throw new Error('Contract not connected');
             }
 
-            console.log('🔍 Searching for active tournaments...');
 
             // Получаем текущий счетчик турниров
             const tournamentCounter = await this.contract.methods.tournamentCounter().call();
@@ -851,11 +955,9 @@ class TournamentManager {
             const checkRange = Math.min(10, currentCount);
             const startId = Math.max(1, currentCount - checkRange + 1);
             
-            console.log(`🔍 Checking tournaments ${startId} to ${currentCount}...`);
 
             for (let tournamentId = currentCount; tournamentId >= startId; tournamentId--) {
                 try {
-                    console.log(`🔍 Checking tournament ${tournamentId}...`);
                     const tournamentInfo = await this.getTournamentInfo(tournamentId);
                     
                     const now = Math.floor(Date.now() / 1000);
@@ -863,7 +965,7 @@ class TournamentManager {
                                    now >= tournamentInfo.startTime && 
                                    now <= tournamentInfo.endTime;
 
-                    console.log(`📋 Tournament ${tournamentId}:`, {
+                    console.log(`🔍 Tournament ${tournamentId}:`, {
                         isActive: tournamentInfo.isActive,
                         isFinished: tournamentInfo.isFinished,
                         startTime: new Date(tournamentInfo.startTime * 1000).toLocaleString(),
@@ -906,7 +1008,6 @@ class TournamentManager {
                 .isPlayerRegistered(tournamentId, address)
                 .call();
 
-            console.log(`🔍 Player ${address} registration for tournament ${tournamentId}: ${isRegistered}`);
             return isRegistered;
 
         } catch (error) {
@@ -915,14 +1016,23 @@ class TournamentManager {
         }
     }
 
-    // Get tournament information
+    // Get tournament information (with caching)
     async getTournamentInfo(tournamentId) {
         try {
-            const info = await this.contract.methods
-                .getTournamentInfo(tournamentId)
-                .call();
+            const cacheKey = `tournamentInfo_${tournamentId}`;
+            
+            // Проверяем кеш
+            const cachedData = this.getCacheData(cacheKey);
+            if (cachedData) {
+                return cachedData;
+            }
+            
+            // Если в кеше нет, запрашиваем из блокчейна (через батчинг)
+            const info = await this.batchCall(
+                this.contract.methods.getTournamentInfo(tournamentId).call
+            );
 
-            return {
+            const result = {
                 entryFee: info.entryFee,
                 startTime: parseInt(info.startTime),
                 endTime: parseInt(info.endTime),
@@ -931,18 +1041,32 @@ class TournamentManager {
                 isFinished: info.isFinished,
                 participantCount: parseInt(info.participantCount)
             };
+            
+            // Сохраняем в кеш
+            this.setCacheData(cacheKey, result);
+            return result;
+            
         } catch (error) {
             console.error('❌ Failed to get tournament info:', error);
             throw error;
         }
     }
 
-    // Get tournament leaderboard
+    // Get tournament leaderboard (with caching)
     async getTournamentLeaderboard(tournamentId) {
         try {
-            const result = await this.contract.methods
-                .getTournamentLeaderboard(tournamentId)
-                .call();
+            const cacheKey = `leaderboard_${tournamentId}`;
+            
+            // Проверяем кеш
+            const cachedData = this.getCacheData(cacheKey);
+            if (cachedData) {
+                return cachedData;
+            }
+            
+            // Если в кеше нет, запрашиваем из блокчейна (через батчинг)
+            const result = await this.batchCall(
+                this.contract.methods.getTournamentLeaderboard(tournamentId).call
+            );
 
             const players = result.players || result[0] || [];
             const scores = result.scores || result[1] || [];
@@ -967,6 +1091,8 @@ class TournamentManager {
                 });
             }
 
+            // Сохраняем в кеш
+            this.setCacheData(cacheKey, leaderboard);
             return leaderboard;
         } catch (error) {
             console.error('❌ Failed to get tournament leaderboard:', error);
@@ -1133,14 +1259,14 @@ class TournamentManager {
             // Auto-generate Tournament ID if not provided
             if (tournamentId === null || tournamentId === undefined) {
                 console.log('🎲 Auto-generating Tournament ID...');
-                tournamentId = await this.generateSmartTournamentId('sequential');
+                tournamentId = await this.generateSmartTournamentId('timestamp');
             }
 
             console.log(`🚀 Starting tournament ${tournamentId}...`);
 
             const entryFeeWei = this.web3.utils.toWei(entryFee.toString(), 'ether');
             
-            console.log('📋 Detailed parameters:', {
+            console.log('🚀 Starting tournament with params:', {
                 tournamentId: tournamentId,
                 entryFee: entryFee,
                 entryFeeWei: entryFeeWei,
@@ -1151,16 +1277,14 @@ class TournamentManager {
 
             // Method 1: Try standard contract call
             try {
-                console.log('📋 Method 1: Standard startTournament call');
                 const tx = await this.contract.methods
                     .startTournament(tournamentId, entryFeeWei, duration)
                     .send({
                         from: this.account,
-                        gas: 200000
+                        gas: TOURNAMENT_CONSTANTS.GAS.TOURNAMENT_REGISTRATION
                     });
 
                 console.log('✅ Tournament started! TX:', tx.transactionHash);
-                console.log('📋 Started tournament ID:', tournamentId);
                 return { 
                     transactionHash: tx.transactionHash,
                     tournamentId: tournamentId 
@@ -1178,7 +1302,6 @@ class TournamentManager {
 
             // Method 2: Try raw transaction
             try {
-                console.log('📋 Method 2: Raw startTournament transaction');
                 const methodId = '0x' + this.web3.utils.keccak256('startTournament(uint256,uint256,uint256)').substring(2, 10);
                 const tournamentIdHex = this.web3.utils.padLeft(this.web3.utils.numberToHex(tournamentId), 64);
                 const entryFeeHex = this.web3.utils.padLeft(this.web3.utils.toHex(entryFeeWei), 64);
@@ -1190,7 +1313,7 @@ class TournamentManager {
                     from: this.account,
                     to: this.config.CONTRACT_ADDRESS,
                     data: data,
-                    gas: '0x30D40' // 200000
+                    gas: '0x30D40' // TOURNAMENT_CONSTANTS.GAS.TOURNAMENT_REGISTRATION
                 };
 
                 const txHash = await window.ethereum.request({
@@ -1199,7 +1322,6 @@ class TournamentManager {
                 });
 
                 console.log('✅ Raw startTournament successful! TX:', txHash);
-                console.log('📋 Started tournament ID (raw):', tournamentId);
                 return {
                     transactionHash: txHash,
                     tournamentId: tournamentId
@@ -1211,7 +1333,6 @@ class TournamentManager {
 
             // Method 3: Try minimal ABI
             try {
-                console.log('📋 Method 3: Minimal ABI startTournament');
                 const minimalABI = [{
                     "name": "startTournament",
                     "type": "function",
@@ -1229,7 +1350,6 @@ class TournamentManager {
                 });
                 
                 console.log('✅ Minimal ABI startTournament successful! TX:', tx.transactionHash);
-                console.log('📋 Started tournament ID (minimal ABI):', tournamentId);
                 return {
                     transactionHash: tx.transactionHash,
                     tournamentId: tournamentId
@@ -1580,9 +1700,7 @@ class TournamentManager {
 
     // Generate timestamp-based Tournament ID
     generateTimestampTournamentId() {
-        const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
-        const tournamentId = timestamp * 1000 + random; // Ensure uniqueness
+        const tournamentId = Date.now();
         console.log(`⏰ Generated Timestamp Tournament ID: ${tournamentId}`);
         return tournamentId;
     }
@@ -1590,7 +1708,6 @@ class TournamentManager {
     // Find next available Tournament ID by checking existing ones
     async findNextAvailableTournamentId(startFrom = 2) {
         try {
-            console.log(`🔍 Looking for available Tournament ID starting from ${startFrom}...`);
             
             for (let id = startFrom; id <= startFrom + 100; id++) {
                 try {
@@ -1622,7 +1739,7 @@ class TournamentManager {
     }
 
     // Smart Tournament ID generator with multiple strategies
-    async generateSmartTournamentId(strategy = 'sequential') {
+    async generateSmartTournamentId(strategy = 'timestamp') {
         switch (strategy) {
             case 'sequential':
                 return await this.findNextAvailableTournamentId();
@@ -1717,7 +1834,6 @@ class TournamentManager {
     // Проверить статус circuit breaker
     async checkCircuitBreakerStatus() {
         try {
-            console.log('🔍 Checking circuit breaker status...');
             
             // Пробуем сделать простой read-only вызов
             const counter = await this.contract.methods.tournamentCounter().call();
@@ -1801,7 +1917,6 @@ window.tournamentManager = new TournamentManager();
 
 // ДИАГНОСТИЧЕСКАЯ ФУНКЦИЯ для быстрой проверки
 window.checkGameContract = async function() {
-    console.log('🔍 === GAME CONTRACT DIAGNOSTIC ===');
     
     if (!window.tournamentManager.contract) {
         console.log('❌ Tournament contract not connected');
@@ -1809,7 +1924,6 @@ window.checkGameContract = async function() {
     }
     
     // Сначала покажем все доступные методы
-    console.log('📋 Available contract methods:');
     const methods = Object.keys(window.tournamentManager.contract.methods);
     methods.forEach(method => {
         if (!method.includes('(')) { // Показываем только основные методы, без перегрузок
@@ -1819,7 +1933,6 @@ window.checkGameContract = async function() {
     
     // Попробуем разные способы получения gameContractAddress
     try {
-        console.log('🔍 Trying different methods to get gameContractAddress...');
         
         // Способ 1: Прямое обращение к public переменной
         try {
@@ -1839,7 +1952,6 @@ window.checkGameContract = async function() {
         
         // Способ 3: Проверим, есть ли вообще такая переменная в контракте
         const hasGameContract = methods.includes('gameContractAddress');
-        console.log('🔍 gameContractAddress method exists:', hasGameContract);
         
         if (!hasGameContract) {
             console.log('⚠️ gameContractAddress method is NOT available in contract ABI');
@@ -1854,12 +1966,10 @@ window.checkGameContract = async function() {
         console.error('❌ Failed to check game contract:', error);
     }
     
-    console.log('🔍 === END DIAGNOSTIC ===');
 };
 
 // ТЕСТ ГИПОТЕЗЫ о проблеме с gameHash
 window.testGameHashProblem = async function() {
-    console.log('🔍 === TESTING GAME HASH PROBLEM ===');
     
     if (!window.tournamentManager.contract) {
         console.log('❌ Tournament contract not connected');
@@ -1887,7 +1997,6 @@ window.testGameHashProblem = async function() {
             .call({ from: window.tournamentManager.account });
         console.log('🔒 Hash 2 (after delay):', hash2);
         
-        console.log('🔍 Hashes match:', hash1 === hash2);
         
         if (hash1 !== hash2) {
             console.log('❌ PROBLEM CONFIRMED: gameHash changes over time due to block.timestamp!');
@@ -1900,12 +2009,10 @@ window.testGameHashProblem = async function() {
         console.error('❌ Test failed:', error);
     }
     
-    console.log('🔍 === END TEST ===');
 };
 
 // ДИАГНОСТИКА дублирования gameHash
 window.testHashDuplication = async function() {
-    console.log('🔍 === TESTING HASH DUPLICATION ===');
     
     if (!window.tournamentManager.contract) {
         console.log('❌ Tournament contract not connected');
@@ -1937,7 +2044,6 @@ window.testHashDuplication = async function() {
         console.log('  Hash 2 (nonce', nonce2, '):', hash2);
         console.log('  Hash 3 (nonce', nonce3, '):', hash3);
         
-        console.log('🔍 Hash uniqueness:');
         console.log('  Hash1 == Hash2:', hash1 === hash2);
         console.log('  Hash1 == Hash3:', hash1 === hash3);
         console.log('  Hash2 == Hash3:', hash2 === hash3);
@@ -1950,7 +2056,6 @@ window.testHashDuplication = async function() {
         }
         
         // Попробуем найти проблему в параметрах
-        console.log('🔍 Hash generation parameters:');
         console.log('  Tournament ID:', tournamentId);
         console.log('  Account:', window.tournamentManager.account);
         console.log('  Nonce range:', nonce1, '->', nonce3);
@@ -1959,12 +2064,10 @@ window.testHashDuplication = async function() {
         console.error('❌ Test failed:', error);
     }
     
-    console.log('🔍 === END TEST ===');
 };
 
 // КРИТИЧЕСКАЯ ДИАГНОСТИКА: получаем gameContractAddress другим способом
 window.getGameContractAddressDirect = async function() {
-    console.log('🔍 === GETTING GAME CONTRACT ADDRESS (DIRECT) ===');
     
     if (!window.tournamentManager.contract) {
         console.log('❌ Tournament contract not connected');
@@ -1973,30 +2076,24 @@ window.getGameContractAddressDirect = async function() {
     
     try {
         // Способ 1: через Web3 напрямую
-        console.log('🔍 Method 1: Direct storage read...');
         const web3 = window.tournamentManager.web3;
         const contractAddress = window.tournamentManager.contract._address;
         
         // gameContractAddress должен быть в слоте 0 (первая переменная в контракте)
         const storageSlot0 = await web3.eth.getStorageAt(contractAddress, 0);
-        console.log('📦 Storage slot 0 (gameContractAddress):', storageSlot0);
         
         // Если это address, то последние 20 bytes
         const gameContractFromStorage = '0x' + storageSlot0.slice(-40);
         console.log('🎮 Game contract address from storage:', gameContractFromStorage);
         
         const isZero = gameContractFromStorage === '0x0000000000000000000000000000000000000000';
-        console.log('🔍 Is zero address:', isZero);
         
         if (isZero) {
             console.log('✅ CONFIRMED: Game contract verification is DISABLED');
             console.log('💡 Problem is NOT in game contract verification');
         } else {
             console.log('⚠️ CONFIRMED: Game contract verification is ENABLED');
-            console.log('🎯 Game contract address:', gameContractFromStorage);
-            console.log('🔍 Expected game contract:', '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e');
             const matches = gameContractFromStorage.toLowerCase() === '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e';
-            console.log('🔍 Addresses match:', matches);
             
             if (!matches) {
                 console.log('❌ PROBLEM FOUND: Wrong game contract address!');
@@ -2010,7 +2107,6 @@ window.getGameContractAddressDirect = async function() {
         console.error('❌ Direct storage read failed:', error);
     }
     
-    console.log('🔍 === END DIRECT READ ===');
 };
 
 // БЫСТРОЕ ИСПРАВЛЕНИЕ проблемы с gameContract
@@ -2022,7 +2118,6 @@ window.fixGameContract = async function() {
         return;
     }
     
-    console.log('🔍 Current problem: gameContractAddress = 0x0000000000000000000000000000000000000001');
     console.log('🔧 Solution options:');
     console.log('  1. Disable verification: 0x0000000000000000000000000000000000000000');
     console.log('  2. Enable with correct contract: 0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e');
@@ -2045,7 +2140,6 @@ window.fixGameContract = async function() {
         console.log('🔧 Updating game contract address...');
         const txHash = await window.tournamentManager.updateGameContract(newAddress);
         console.log('✅ Game contract address updated successfully!');
-        console.log('📋 Transaction hash:', txHash);
         console.log('💡 Now try playing the game again - score submission should work!');
         
     } catch (error) {
@@ -2060,7 +2154,6 @@ window.fixGameContract = async function() {
 
 // ТЕСТИРОВАНИЕ автоматического поиска турниров
 window.testTournamentSearch = async function() {
-    console.log('🔍 === TESTING TOURNAMENT SEARCH ===');
     
     if (!window.tournamentManager || !window.tournamentManager.connected) {
         console.log('❌ Tournament manager not connected');
@@ -2074,7 +2167,6 @@ window.testTournamentSearch = async function() {
             console.log('✅ Found active tournament:', activeTournament);
             
             if (window.tournamentLobby) {
-                console.log('🎯 Testing tournament lobby integration...');
                 await window.tournamentLobby.searchForActiveTournaments();
             }
         } else {
@@ -2085,13 +2177,9 @@ window.testTournamentSearch = async function() {
         console.error('❌ Test failed:', error);
     }
     
-    console.log('🔍 === END TEST ===');
 };
 
 console.log('🏆 Tournament Manager loaded');
 console.log('💡 Run checkGameContract() in console to diagnose game contract verification');
 console.log('🧪 Run testGameHashProblem() to test hash timing issue');
-console.log('🔍 Run testHashDuplication() to test hash uniqueness');
-console.log('🎯 Run getGameContractAddressDirect() to get game contract address directly');
 console.log('🔧 Run fixGameContract() to fix the game contract address problem!');
-console.log('🔍 Run testTournamentSearch() to test automatic tournament search!');

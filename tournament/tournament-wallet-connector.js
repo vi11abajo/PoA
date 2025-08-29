@@ -11,7 +11,7 @@ class TournamentWalletConnector {
         this.config = {
             NETWORK_NAME: 'Pharos Testnet',
             RPC_URL: 'https://testnet.dplabs-internal.com',
-            CHAIN_ID: '688688',
+            CHAIN_ID: TOURNAMENT_CONSTANTS.BLOCKCHAIN.PHAROS_TESTNET_CHAIN_ID,
         };
 
         console.log('💼 Tournament Wallet Connector initialized');
@@ -304,7 +304,7 @@ class TournamentWalletConnector {
                     font-size: 14px;
                 ">${message}</div>
             `;
-            setTimeout(() => this.clearMessage(), 5000);
+            setTimeout(() => this.clearMessage(), TOURNAMENT_CONSTANTS.TIMEOUTS.MESSAGE_DISPLAY);
         }
     }
 
@@ -322,7 +322,7 @@ class TournamentWalletConnector {
                     font-size: 14px;
                 ">${message}</div>
             `;
-            setTimeout(() => this.clearMessage(), 3000);
+            setTimeout(() => this.clearMessage(), TOURNAMENT_CONSTANTS.TIMEOUTS.SUCCESS_MESSAGE);
         }
     }
 

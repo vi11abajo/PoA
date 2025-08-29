@@ -22,12 +22,80 @@ class TournamentLobby {
         this.isMonitoringActive = false;
         this.lastCheckedTournaments = new Set();
         
+        // 🛠️ Централизованное управление таймерами (предотвращение утечек памяти)
+        this.timers = {
+            intervals: new Map(),      // именованные интервалы
+            timeouts: new Set(),       // все timeout'ы
+            updateLoop: null,          // основной цикл обновления
+            monitoring: null           // мониторинг турниров
+        };
+        
         // ⚡ Локальные попытки для случаев, когда счет не улучшен
         this.playerAttempts = 0;
         this.playerRegistered = false;
 
-        console.log('🏆 Tournament Lobby initialized - BLOCKCHAIN ONLY MODE');
-        console.log('⚡ NO LOCAL FALLBACKS - ALL DATA FROM SMART CONTRACTS ONLY!');
+    }
+
+    // 🛠️ БЕЗОПАСНЫЕ МЕТОДЫ УПРАВЛЕНИЯ ТАЙМЕРАМИ
+    
+    // Создать безопасный интервал с автоматической очисткой
+    createSafeInterval(callback, delay, name) {
+        // Очищаем старый интервал если есть
+        if (this.timers.intervals.has(name)) {
+            clearInterval(this.timers.intervals.get(name));
+        }
+        
+        const intervalId = setInterval(callback, delay);
+        this.timers.intervals.set(name, intervalId);
+        console.log(`⏰ Created safe interval: ${name}`);
+        return intervalId;
+    }
+    
+    // Создать безопасный timeout с автоматическим отслеживанием
+    createSafeTimeout(callback, delay) {
+        const timeoutId = setTimeout(() => {
+            callback();
+            // Автоматически удаляем из отслеживания после выполнения
+            this.timers.timeouts.delete(timeoutId);
+        }, delay);
+        
+        this.timers.timeouts.add(timeoutId);
+        return timeoutId;
+    }
+    
+    // Очистить конкретный интервал
+    clearSafeInterval(name) {
+        if (this.timers.intervals.has(name)) {
+            clearInterval(this.timers.intervals.get(name));
+            this.timers.intervals.delete(name);
+            console.log(`🧹 Cleared safe interval: ${name}`);
+        }
+    }
+    
+    // Очистить все таймеры (предотвращение утечек)
+    clearAllTimers() {
+        // Очищаем все интервалы
+        this.timers.intervals.forEach((intervalId, name) => {
+            clearInterval(intervalId);
+            console.log(`🧹 Cleared interval: ${name}`);
+        });
+        this.timers.intervals.clear();
+        
+        // Очищаем все timeout'ы
+        this.timers.timeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.timers.timeouts.clear();
+        
+        // Очищаем старые переменные для совместимости
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+            this.updateInterval = null;
+        }
+        if (this.tournamentMonitorInterval) {
+            clearInterval(this.tournamentMonitorInterval);
+            this.tournamentMonitorInterval = null;
+        }
+        
+        console.log('🧹 All timers cleared - no memory leaks!');
     }
 
     // ⚡ КРИТИЧЕСКАЯ ПРОВЕРКА БЛОКЧЕЙН ПОДКЛЮЧЕНИЯ ⚡
@@ -210,15 +278,15 @@ async initDependencies() {
 
     // Запуск цикла обновления
     startUpdateLoop() {
-        // Обновляем данные каждые 30 секунд
-        this.updateInterval = setInterval(() => {
+        // Обновляем данные каждые 30 секунд БЕЗОПАСНО
+        this.createSafeInterval(() => {
             this.updateData();
-        }, TOURNAMENT_CONFIG.AUTO_UPDATE_INTERVAL || 30000);
+        }, TOURNAMENT_CONFIG.AUTO_UPDATE_INTERVAL || 30000, 'dataUpdate');
 
-        // Первое обновление
-        setTimeout(() => this.updateData(), 2000);
+        // Первое обновление БЕЗОПАСНО  
+        this.createSafeTimeout(() => this.updateData(), 2000);
 
-        console.log('⏰ Update loop started');
+        console.log('⏰ Safe update loop started - no memory leaks');
     }
 
     // Обновление всех данных
@@ -285,6 +353,13 @@ async initDependencies() {
         if (window.tournamentManager && this.walletConnector) {
             try {
                 console.log('🔗 Connecting TournamentManager to wallet...');
+                console.log('🔧 WalletConnector details:', {
+                    connected: this.walletConnector.connected,
+                    account: this.walletConnector.account,
+                    hasWeb3: !!this.walletConnector.web3,
+                    web3Type: typeof this.walletConnector.web3
+                });
+                
                 const connected = await window.tournamentManager.connect(this.walletConnector);
                 if (connected) {
                     console.log('✅ TournamentManager connected to blockchain');
@@ -294,6 +369,11 @@ async initDependencies() {
             } catch (error) {
                 console.error('❌ Error connecting TournamentManager:', error);
             }
+        } else {
+            console.log('🔧 Connection check failed:', {
+                tournamentManagerAvailable: !!window.tournamentManager,
+                walletConnectorAvailable: !!this.walletConnector
+            });
         }
 
         // Обновляем обычные кнопки для ВСЕХ пользователей (включая админа)
@@ -308,7 +388,7 @@ async initDependencies() {
         console.log('🔧 FORCE Admin check for address:', this.walletConnector.account);
         
         // Принудительно обновляем админ панель еще раз через секунду
-        setTimeout(() => {
+        this.createSafeTimeout(() => {
             console.log('🔧 DELAYED Admin check...');
             this.updateAdminPanel();
         }, 1000);
@@ -438,19 +518,23 @@ async initDependencies() {
         console.log('🔄 Starting tournament monitoring (every 60 seconds)...');
         this.isMonitoringActive = true;
         
-        this.tournamentMonitorInterval = setInterval(async () => {
+        // БЕЗОПАСНЫЙ мониторинг турниров
+        this.createSafeInterval(async () => {
             console.log('🔄 Periodic tournament check...');
             await this.searchForActiveTournaments();
-        }, 60000); // Каждую минуту
+        }, 60000, 'tournamentMonitoring');
     }
 
     // Остановить мониторинг турниров
     stopTournamentMonitoring() {
+        console.log('⏹️ Stopping tournament monitoring');
+        this.clearSafeInterval('tournamentMonitoring');
+        this.isMonitoringActive = false;
+        
+        // Совместимость со старым кодом
         if (this.tournamentMonitorInterval) {
-            console.log('⏹️ Stopping tournament monitoring');
             clearInterval(this.tournamentMonitorInterval);
             this.tournamentMonitorInterval = null;
-            this.isMonitoringActive = false;
         }
     }
 
@@ -559,7 +643,7 @@ async initDependencies() {
                     if (isRegistered) {
                         // ⚡ Проверяем количество попыток для определения статуса
                         const totalAttempts = await this.getUserAttempts();
-                        if (totalAttempts >= 3) {
+                        if (totalAttempts >= TOURNAMENT_CONSTANTS.GAME.MAX_ATTEMPTS) {
                             this.currentUserStatus = 'finished';
                             console.log('🏁 Player status: finished (all attempts used)');
                         } else {
@@ -757,8 +841,8 @@ async initDependencies() {
 
         // ⚡ ИСПРАВЛЕНО: getUserAttempts() возвращает Promise, нужен await
         const attempts = await this.getUserAttempts();
-        if (attempts >= 3) {
-            this.showError('You have used all 3 attempts');
+        if (attempts >= TOURNAMENT_CONSTANTS.GAME.MAX_ATTEMPTS) {
+            this.showError(`You have used all ${TOURNAMENT_CONSTANTS.GAME.MAX_ATTEMPTS} attempts`);
             return;
         }
 
@@ -955,7 +1039,7 @@ async submitGameScore(score, playerName = null) {
             
             // Обновляем лидерборд на всякий случай
             if (typeof this.updateLeaderboard === 'function') {
-                setTimeout(() => this.updateLeaderboard(), 1000);
+                this.createSafeTimeout(() => this.updateLeaderboard(), 1000);
             }
         } catch (updateError) {
             console.warn('⚠️ Error updating UI after failed submission:', updateError);
@@ -1065,7 +1149,7 @@ async submitGameScore(score, playerName = null) {
         console.log('🚀 Starting tournament game in modal...');
         
         // Ждем пока модальное окно появится в DOM
-        setTimeout(() => {
+        this.createSafeTimeout(() => {
             const tournamentCanvas = document.getElementById('tournamentGameCanvas');
             if (!tournamentCanvas) {
                 console.error('❌ Tournament canvas not found');
@@ -1401,9 +1485,16 @@ async updateButtonStates() {
 
         if (isAdmin) {
             adminPanel.style.display = 'block';
+            adminPanel.classList.add('show');
             console.log('✅ Admin panel shown');
         } else {
-            adminPanel.style.display = 'none';
+            adminPanel.classList.remove('show');
+            // Скрываем с анимацией
+            this.createSafeTimeout(() => {
+                if (!adminPanel.classList.contains('show')) {
+                    adminPanel.style.display = 'none';
+                }
+            }, 400); // Время анимации
             console.log('👤 Admin panel hidden (not admin)');
         }
 
@@ -1819,7 +1910,7 @@ showError(message) {
     document.body.appendChild(notification);
 
     // Удаляем через 5 секунд
-    setTimeout(() => {
+    tournamentLobby.createSafeTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
         }
@@ -1851,7 +1942,7 @@ showWarning(message) {
     document.body.appendChild(notification);
 
     // Удаляем через 6 секунд
-    setTimeout(() => {
+    tournamentLobby.createSafeTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
         }
@@ -1882,7 +1973,7 @@ showSuccess(message) {
     document.body.appendChild(notification);
 
     // Удаляем через 4 секунды
-    setTimeout(() => {
+    tournamentLobby.createSafeTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
         }
@@ -2055,7 +2146,7 @@ showSuccess(message) {
         this.updateButtonStates();
 
         // Скрываем секцию после сохранения
-        setTimeout(() => this.hidePlayerNameSection(), 2000);
+        this.createSafeTimeout(() => this.hidePlayerNameSection(), 2000);
     }
 }
 
@@ -2126,7 +2217,7 @@ window.addEventListener('load', async () => {
         await window.tournamentLobby.init();
 
         // Проверка здоровья через 2 секунды
-        setTimeout(() => {
+        window.tournamentLobby.createSafeTimeout(() => {
             const health = window.tournamentLobby.healthCheck();
             if (health.walletConnected && health.tournamentManagerReady) {
                 console.log('💚 All systems operational');
@@ -2181,9 +2272,9 @@ window.debugTournamentLobby = {
             return;
         }
 
-        setTimeout(() => window.debugTournamentLobby.addTestScore(5000, 'TestPlayer1'), 500);
-        setTimeout(() => window.debugTournamentLobby.addTestScore(7500, 'TestPlayer2'), 1000);
-        setTimeout(() => window.debugTournamentLobby.addTestScore(6200, 'TestPlayer3'), 1500);
+        window.tournamentLobby.createSafeTimeout(() => window.debugTournamentLobby.addTestScore(5000, 'TestPlayer1'), 500);
+        window.tournamentLobby.createSafeTimeout(() => window.debugTournamentLobby.addTestScore(7500, 'TestPlayer2'), 1000);
+        window.tournamentLobby.createSafeTimeout(() => window.debugTournamentLobby.addTestScore(6200, 'TestPlayer3'), 1500);
     },
 
     // Лидерборд

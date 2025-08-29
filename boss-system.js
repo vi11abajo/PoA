@@ -31,11 +31,9 @@ function loadBossImages() {
         img.src = url;
         img.onload = () => {
             bossImagesLoaded[bossNumber] = true;
-            console.log(`👑 Boss ${bossNumber} image loaded`);
         };
         img.onerror = () => {
             bossImagesLoaded[bossNumber] = false;
-            console.log(`❌ Boss ${bossNumber} image failed`);
         };
     });
 }
@@ -87,7 +85,6 @@ function createBoss(level) {
         name: getBossName(bossNumber)
     };
 
-    console.log(`👑 Boss created: ${currentBoss.name} (HP: ${currentBoss.maxHP})`);
     return currentBoss;
 }
 
@@ -161,7 +158,6 @@ function updateBossAppearing(boss, deltaTime) {
 
         // Создаем эффект приземления
         createBossLandingEffect(boss);
-        console.log(`👑 ${boss.name} has entered the battle!`);
     }
 }
 
@@ -251,7 +247,6 @@ function updateBossDying(boss, deltaTime) {
         // Создаем финальный взрыв
         createBossFinalExplosion(boss);
 
-        console.log(`👑 ${boss.name} has been defeated!`);
     }
 }
 
@@ -277,7 +272,6 @@ function updateBossShooting(boss) {
         boss.lastShotTime = now;
         boss.nextShotDelay = getRandomShotDelay(); // Устанавливаем новую рандомную задержку
 
-        console.log(`👑 Boss fired! Next shot in ${boss.nextShotDelay}ms`); // Отладка
     }
 }
 
@@ -370,7 +364,6 @@ function damageBoss(damage) {
     // Создаем частицы попадания
     createBossHitParticles(currentBoss);
 
-    console.log(`👑 Boss took ${damage} damage! HP: ${currentBoss.currentHP}/${currentBoss.maxHP}`);
 
     // Проверяем смерть
     if (currentBoss.currentHP <= 0) {
@@ -551,7 +544,6 @@ function getBossStatus() {
 // Инициализация системы боссов
 function initBossSystem() {
     loadBossImages();
-    console.log('👑 Boss system initialized');
 }
 
 // Очистка системы боссов

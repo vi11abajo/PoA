@@ -15,13 +15,11 @@ class TournamentLobby {
         this.leaderboard = null;
         this.storage = null;
 
-        console.log('🏆 Tournament Lobby initialized');
     }
 
     // Инициализация лобби
     async init() {
         try {
-            console.log('🚀 Starting Tournament Lobby...');
 
             // Ждем немного для загрузки других скриптов
             await this.sleep(1000);
@@ -34,7 +32,6 @@ class TournamentLobby {
             this.setupUI();
             this.startUpdateLoop();
 
-            console.log('✅ Tournament Lobby ready');
 
         } catch (error) {
             console.error('❌ Failed to initialize Tournament Lobby:', error);
@@ -48,7 +45,6 @@ class TournamentLobby {
             // Инициализируем TournamentLeaderboard
             if (typeof TournamentLeaderboard !== 'undefined') {
                 this.leaderboard = new TournamentLeaderboard(this.currentTournamentId);
-                console.log('✅ Tournament Leaderboard ready');
             } else {
                 console.error('❌ TournamentLeaderboard not found');
             }
@@ -56,7 +52,6 @@ class TournamentLobby {
             // Инициализируем TournamentStorage
             if (typeof TournamentStorage !== 'undefined') {
                 this.storage = new TournamentStorage(this.currentTournamentId);
-                console.log('✅ Tournament Storage ready');
             } else {
                 console.error('❌ TournamentStorage not found');
             }
@@ -69,9 +64,7 @@ class TournamentLobby {
     initWalletConnector() {
         if (window.tournamentWalletConnector) {
             this.walletConnector = window.tournamentWalletConnector;
-            console.log('✅ Tournament wallet connector ready');
         } else {
-            console.log('⏳ Tournament wallet connector not ready yet');
         }
     }
 
@@ -79,7 +72,6 @@ class TournamentLobby {
     setupUI() {
         this.updateBasicInfo();
         this.setupButtons();
-        console.log('✅ UI setup complete');
     }
 
     // Обновление базовой информации
@@ -133,15 +125,12 @@ class TournamentLobby {
             adminPanel.style.display = isAdmin ? 'block' : 'none';
 
             if (isAdmin) {
-                console.log('👑 Admin access granted');
             }
         }
     }
 
     // Обработка подключения кошелька
     onWalletConnected(account) {
-        console.log('💛 Wallet connected to tournament lobby:', account);
-        console.log('🔍 onWalletConnected calling updateUserStatus with string "connected"');
 
         this.updateUserStatus('connected');
         this.checkAdminStatus();
@@ -149,8 +138,6 @@ class TournamentLobby {
 
     // Обработка отключения кошелька
     onWalletDisconnected() {
-        console.log('💛 Wallet disconnected from tournament lobby');
-        console.log('🔍 onWalletDisconnected calling updateUserStatus with string "disconnected"');
 
         this.updateUserStatus('disconnected');
 
@@ -176,7 +163,6 @@ class TournamentLobby {
             this.hideLoading();
             this.showSuccess('Successfully registered for tournament!');
 
-            console.log('🔍 handleRegisterForTournament calling updateUserStatus with string "registered"');
             this.updateUserStatus('registered');
 
             // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Полная очистка данных при регистрации
@@ -215,7 +201,6 @@ class TournamentLobby {
     // 🔥 ИСПРАВЛЕНО: Отправка результата игры
     async submitGameScore(score, playerName = null) {
         try {
-            console.log(`📊 Submitting score: ${score}`);
 
             if (!this.walletConnector || !this.walletConnector.connected) {
                 throw new Error('Wallet not connected');
@@ -247,7 +232,6 @@ class TournamentLobby {
             this.showSuccess(`Score ${score} submitted successfully!`);
 
             // 3. Обновляем UI
-            console.log('🎮 Game completed, updating attempt counter and leaderboard');
             this.updateAttemptIndicators();
             this.updateLeaderboard();
 
@@ -325,13 +309,10 @@ class TournamentLobby {
 
     // Обновление статуса пользователя
     updateUserStatus(status) {
-        console.log('👤 User status update called with:', status, typeof status);
         console.trace('👤 Call stack for updateUserStatus:');
 
         if (typeof status === 'object') {
             console.error('🚨 CRITICAL: OBJECT FOUND! Source must be fixed!');
-            console.log('🚨 Object details:', JSON.stringify(status, null, 2));
-            console.log('🚨 Call stack above shows the exact source');
             alert('DEVELOPMENT ERROR: Object passed to updateUserStatus! Check console for details.');
             return;
         }
@@ -344,7 +325,6 @@ class TournamentLobby {
         const oldStatus = this.currentUserStatus;
         this.currentUserStatus = status;
 
-        console.log('✅ User status updated:', {
             from: oldStatus,
             to: status,
             currentTournamentStatus: this.currentTournamentStatus
@@ -361,7 +341,6 @@ class TournamentLobby {
         const playButton = document.getElementById('playButton');
 
         if (!registerButton || !playButton) {
-            console.log('❌ Button elements not found');
             return;
         }
 
@@ -369,7 +348,6 @@ class TournamentLobby {
         const tournamentStarted = this.currentTournamentStatus === 'active';
         const isRegistered = this.currentUserStatus === 'registered';
 
-        console.log('🔄 Updating buttons with state:', {
             walletConnected,
             tournamentStarted,
             isRegistered,
@@ -382,7 +360,6 @@ class TournamentLobby {
             registerButton.textContent = 'Registered';
             registerButton.disabled = true;
             registerButton.className = 'action-button';
-            console.log('✅ Set button to: Registered (disabled)');
         } else if (!walletConnected && !tournamentStarted) {
             registerButton.textContent = 'Tournament Not Started';
             registerButton.disabled = true;
@@ -420,10 +397,8 @@ class TournamentLobby {
         playButton.className = 'action-button tournament-play';
 
         if (wasPlayButtonDisabled && !playButton.disabled) {
-            console.log('✅ Play button activated!');
         }
 
-        console.log('🎯 Final button states:', {
             registerText: registerButton.textContent,
             registerDisabled: registerButton.disabled,
             playDisabled: playButton.disabled
@@ -432,7 +407,6 @@ class TournamentLobby {
 
     // Сброс индикаторов попыток
     resetAttemptIndicators() {
-        console.log('🔄 Resetting attempt indicators to initial state');
 
         const attemptIndicators = document.getElementById('attemptIndicators');
         if (!attemptIndicators) return;
@@ -442,12 +416,10 @@ class TournamentLobby {
             dot.className = 'attempt-dot';
         });
 
-        console.log('✅ Attempt indicators reset');
     }
 
     // 🔥 ИСПРАВЛЕНО: Обновление индикаторов попыток
     updateAttemptIndicators() {
-        console.log('🎯 Updating attempt indicators after game...');
 
         const attemptIndicators = document.getElementById('attemptIndicators');
         if (!attemptIndicators) return;
@@ -471,18 +443,15 @@ class TournamentLobby {
             }
         });
 
-        console.log('🎯 Updated attempt indicators:', `${currentAttempts}/3`);
 
         // Если достигли лимита попыток, деактивируем кнопку игры
         if (currentAttempts >= 3) {
-            console.log('❌ All 3 attempts used up');
             const playButton = document.getElementById('playButton');
             if (playButton) {
                 playButton.disabled = true;
                 playButton.textContent = '🚫 No attempts left';
             }
         } else {
-            console.log(`✅ ${3 - currentAttempts} attempts remaining`);
         }
 
         // Обновляем через tournament UI если доступно
@@ -597,7 +566,6 @@ class TournamentLobby {
             }
 
             if (this.currentUserStatus === 'disconnected') {
-                console.log('🔍 checkWalletStatus calling updateUserStatus with string "connected"');
                 this.updateUserStatus('connected');
             }
         } else {
@@ -609,7 +577,6 @@ class TournamentLobby {
             }
 
             if (this.currentUserStatus !== 'disconnected') {
-                console.log('🔍 checkWalletStatus calling updateUserStatus with string "disconnected"');
                 this.updateUserStatus('disconnected');
             }
         }
@@ -704,7 +671,6 @@ class TournamentLobby {
         } else {
             alert('Success: ' + message);
         }
-        console.log('Tournament Success:', message);
     }
 
     // Проверка здоровья системы
@@ -718,7 +684,6 @@ class TournamentLobby {
             blockchainAccessible: typeof window.web3 !== 'undefined' || typeof window.Web3 !== 'undefined'
         };
 
-        console.log('🏥 Health check results:', status);
         return status;
     }
 
@@ -740,7 +705,6 @@ class TournamentLobby {
     destroy() {
         this.stopUpdateLoop();
         this.stopTimer();
-        console.log('🏆 Tournament Lobby destroyed');
     }
 }
 
@@ -754,7 +718,6 @@ window.handleWalletToggle = async function() {
             await window.tournamentWalletConnector.showWalletModal();
         }
     } else {
-        console.log('❌ Tournament wallet connector not available');
         alert('Wallet connector not ready. Please refresh the page.');
     }
 };
@@ -763,7 +726,6 @@ window.handleRegisterForTournament = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleRegisterForTournament();
     } else {
-        console.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -771,7 +733,6 @@ window.handlePlayTournamentGame = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handlePlayTournamentGame();
     } else {
-        console.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -779,7 +740,6 @@ window.handleStartTournament = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleStartTournament();
     } else {
-        console.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -787,7 +747,6 @@ window.handleEndTournament = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleEndTournament();
     } else {
-        console.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -796,7 +755,6 @@ window.tournamentLobby = new TournamentLobby();
 
 // Автоматическая инициализация при загрузке страницы
 window.addEventListener('load', async () => {
-    console.log('🚀 Tournament Lobby page loaded');
 
     try {
         await window.tournamentLobby.init();
@@ -804,9 +762,7 @@ window.addEventListener('load', async () => {
         setTimeout(() => {
             const health = window.tournamentLobby.healthCheck();
             if (health.walletConnected && health.tournamentManagerReady) {
-                console.log('💚 All systems operational');
             } else {
-                console.log('💡 System ready for wallet connection');
             }
         }, 2000);
 
@@ -822,37 +778,30 @@ window.debugTournamentLobby = {
     forceUpdate: () => window.tournamentLobby.updateData(),
 
     mockRegister: () => {
-        console.log('🧪 Mock register - setting status to "registered"');
         window.tournamentLobby.updateUserStatus('registered');
     },
 
     mockConnect: () => {
-        console.log('🧪 Mock connect - setting status to "connected"');
         window.tournamentLobby.updateUserStatus('connected');
     },
 
     mockDisconnect: () => {
-        console.log('🧪 Mock disconnect - setting status to "disconnected"');
         window.tournamentLobby.updateUserStatus('disconnected');
     },
 
     // 🔥 ИСПРАВЛЕНО: Тест с правильным подсчетом попыток
     addTestScore: (score, playerName) => {
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            console.log('❌ Wallet not connected for test score');
             return;
         }
-        console.log(`🧪 Adding test score: ${score} for ${playerName || 'current player'}`);
         window.tournamentLobby.submitGameScore(score, playerName);
     },
 
     getLeaderboard: () => {
         if (window.tournamentLobby.leaderboard) {
             const leaderboard = window.tournamentLobby.leaderboard.getStoredLeaderboard();
-            console.log('🏆 Current leaderboard:', leaderboard);
             return leaderboard;
         }
-        console.log('❌ Leaderboard not available');
         return null;
     },
 
@@ -860,18 +809,15 @@ window.debugTournamentLobby = {
         if (window.tournamentLobby.leaderboard) {
             window.tournamentLobby.leaderboard.clearLeaderboard();
             window.tournamentLobby.updateLeaderboard();
-            console.log('🧹 Leaderboard cleared');
         }
     },
 
     getPlayerStats: () => {
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            console.log('❌ Wallet not connected');
             return null;
         }
         if (window.tournamentLobby.leaderboard) {
             const stats = window.tournamentLobby.leaderboard.getPlayerStats(window.tournamentLobby.walletConnector.account);
-            console.log('📊 Your stats:', stats);
             return stats;
         }
         return null;
@@ -881,7 +827,6 @@ window.debugTournamentLobby = {
     getStorageStats: () => {
         if (window.tournamentLobby.storage) {
             const stats = window.tournamentLobby.storage.getStorageStats();
-            console.log('💾 Storage stats:', stats);
             return stats;
         }
         return null;
@@ -889,12 +834,10 @@ window.debugTournamentLobby = {
 
     getPlayerAttempts: () => {
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            console.log('❌ Wallet not connected');
             return 0;
         }
         if (window.tournamentLobby.storage) {
             const attempts = window.tournamentLobby.storage.getPlayerAttempts();
-            console.log(`🎯 Player attempts: ${attempts}/3`);
             return attempts;
         }
         return 0;
@@ -902,13 +845,11 @@ window.debugTournamentLobby = {
 
     resetPlayerAttempts: () => {
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            console.log('❌ Wallet not connected');
             return;
         }
         if (window.tournamentLobby.storage) {
             window.tournamentLobby.storage.resetPlayerAttempts();
             window.tournamentLobby.updateAttemptIndicators();
-            console.log('🧹 Player attempts reset');
         }
     },
 
@@ -920,42 +861,34 @@ window.debugTournamentLobby = {
             window.tournamentLobby.leaderboard.clearLeaderboard();
         }
         window.tournamentLobby.updateLeaderboard();
-        console.log('🧹 All tournament data cleared');
     },
 
     simulateGame: (finalScore) => {
-        console.log(`🎮 Simulating game with score: ${finalScore || 'random'}`);
         const score = finalScore || Math.floor(Math.random() * 10000) + 1000;
         window.tournamentLobby.submitGameScore(score, `Player${Date.now()}`);
     },
 
     // Тест полного цикла регистрации
     testRegistrationFlow: () => {
-        console.log('🧪 Testing full registration flow...');
 
         // 1. Подключаем кошелек
         window.debugTournamentLobby.mockConnect();
 
         // 2. Ждем и регистрируемся
         setTimeout(() => {
-            console.log('🧪 Step 2: Mock registration');
             window.debugTournamentLobby.mockRegister();
         }, 1000);
 
         // 3. Проверяем что попытки сброшены
         setTimeout(() => {
-            console.log('🧪 Step 3: Check attempts reset');
             const attempts = window.debugTournamentLobby.getPlayerAttempts();
-            console.log(`🎯 Attempts after registration: ${attempts} (should be 0)`);
         }, 2000);
     },
 
     // Симуляция 3 игр подряд
     testFullGameFlow: async () => {
-        console.log('🧪 Testing full game flow (3 attempts)...');
 
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            console.log('❌ Wallet not connected - using mock connection');
             window.debugTournamentLobby.mockConnect();
             await new Promise(resolve => setTimeout(resolve, 500));
             window.debugTournamentLobby.mockRegister();
@@ -964,7 +897,6 @@ window.debugTournamentLobby = {
 
         // Играем 3 игры
         for (let i = 1; i <= 3; i++) {
-            console.log(`🎮 Game ${i}/3`);
             const score = Math.floor(Math.random() * 5000) + 1000;
             window.tournamentLobby.submitGameScore(score, `TestPlayer`);
 
@@ -977,13 +909,9 @@ window.debugTournamentLobby = {
         // Проверяем что попытки исчерпаны
         setTimeout(() => {
             const attempts = window.debugTournamentLobby.getPlayerAttempts();
-            console.log(`🎯 Final attempts: ${attempts}/3 (should be 3)`);
 
             const canPlay = window.tournamentLobby.storage.canPlayerPlay();
-            console.log(`🎮 Can still play: ${canPlay} (should be false)`);
         }, 1500);
     }
 };
 
-console.log('🏆 Tournament Lobby loaded with FIXED attempt counting system');
-console.log('🔧 Debug functions available at window.debugTournamentLobby');

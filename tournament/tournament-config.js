@@ -177,4 +177,3 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TOURNAMENT_CONFIG = TOURNAMENT_CONFIG;
 }
 
-console.log('🏆 Tournament config loaded:', TOURNAMENT_CONFIG);

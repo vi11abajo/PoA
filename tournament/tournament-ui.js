@@ -380,12 +380,22 @@ class TournamentUI {
         }
     }
 
-    // Обновить лидерборд
+    // Обновить лидерборд (оптимизированная версия)
     updateLeaderboard(leaderboard) {
         if (!this.elements.leaderboardBody || !Array.isArray(leaderboard)) return;
 
         const sortedBoard = TournamentUtils.sortByScore(leaderboard);
         const topPlayers = sortedBoard.slice(0, TOURNAMENT_CONFIG.LEADERBOARD_UPDATE_LIMIT || 10);
+
+        // 📊 Проверяем, изменился ли лидерборд
+        if (this.lastLeaderboardHash && this.isSameLeaderboard(topPlayers)) {
+            console.log('⚡ Leaderboard unchanged, skipping update');
+            return;
+        }
+
+        // Сохраняем хеш для следующего сравнения
+        this.lastLeaderboardHash = this.generateLeaderboardHash(topPlayers);
+        console.log('🔄 Updating leaderboard DOM');
 
         let html = '';
 
@@ -405,7 +415,7 @@ class TournamentUI {
                 const rankColor = TournamentUtils.getRankColor(rank);
 
                 html += `
-                    <tr style="color: ${rankColor}">
+                    <tr style="color: ${rankColor}" data-player="${entry.player}">
                         <td>${medal} ${rank}</td>
                         <td>${entry.playerName || 'Anonymous'}</td>
                         <td title="${entry.player}">${TournamentUtils.formatAddress(entry.player)}</td>
@@ -418,6 +428,112 @@ class TournamentUI {
 
         this.elements.leaderboardBody.innerHTML = html;
         console.log(`📊 Leaderboard updated with ${topPlayers.length} entries`);
+    }
+
+    // 🔍 Генерировать хеш для сравнения лидерборда
+    generateLeaderboardHash(players) {
+        if (!players || players.length === 0) return 'empty';
+        
+        return players
+            .map(p => `${p.player}:${p.score}`)
+            .join('|');
+    }
+    
+    // 🔍 Проверить, одинаковый ли лидерборд
+    isSameLeaderboard(newPlayers) {
+        const newHash = this.generateLeaderboardHash(newPlayers);
+        return newHash === this.lastLeaderboardHash;
+    }
+    
+    // ⚡ Инкрементальное обновление одного игрока
+    updatePlayerInLeaderboard(player, newScore, playerName) {
+        const rows = this.elements.leaderboardBody?.querySelectorAll('tr[data-player]');
+        if (!rows) return false;
+        
+        let playerRow = null;
+        for (const row of rows) {
+            if (row.dataset.player === player) {
+                playerRow = row;
+                break;
+            }
+        }
+        
+        if (playerRow) {
+            // Обновляем существующую строку
+            const cells = playerRow.querySelectorAll('td');
+            if (cells.length >= 4) {
+                cells[3].textContent = TournamentUtils.formatNumber(newScore);
+                console.log(`⚡ Updated player ${player} score to ${newScore}`);
+                return true;
+            }
+        }
+        
+        return false; // Не нашли игрока, нужно полное обновление
+    }
+    
+    // 📱 Виртуализация для больших списков лидеров
+    updateLeaderboardVirtualized(leaderboard, maxVisible = 50) {
+        if (!this.elements.leaderboardBody || !Array.isArray(leaderboard)) return;
+        
+        const sortedBoard = TournamentUtils.sortByScore(leaderboard);
+        
+        if (sortedBoard.length <= maxVisible) {
+            // Если данных мало, используем обычное обновление
+            return this.updateLeaderboard(leaderboard);
+        }
+        
+        console.log(`📱 Using virtualization for ${sortedBoard.length} players (showing top ${maxVisible})`);
+        
+        // Показываем только верхние результаты + счетчик остальных
+        const topPlayers = sortedBoard.slice(0, maxVisible);
+        const remainingCount = sortedBoard.length - maxVisible;
+        
+        let html = '';
+        
+        topPlayers.forEach((entry, index) => {
+            const rank = index + 1;
+            const medal = TournamentUtils.getMedal(rank);
+            const percentage = TournamentUtils.getPrizePercentage(rank);
+            const rankColor = TournamentUtils.getRankColor(rank);
+
+            html += `
+                <tr style="color: ${rankColor}" data-player="${entry.player}">
+                    <td>${medal} ${rank}</td>
+                    <td>${entry.playerName || 'Anonymous'}</td>
+                    <td title="${entry.player}">${TournamentUtils.formatAddress(entry.player)}</td>
+                    <td>${TournamentUtils.formatNumber(entry.score)}</td>
+                    <td>${percentage}</td>
+                </tr>
+            `;
+        });
+        
+        // Добавляем строку с информацией об остальных игроках
+        if (remainingCount > 0) {
+            html += `
+                <tr style="color: #666; font-style: italic;">
+                    <td colspan="5" style="text-align: center; padding: 10px;">
+                        ... и еще ${remainingCount} игроков
+                        <button onclick="this.style.display='none'; window.tournamentUI?.showAllLeaderboard?.()" 
+                                style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">
+                            Показать всех
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        this.elements.leaderboardBody.innerHTML = html;
+        console.log(`📱 Virtualized leaderboard: ${topPlayers.length} visible, ${remainingCount} hidden`);
+        
+        // Сохраняем полный список для функции "показать всех"
+        this.fullLeaderboardData = sortedBoard;
+    }
+    
+    // 📋 Показать весь лидерборд (по требованию)
+    showAllLeaderboard() {
+        if (this.fullLeaderboardData) {
+            this.updateLeaderboard(this.fullLeaderboardData);
+        }
     }
 
     // Показать/скрыть админ панель
