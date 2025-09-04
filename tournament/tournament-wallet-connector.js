@@ -14,7 +14,7 @@ class TournamentWalletConnector {
             CHAIN_ID: TOURNAMENT_CONSTANTS.BLOCKCHAIN.PHAROS_TESTNET_CHAIN_ID,
         };
 
-        console.log('💼 Tournament Wallet Connector initialized');
+        Logger.log('💼 Tournament Wallet Connector initialized');
         this.createWalletModal();
     }
 
@@ -121,7 +121,7 @@ class TournamentWalletConnector {
         });
 
         document.body.appendChild(modal);
-        console.log('✅ Wallet modal created');
+        Logger.log('✅ Wallet modal created');
     }
 
     // Показать модалку кошелька
@@ -197,10 +197,10 @@ class TournamentWalletConnector {
                 window.tournamentLobby.onWalletConnected(this.account);
             }
 
-            console.log('✅ Wallet connected:', this.account);
+            Logger.log('✅ Wallet connected:', this.account);
 
         } catch (error) {
-            console.error('Connection error:', error);
+            Logger.error('Connection error:', error);
             this.showError(error.message);
         }
     }
@@ -221,7 +221,7 @@ class TournamentWalletConnector {
             await window.tournamentLobby.onWalletDisconnected();
         }
 
-        console.log('💔 Wallet disconnected');
+        Logger.log('💔 Wallet disconnected');
     }
 
     // Переключение сети
@@ -340,7 +340,7 @@ class TournamentWalletConnector {
             const balance = await this.web3.eth.getBalance(this.account);
             return this.web3.utils.fromWei(balance, 'ether');
         } catch (error) {
-            console.error('Balance error:', error);
+            Logger.error('Balance error:', error);
             return '0';
         }
     }
@@ -370,7 +370,7 @@ class TournamentWalletConnector {
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('Transaction error:', error);
+            Logger.error('Transaction error:', error);
             throw error;
         }
     }
@@ -384,22 +384,33 @@ class TournamentWalletConnector {
             chainId: this.config.CHAIN_ID
         };
     }
+
+    // Метод init для совместимости с основным коннектором
+    init() {
+        Logger.log('✅ Tournament Wallet Connector init called (already initialized)');
+        // Турнирный коннектор уже инициализирован в конструкторе
+        return true;
+    }
 }
 
 // Создаем глобальный экземпляр
 window.tournamentWalletConnector = new TournamentWalletConnector();
 
 // Делаем его доступным как walletConnector для совместимости
-window.walletConnector = window.tournamentWalletConnector;
+// Используем setTimeout чтобы перезаписать основной коннектор после его загрузки
+setTimeout(() => {
+    window.walletConnector = window.tournamentWalletConnector;
+    Logger.log('✅ Tournament wallet connector set as main walletConnector');
+}, 100);
 
 // Обновляем функцию handleWalletToggle
 window.handleWalletToggle = async function() {
     if (window.tournamentWalletConnector) {
         await window.tournamentWalletConnector.showWalletModal();
     } else {
-        console.log('❌ Tournament wallet connector not available');
+        Logger.log('❌ Tournament wallet connector not available');
         alert('Wallet connector not ready. Please refresh the page.');
     }
 };
 
-console.log('💼 Tournament Wallet Connector loaded and ready');
+Logger.log('💼 Tournament Wallet Connector loaded and ready');

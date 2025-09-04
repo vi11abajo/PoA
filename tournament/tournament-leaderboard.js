@@ -6,7 +6,7 @@ class TournamentLeaderboard {
         this.tournamentId = tournamentId;
         this.leaderboard = [];
 
-        console.log('🏆 Tournament Leaderboard initialized for tournament #' + tournamentId);
+        Logger.log('🏆 Tournament Leaderboard initialized for tournament #' + tournamentId);
     }
 
     // Получить сохраненный лидерборд
@@ -15,7 +15,7 @@ class TournamentLeaderboard {
             const stored = localStorage.getItem(`tournament_leaderboard_${this.tournamentId}`);
             return stored ? JSON.parse(stored) : [];
         } catch (error) {
-            console.error('❌ Error loading leaderboard:', error);
+            Logger.error('❌ Error loading leaderboard:', error);
             return [];
         }
     }
@@ -27,17 +27,17 @@ class TournamentLeaderboard {
                 `tournament_leaderboard_${this.tournamentId}`,
                 JSON.stringify(leaderboard)
             );
-            console.log('💾 Leaderboard saved to localStorage');
+            Logger.log('💾 Leaderboard saved to localStorage');
             this.leaderboard = leaderboard;
         } catch (error) {
-            console.error('❌ Error saving leaderboard:', error);
+            Logger.error('❌ Error saving leaderboard:', error);
         }
     }
 
     // 🔥 ИСПРАВЛЕНО: Добавить результат игрока в лидерборд (БЕЗ увеличения попыток здесь)
     addPlayerScore(walletAddress, score, playerName = null) {
         try {
-            console.log(`💾 Adding score for player: ${walletAddress}, score: ${score}`);
+            Logger.log(`💾 Adding score for player: ${walletAddress}, score: ${score}`);
 
             // Получаем текущий лидерборд
             let leaderboard = this.getStoredLeaderboard();
@@ -61,7 +61,7 @@ class TournamentLeaderboard {
                     leaderboard[playerIndex].playerName = playerName.trim();
                 }
 
-                console.log(`✅ Updated existing player. Scores: ${leaderboard[playerIndex].scores.length}, Best: ${leaderboard[playerIndex].bestScore}`);
+                Logger.log(`✅ Updated existing player. Scores: ${leaderboard[playerIndex].scores.length}, Best: ${leaderboard[playerIndex].bestScore}`);
             } else {
                 // Новый игрок
                 const newPlayer = {
@@ -74,7 +74,7 @@ class TournamentLeaderboard {
                 };
 
                 leaderboard.push(newPlayer);
-                console.log(`✅ Added new player: ${newPlayer.playerName}, Score: ${score}`);
+                Logger.log(`✅ Added new player: ${newPlayer.playerName}, Score: ${score}`);
             }
 
             // Сортируем по лучшему результату
@@ -83,12 +83,12 @@ class TournamentLeaderboard {
             // Сохраняем обновленный лидерборд
             this.saveLeaderboard(leaderboard);
 
-            console.log(`🏆 Leaderboard updated. Total players: ${leaderboard.length}`);
+            Logger.log(`🏆 Leaderboard updated. Total players: ${leaderboard.length}`);
 
             return leaderboard;
 
         } catch (error) {
-            console.error('❌ Error adding player score:', error);
+            Logger.error('❌ Error adding player score:', error);
             return this.getStoredLeaderboard();
         }
     }
@@ -104,10 +104,10 @@ class TournamentLeaderboard {
             if (playerIndex !== -1) {
                 leaderboard[playerIndex].attempts = attempts;
                 this.saveLeaderboard(leaderboard);
-                console.log(`✅ Updated player attempts: ${attempts}`);
+                Logger.log(`✅ Updated player attempts: ${attempts}`);
             }
         } catch (error) {
-            console.error('❌ Error updating player attempts:', error);
+            Logger.error('❌ Error updating player attempts:', error);
         }
     }
 
@@ -142,14 +142,14 @@ class TournamentLeaderboard {
     // Обновить лидерборд в UI (теперь принимает leaderboardBody как параметр)
     updateLeaderboardUI(leaderboardBody, options = {}) {
         if (!leaderboardBody) {
-            console.error('❌ Leaderboard body element not provided');
+            Logger.error('❌ Leaderboard body element not provided');
             return;
         }
 
         // Получаем реальные данные лидерборда
         const leaderboard = this.getStoredLeaderboard();
 
-        console.log(`🏆 Updating leaderboard UI with ${leaderboard.length} players`);
+        Logger.log(`🏆 Updating leaderboard UI with ${leaderboard.length} players`);
 
         leaderboardBody.innerHTML = '';
 
@@ -215,7 +215,7 @@ class TournamentLeaderboard {
             leaderboardBody.appendChild(row);
         });
 
-        console.log(`✅ Leaderboard UI updated. Showing top ${topPlayers.length} of ${leaderboard.length} players`);
+        Logger.log(`✅ Leaderboard UI updated. Showing top ${topPlayers.length} of ${leaderboard.length} players`);
     }
 
     // 🔥 НОВОЕ: Очистить данные игрока при регистрации в новом турнире
@@ -229,9 +229,9 @@ class TournamentLeaderboard {
             );
 
             this.saveLeaderboard(leaderboard);
-            console.log(`🧹 Cleared player data for: ${walletAddress}`);
+            Logger.log(`🧹 Cleared player data for: ${walletAddress}`);
         } catch (error) {
-            console.error('❌ Error clearing player data:', error);
+            Logger.error('❌ Error clearing player data:', error);
         }
     }
 
@@ -290,10 +290,10 @@ class TournamentLeaderboard {
         try {
             localStorage.removeItem(`tournament_leaderboard_${this.tournamentId}`);
             this.leaderboard = [];
-            console.log('🧹 Leaderboard cleared');
+            Logger.log('🧹 Leaderboard cleared');
             return true;
         } catch (error) {
-            console.error('❌ Error clearing leaderboard:', error);
+            Logger.error('❌ Error clearing leaderboard:', error);
             return false;
         }
     }
@@ -331,11 +331,11 @@ class TournamentLeaderboard {
             validatedPlayers.sort((a, b) => b.bestScore - a.bestScore);
 
             this.saveLeaderboard(validatedPlayers);
-            console.log(`✅ Imported ${validatedPlayers.length} players to leaderboard`);
+            Logger.log(`✅ Imported ${validatedPlayers.length} players to leaderboard`);
 
             return true;
         } catch (error) {
-            console.error('❌ Error importing leaderboard:', error);
+            Logger.error('❌ Error importing leaderboard:', error);
             return false;
         }
     }
@@ -343,7 +343,7 @@ class TournamentLeaderboard {
     // Смена турнира
     setTournamentId(newTournamentId) {
         this.tournamentId = newTournamentId;
-        console.log(`🔄 Switched to tournament #${newTournamentId}`);
+        Logger.log(`🔄 Switched to tournament #${newTournamentId}`);
     }
 
     // Получить текущий ID турнира
@@ -359,4 +359,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TournamentLeaderboard = TournamentLeaderboard;
 }
 
-console.log('🏆 Tournament Leaderboard module loaded (FIXED - no double attempt counting)');
+Logger.log('🏆 Tournament Leaderboard module loaded (FIXED - no double attempt counting)');

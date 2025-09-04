@@ -41,12 +41,16 @@
                         <div class="info-value" id="entryFee">0.005 PHRS</div>
                     </div>
                     <div class="info-item">
-                        <div class="info-label">DURATION</div>
-                        <div class="info-value">10 Minutes</div>
-                    </div>
-                    <div class="info-item">
                         <div class="info-label">MAX ATTEMPTS</div>
                         <div class="info-value">3 Games</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">DURATION</div>
+                        <div class="info-value">20 Minutes</div>
+                    </div>
+                    <div class="info-item" id="tournamentTimerSection" style="display: none;">
+                        <div class="info-label">TIME LEFT</div>
+                        <div class="info-value timer-display" id="tournamentTimer">--:--</div>
                     </div>
                 </div>
             </div>
@@ -167,7 +171,7 @@
             <h4>🔧 Admin Controls</h4>
             <div class="admin-controls">
                 <button class="admin-button" id="startTournamentBtn" onclick="handleStartTournament()">
-                    🚀 Start Tournament (10 min)
+                    🚀 Start Tournament (20 min)
                 </button>
                 <button class="admin-button" id="endTournamentBtn" onclick="handleEndTournament()">
                     🏁 End Tournament
@@ -183,6 +187,9 @@
 
         <!-- 1. ВНЕШНИЕ БИБЛИОТЕКИ (первыми) -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+        <script src="../logger.js"></script>
+        <script src="../performance-optimizer.js"></script>
+        <script src="../performance-monitor.js"></script>
 
         <!-- 2. КОНФИГУРАЦИИ (основа для всех остальных) -->
         <script src="tournament-constants.js"></script>

@@ -1,7 +1,7 @@
 // 👑 PHAROS INVADERS - BOSS SYSTEM
 // Полная система боссов с ИИ, анимацией и эффектами
 
-console.log('👑 Loading boss system...');
+// Logger.log('Loading boss system...'); // Removed - Logger not available yet
 
 // Переменные босса
 let currentBoss = null;
@@ -105,7 +105,7 @@ function updateBoss(deltaTime) {
 
     // Проверяем наличие canvas
     if (!canvas) {
-        console.error('❌ Canvas not found in updateBoss');
+        Logger.error('Canvas not found in updateBoss');
         return;
     }
 
@@ -331,7 +331,7 @@ function updateBossBullets(deltaTime) {
     }
 
     if (!canvas) {
-        console.error('❌ Canvas not found in updateBossBullets');
+        Logger.error('Canvas not found in updateBossBullets');
         return;
     }
 
@@ -570,4 +570,4 @@ window.BOSS_SYSTEM = {
     getBossParticles: () => bossParticles
 };
 
-console.log('👑 Boss system loaded successfully!');
+Logger.log('Boss system loaded successfully!');

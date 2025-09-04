@@ -53,7 +53,7 @@ class WalletConnector {
             }
         ];
         
-        console.log('🔗 Creating WalletConnector...');
+        Logger.log('🔗 Creating WalletConnector...');
         this.init();
     }
     
@@ -62,7 +62,7 @@ class WalletConnector {
         this.createWalletModal();
         this.updateConnectionStatus();
         this.isInitialized = true;
-        console.log('✅ WalletConnector initialized');
+        Logger.log('✅ WalletConnector initialized');
     }
     
     createWalletButton() {
@@ -223,7 +223,7 @@ class WalletConnector {
         
         // УДАЛЕНО: Дублированная кнопка кошелька из wallet-connector.js
         // Используем только кнопку из tournament-lobby.html
-        console.log('🔧 Skipping wallet button creation - using existing button from tournament-lobby.html');
+        Logger.log('🔧 Skipping wallet button creation - using existing button from tournament-lobby.html');
     }
     
     createWalletModal() {
@@ -251,7 +251,7 @@ class WalletConnector {
         `;
         
         document.body.appendChild(modal);
-        console.log('✅ Wallet modal created');
+        Logger.log('✅ Wallet modal created');
     }
     
     showWalletModal() {
@@ -327,10 +327,10 @@ class WalletConnector {
                 }, 1000);
             }
             
-            console.log('✅ Wallet connected:', this.account);
+            Logger.log('✅ Wallet connected:', this.account);
             
         } catch (error) {
-            console.error('Connection error:', error);
+            Logger.error('Connection error:', error);
             this.showError(error.message);
         }
     }
@@ -342,7 +342,7 @@ class WalletConnector {
         this.connected = false;
         this.walletType = null;
         this.updateConnectionStatus();
-        console.log('💔 Wallet disconnected');
+        Logger.log('💔 Wallet disconnected');
     }
     
     async switchNetwork() {
@@ -449,7 +449,7 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
-            console.log('💰 Paying game fee:', this.config.GAME_FEE, 'PHRS');
+            Logger.log('💰 Paying game fee:', this.config.GAME_FEE, 'PHRS');
             
             const feeInWei = this.web3.utils.toWei(this.config.GAME_FEE, 'ether');
             
@@ -471,11 +471,11 @@ class WalletConnector {
                 gas: Math.round(gasEstimate * 1.2)
             });
 
-            console.log('✅ Game fee paid! TX:', tx.transactionHash);
+            Logger.log('✅ Game fee paid! TX:', tx.transactionHash);
             return true;
             
         } catch (error) {
-            console.error('❌ Payment error:', error);
+            Logger.error('❌ Payment error:', error);
             
             if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
                 throw new Error(error.message || 'Insufficient funds in wallet');
@@ -520,7 +520,7 @@ class WalletConnector {
                 }
             }
             
-            console.log(`🔒 Validated score: ${score}, name: ${playerName}`);
+            Logger.log(`🔒 Validated score: ${score}, name: ${playerName}`);
             
             const gasEstimate = await this.contract.methods
                 .recordScore(score, playerName)
@@ -533,11 +533,11 @@ class WalletConnector {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Score saved! TX:', tx.transactionHash);
+            Logger.log('✅ Score saved! TX:', tx.transactionHash);
             return tx.transactionHash;
             
         } catch (error) {
-            console.error('❌ Save score error:', error);
+            Logger.error('❌ Save score error:', error);
             throw error;
         }
     }
@@ -555,12 +555,21 @@ class WalletConnector {
             }));
             
         } catch (error) {
-            console.error('❌ Get scores error:', error);
+            Logger.error('❌ Get scores error:', error);
             return [];
         }
     }
 }
 
 
-console.log('🚀 Creating global WalletConnector...');
+// Logger.log('🚀 Creating global WalletConnector...'); // Will be logged after init
 window.walletConnector = new WalletConnector();
+
+// Инициализируем кошелек после загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.walletConnector.init();
+    });
+} else {
+    window.walletConnector.init();
+}

@@ -67,7 +67,7 @@ class TournamentGame {
         this.initImages();
         this.setupEventListeners();
 
-        console.log('🎮 Tournament Game initialized');
+        Logger.log('🎮 Tournament Game initialized');
     }
 
     // Инициализация изображений
@@ -77,11 +77,11 @@ class TournamentGame {
         this.images.octopus.src = TOURNAMENT_CONFIG.IMAGES.OCTOPUS;
         this.images.octopus.onload = () => {
             this.images.loaded.octopus = true;
-            console.log('🐙 Octopus image loaded');
+            Logger.log('🐙 Octopus image loaded');
         };
         this.images.octopus.onerror = () => {
             this.images.loaded.octopus = false;
-            console.log('❌ Octopus image failed');
+            Logger.log('❌ Octopus image failed');
         };
 
         // Крабы
@@ -92,12 +92,12 @@ class TournamentGame {
 
             this.images.crabs[color.toLowerCase()].onload = () => {
                 this.images.loaded.crabs[color.toLowerCase()] = true;
-                console.log(`🦀 ${color} crab loaded`);
+                Logger.log(`🦀 ${color} crab loaded`);
             };
 
             this.images.crabs[color.toLowerCase()].onerror = () => {
                 this.images.loaded.crabs[color.toLowerCase()] = false;
-                console.log(`❌ ${color} crab failed`);
+                Logger.log(`❌ ${color} crab failed`);
             };
         });
     }
@@ -143,7 +143,7 @@ class TournamentGame {
         this.canvas.width = TOURNAMENT_CONFIG.CANVAS_WIDTH;
         this.canvas.height = TOURNAMENT_CONFIG.CANVAS_HEIGHT;
 
-        console.log('✅ Tournament canvas initialized');
+        Logger.log('✅ Tournament canvas initialized');
     }
 
     // Начать игру
@@ -175,7 +175,7 @@ class TournamentGame {
         // Запускаем игровой цикл
         this.gameLoop(performance.now());
 
-        console.log('🚀 Tournament game started');
+        Logger.log('🚀 Tournament game started');
     }
 
     // Пауза
@@ -198,7 +198,7 @@ class TournamentGame {
         this.gameState = 'gameOver';
         this.gameDuration = Date.now() - this.gameStartTime;
 
-        console.log(`🏁 Game ended. Score: ${this.score}, Duration: ${this.gameDuration}ms`);
+        Logger.log(`🏁 Game ended. Score: ${this.score}, Duration: ${this.gameDuration}ms`);
 
         if (this.onGameOver) {
             this.onGameOver({
@@ -790,7 +790,7 @@ class TournamentGame {
         document.removeEventListener('keydown', this.handleKeyDown);
         document.removeEventListener('keyup', this.handleKeyUp);
 
-        console.log('🎮 Tournament game destroyed');
+        Logger.log('🎮 Tournament game destroyed');
     }
 }
 
@@ -801,4 +801,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TournamentGame = TournamentGame;
 }
 
-console.log('🎮 Tournament game engine loaded');
+Logger.log('🎮 Tournament game engine loaded');

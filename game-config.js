@@ -29,6 +29,10 @@ const GAME_CONFIG = {
     // 💰 БЛОКЧЕЙН НАСТРОЙКИ
     GAME_FEE: '0.001',      // Game start fee in PHRS (e.g.: '0.001', '0.005', '0.01')
     
+    // 📝 НАСТРОЙКИ ЛОГИРОВАНИЯ
+    DEBUG_MODE: false,      // Включить отладочные сообщения (true/false)
+    LOG_LEVEL: 'ERROR',     // Уровень логирования: DEBUG, INFO, WARN, ERROR
+    
     // 🎨 ВИЗУАЛЬНЫЕ НАСТРОЙКИ
     PARTICLE_COUNT: 88,    // Количество частиц в % (50 = меньше для слабых ПК, 150 = больше)
     ANIMATION_SPEED: 100,   // Скорость анимаций в % (80 = медленнее, 120 = быстрее)
@@ -80,4 +84,7 @@ const GAME_CONFIG = {
 // GAME_FEE: '0.005'  - Дорого (для турниров)
 // GAME_FEE: '0.01'   - Очень дорого (для премиум режима)
 
-console.log('🎮 Game config loaded:', GAME_CONFIG);
+// Logger removed to avoid errors during loading
+if (typeof Logger !== 'undefined' && Logger.log) {
+    Logger.log('🎮 Game config loaded:', GAME_CONFIG);
+}

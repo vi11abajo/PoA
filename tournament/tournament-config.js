@@ -28,7 +28,7 @@ const TOURNAMENT_CONFIG = {
     },
 
     // ⏰ ВРЕМЕННЫЕ ПАРАМЕТРЫ
-    TOURNAMENT_DURATION: 600,        // 10 минут в секундах
+    TOURNAMENT_DURATION: 1200,       // 20 минут в секундах
     AUTO_UPDATE_INTERVAL: 33000,     // Обновление данных каждые 33 сек
     TIMER_UPDATE_INTERVAL: 1000,     // Обновление таймера каждую секунду
     WARNING_TIME_THRESHOLD: 120,     // Предупреждение за 2 минуты

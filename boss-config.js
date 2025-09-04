@@ -120,4 +120,4 @@ function getBossName(bossNumber) {
 // 💥 АГРЕССИВНЫЕ БОССЫ:
 // BOSS_FIRE_RATE: 0.02, BOSS_SHOTS_COUNT: 7, BOSS_SHOT_SPREAD: 0.5
 
-console.log('👑 Boss config loaded:', BOSS_CONFIG);
+// Logger.log('👑 Boss config loaded:', BOSS_CONFIG); // Removed - Logger not available yet

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Owner Check</title>
+    <style>body { font-family: monospace; background: #001122; color: #00ddff; padding: 20px; }</style>
+</head>
+<body>
+    <h2>🔍 Quick Contract Owner Check</h2>
+    <div id="results">Checking...</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.2.2/dist/web3.min.js"></script>
+    <script>
+        async function checkOwner() {
+            const results = document.getElementById('results');
+            
+            try {
+                const web3 = new Web3('https://testnet.dplabs-internal.com');
+                
+                const contractABI = [{
+                    "inputs": [],
+                    "name": "owner",
+                    "outputs": [{"name": "", "type": "address"}],
+                    "stateMutability": "view",
+                    "type": "function"
+                }];
+                
+                const contract = new web3.eth.Contract(contractABI, '0x454064eA4517A80b0388EEeFFFBf2Efb85a86061');
+                
+                const owner = await contract.methods.owner().call();
+                
+                const configAdmin = '0x59F74eD82A08F80cff5D7E8055f6a24A18595F64';
+                
+                results.innerHTML = `
+                    <div style="color: #00ff88; margin: 10px 0;">
+                        <strong>📋 Contract Analysis:</strong><br>
+                        🏛️ Contract: 0x454064eA4517A80b0388EEeFFFBf2Efb85a86061<br>
+                        👑 Actual Owner: ${owner}<br>
+                        📝 Config Admin: ${configAdmin}<br><br>
+                        
+                        ${owner.toLowerCase() === configAdmin.toLowerCase() ? 
+                            '<span style="color: #00ff88;">✅ MATCH: Config admin is contract owner</span>' : 
+                            '<span style="color: #ff4444;">❌ MISMATCH: Config admin is NOT contract owner!</span>'
+                        }<br><br>
+                        
+                        <strong>💡 Solution:</strong><br>
+                        ${owner.toLowerCase() === configAdmin.toLowerCase() ?
+                            'You should be able to start tournaments. If still failing, check other restrictions.' :
+                            `Update tournament-config.js ADMIN_ADDRESS to:<br><code style="color: #ffaa00;">${owner}</code><br>Or use the actual owner account.`
+                        }
+                    </div>
+                `;
+                
+            } catch (error) {
+                results.innerHTML = `<div style="color: #ff4444;">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        checkOwner();
+    </script>
+</body>
+</html>

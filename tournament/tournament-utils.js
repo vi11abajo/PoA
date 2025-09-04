@@ -211,7 +211,7 @@ const TournamentUtils = {
             localStorage.setItem(`tournament_${key}`, JSON.stringify(data));
             return true;
         } catch (error) {
-            console.error('Storage save error:', error);
+            Logger.error('Storage save error:', error);
             return false;
         }
     },
@@ -221,7 +221,7 @@ const TournamentUtils = {
             const data = localStorage.getItem(`tournament_${key}`);
             return data ? JSON.parse(data) : null;
         } catch (error) {
-            console.error('Storage load error:', error);
+            Logger.error('Storage load error:', error);
             return null;
         }
     },
@@ -231,7 +231,7 @@ const TournamentUtils = {
             localStorage.removeItem(`tournament_${key}`);
             return true;
         } catch (error) {
-            console.error('Storage remove error:', error);
+            Logger.error('Storage remove error:', error);
             return false;
         }
     },
@@ -244,10 +244,10 @@ const TournamentUtils = {
                     localStorage.removeItem(key);
                 }
             });
-            console.log('🧹 Tournament storage cleared');
+            Logger.log('Tournament storage cleared');
             return true;
         } catch (error) {
-            console.error('Error clearing tournament storage:', error);
+            Logger.error('Error clearing tournament storage:', error);
             return false;
         }
     },
@@ -351,7 +351,7 @@ const TournamentUtils = {
     playSound(soundName) {
         // Заглушка для будущих звуковых эффектов
         if (TOURNAMENT_CONFIG.DEBUG_MODE) {
-            console.log(`🔊 Playing sound: ${soundName}`);
+            Logger.log(`🔊 Playing sound: ${soundName}`);
         }
     },
 
@@ -479,7 +479,7 @@ const TournamentUtils = {
         const timestamp = new Date().toISOString();
         const emoji = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : 'ℹ️';
 
-        console.log(`${emoji} [${timestamp}] ${message}`);
+        Logger.log(`${emoji} [${timestamp}] ${message}`);
     }
 };
 
@@ -490,4 +490,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TournamentUtils = TournamentUtils;
 }
 
-console.log('🛠️ Tournament utilities loaded');
+Logger.log('🛠️ Tournament utilities loaded');

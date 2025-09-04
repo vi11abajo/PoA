@@ -1,10 +1,14 @@
-// game.js - FULL GAME RESTORED WITH CONFIG SPEED SETTINGS + TOURNAMENT MODE
+// game.js - FULL GAME RESTORED WITH CONFIG SPEED SETTINGS + TOURNAMENT MODE + PERFORMANCE OPTIMIZATIONS
 
-console.log('🎮 Loading full game.js...');
+// Logger.log('Loading full game.js...'); // Removed - Logger not available yet
 
 // 🏆 ТУРНИРНЫЙ РЕЖИМ - добавлено в начало
 let tournamentMode = false;
 let tournamentData = null;
+
+// 🚀 PERFORMANCE OPTIMIZER - добавлено для оптимизации
+let performanceOptimizer = null;
+let performanceMonitor = null;
 
 // Game variables
 let gameState = 'start';
@@ -102,6 +106,9 @@ function clearShadow(ctx) {
 
 // НОВАЯ ПЕРЕМЕННАЯ: состояние босса
 let bossActive = false;
+
+// ПЕРЕМЕННАЯ ДЛЯ ЗАДЕРЖКИ МЕЖДУ УРОВНЯМИ
+let levelTransitionActive = false;
 
 // FPS variables
 let lastTime = 0;
@@ -252,7 +259,7 @@ function initCanvas() {
     if (canvas) {
         ctx = canvas.getContext('2d');
     } else {
-        console.error('❌ Failed to initialize canvas');
+        Logger.error('Failed to initialize canvas');
     }
 }
 
@@ -346,14 +353,32 @@ function createBullet() {
             ? 8 * (GAME_CONFIG.PLAYER_BULLET_SPEED / 100)
             : 8;
 
-        bullets.push({
-            x: player.x + player.width / 2 - 3,
-            y: player.y,
-            width: 6,
-            height: 15,
-            speed: bulletSpeed,
-            trail: []
-        });
+        // 🚀 Используем object pooling для пуль игрока если доступен
+        let bullet;
+        if (performanceOptimizer) {
+            bullet = performanceOptimizer.getPooledObject('playerBullets', {
+                x: player.x + player.width / 2 - 3,
+                y: player.y,
+                width: 6,
+                height: 15,
+                speed: bulletSpeed,
+                trail: [],
+                vy: -bulletSpeed
+            });
+        } else {
+            bullet = {
+                x: player.x + player.width / 2 - 3,
+                y: player.y,
+                width: 6,
+                height: 15,
+                speed: bulletSpeed,
+                trail: [],
+                vy: -bulletSpeed
+            };
+        }
+        if (bullet) {
+            bullets.push(bullet);
+        }
         lastShotTime = now;
         createRipple(player.x + player.width / 2, player.y);
     }
@@ -371,14 +396,32 @@ function createInvaderBullet(invader) {
             ? 2.5 * (GAME_CONFIG.CRAB_BULLET_SPEED / 100)
             : 2.5;
 
-        invaderBullets.push({
-            x: invader.x + invader.width / 2 - 4,
-            y: invader.y + invader.height,
-            width: 8,
-            height: 8,
-            speed: bulletSpeed,
-            wobble: 0
-        });
+        // 🚀 Используем object pooling для пуль крабов если доступен
+        let bullet;
+        if (performanceOptimizer) {
+            bullet = performanceOptimizer.getPooledObject('crabBullets', {
+                x: invader.x + invader.width / 2 - 4,
+                y: invader.y + invader.height,
+                width: 8,
+                height: 8,
+                speed: bulletSpeed,
+                wobble: 0,
+                vy: bulletSpeed
+            });
+        } else {
+            bullet = {
+                x: invader.x + invader.width / 2 - 4,
+                y: invader.y + invader.height,
+                width: 8,
+                height: 8,
+                speed: bulletSpeed,
+                wobble: 0,
+                vy: bulletSpeed
+            };
+        }
+        if (bullet) {
+            invaderBullets.push(bullet);
+        }
     }
 }
 
@@ -431,19 +474,43 @@ function updatePlayer(deltaTime) {
 
 // Update bullets
 function updateBullets(deltaTime) {
+    // 🚀 Обновляем пули игрока с возвратом в object pool
     bullets = bullets.filter(bullet => {
         bullet.y -= bullet.speed * deltaTime;
         bullet.trail.push({x: bullet.x + bullet.width/2, y: bullet.y + bullet.height});
         if (bullet.trail.length > 8) bullet.trail.shift();
-        return bullet.y > -bullet.height;
+        
+        if (bullet.y <= -bullet.height) {
+            // Возвращаем пулю в пул при выходе за границы если доступен
+            if (performanceOptimizer) {
+                performanceOptimizer.returnToPool('playerBullets', bullet);
+            }
+            return false;
+        }
+        return true;
     });
 
+    // 🚀 Обновляем пули крабов с возвратом в object pool
     invaderBullets = invaderBullets.filter(bullet => {
         bullet.y += bullet.speed * deltaTime;
         bullet.wobble += 0.2 * deltaTime;
         bullet.x += Math.sin(bullet.wobble) * 0.5 * deltaTime;
-        return bullet.y < canvas.height;
+        
+        if (bullet.y >= canvas.height) {
+            // Возвращаем пулю в пул при выходе за границы если доступен
+            if (performanceOptimizer) {
+                performanceOptimizer.returnToPool('crabBullets', bullet);
+            }
+            return false;
+        }
+        return true;
     });
+    
+    // 🚀 Обновляем пространственную сетку для оптимизации коллизий
+    if (performanceOptimizer && (bullets.length > 10 || invaderBullets.length > 10)) {
+        const allObjects = [...bullets, ...invaderBullets, ...invaders.filter(inv => inv.alive), player];
+        performanceOptimizer.updateSpatialGrid(allObjects);
+    }
 }
 
 // Update crabs
@@ -591,6 +658,11 @@ function checkCollisions() {
         // Remove bullets and invaders in reverse order to maintain indices
         bulletsToRemove.sort((a, b) => b - a);
         for (let i of bulletsToRemove) {
+            // 🚀 Возвращаем пули в object pool если доступен
+            const bullet = bullets[i];
+            if (performanceOptimizer) {
+                performanceOptimizer.returnToPool('playerBullets', bullet);
+            }
             bullets.splice(i, 1);
         }
     }
@@ -603,6 +675,11 @@ function checkCollisions() {
                 invaderBullets[i].y + invaderBullets[i].height > player.y) {
 
                 createExplosion(player.x + player.width/2, player.y + player.height/2, '#6666ff', true);
+                // 🚀 Возвращаем пулю краба в object pool если доступен
+                const bullet = invaderBullets[i];
+                if (performanceOptimizer) {
+                    performanceOptimizer.returnToPool('crabBullets', bullet);
+                }
                 invaderBullets.splice(i, 1);
                 lives--;
 
@@ -654,27 +731,58 @@ function drawPlayer() {
 
 // Draw crabs
 function drawInvaders() {
-    for (let invader of invaders) {
-        if (invader.alive) {
-            const centerX = invader.x + invader.width / 2;
-            const centerY = invader.y + invader.height / 2;
-            const bobbing = Math.sin(invader.animFrame) * 2;
+    // 🚀 Используем batch rendering для группировки крабов по типу  
+    // Временно отключен для диагностики проблемы с изображениями
+    if (false && performanceOptimizer && invaders.length > 1) {
+        const aliveInvaders = invaders.filter(inv => inv.alive).map(invader => ({
+            ...invader,
+            active: true, // Помечаем как активный для batch renderer
+            imageKey: invader.type,
+            centerX: invader.x + invader.width / 2,
+            centerY: invader.y + invader.height / 2,
+            bobbing: Math.sin(invader.animFrame) * 2
+        }));
+        
+        const imageMap = new Map();
+        Object.keys(crabImages).forEach(type => {
+            if (crabImagesLoaded[type]) {
+                imageMap.set(type, crabImages[type]);
+            }
+        });
+        
+        if (performanceOptimizer) {
+            performanceOptimizer.renderBatch(ctx, aliveInvaders, imageMap);
+        }
+    } else {
+        // Обычная отрисовка для малого количества крабов
+        for (let invader of invaders) {
+            if (invader.alive) {
+                const centerX = invader.x + invader.width / 2;
+                const centerY = invader.y + invader.height / 2;
+                const bobbing = Math.sin(invader.animFrame) * 2;
 
-            if (crabImagesLoaded[invader.type] && crabImages[invader.type].complete) {
-                setCrabShadow(ctx, getCrabColor(invader.type));
-                const imageSize = 40;
-                ctx.drawImage(crabImages[invader.type], centerX - imageSize/2,
-                             centerY - imageSize/2 + bobbing, imageSize, imageSize);
+                if (crabImagesLoaded[invader.type] && crabImages[invader.type].complete) {
+                    setCrabShadow(ctx, getCrabColor(invader.type));
+                    const imageSize = 40;
+                    ctx.drawImage(crabImages[invader.type], centerX - imageSize/2,
+                                 centerY - imageSize/2 + bobbing, imageSize, imageSize);
 
-            } else {
-                ctx.font = '25px Arial';
-                ctx.fillText('🦀', invader.x, invader.y + 20 + bobbing);
+                } else {
+                    // Отладочная информация для диагностики загрузки изображений
+                    if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.DEBUG_MODE) {
+                        console.log('Image not loaded for crab type:', invader.type, 
+                                  'loaded:', crabImagesLoaded[invader.type], 
+                                  'complete:', crabImages[invader.type]?.complete);
+                    }
+                    ctx.font = '25px Arial';
+                    ctx.fillText('🦀', invader.x, invader.y + 20 + bobbing);
+                }
             }
         }
+        
+        // Clear shadows after rendering all invaders
+        clearShadow(ctx);
     }
-    
-    // Clear shadows after rendering all invaders
-    clearShadow(ctx);
 }
 
 // Draw bullets
@@ -758,6 +866,18 @@ function drawUI() {
         ctx.font = '24px Arial';
         ctx.fillText('Press P to continue', canvas.width/2, canvas.height/2 + 50);
     }
+    
+    // Отображаем сообщение о завершении уровня
+    if (levelTransitionActive) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00ff88';
+        ctx.font = '48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('LEVEL COMPLETE!', canvas.width/2, canvas.height/2);
+        ctx.font = '24px Arial';
+        ctx.fillText(`Preparing Level ${level + 1}...`, canvas.width/2, canvas.height/2 + 50);
+    }
 }
 
 // Main game loop
@@ -768,6 +888,13 @@ function gameLoop(currentTime) {
 
     deltaTime = rawDeltaTime / frameTime;
     if (deltaTime > 3) deltaTime = 3;
+
+    // 🚀 Обновляем мониторинг производительности
+    if (performanceMonitor) {
+        performanceMonitor.updateFPS(currentTime);
+        performanceMonitor.updateMemory(performanceOptimizer);
+        performanceMonitor.updateDisplay(currentTime);
+    }
 
     if (gameState === 'playing') {
         updatePlayer(deltaTime);
@@ -782,41 +909,48 @@ function gameLoop(currentTime) {
         checkCollisions();
 
         let aliveInvaders = invaders.filter(inv => inv.alive);
-        if (aliveInvaders.length === 0 && !bossActive) {
-            const nextLevel = level + 1;
+        if (aliveInvaders.length === 0 && !bossActive && !levelTransitionActive) {
+            levelTransitionActive = true;
+            
+            // Задержка 2 секунды перед появлением врагов следующего уровня
+            createSafeTimeout(() => {
+                const nextLevel = level + 1;
 
-            const gameSpeedIncrease = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_SPEED_LEVEL_INCREASE)
-                ? GAME_CONFIG.GAME_SPEED_LEVEL_INCREASE
-                : 0.07;
+                const gameSpeedIncrease = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.GAME_SPEED_LEVEL_INCREASE)
+                    ? GAME_CONFIG.GAME_SPEED_LEVEL_INCREASE
+                    : 0.07;
 
-            const invaderSpeedIncrease = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_LEVEL_INCREASE)
-                ? GAME_CONFIG.CRAB_SPEED_LEVEL_INCREASE
-                : 0.25;
+                const invaderSpeedIncrease = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_LEVEL_INCREASE)
+                    ? GAME_CONFIG.CRAB_SPEED_LEVEL_INCREASE
+                    : 0.25;
 
-            gameSpeed += gameSpeedIncrease;
-            invaderSpeed += invaderSpeedIncrease;
+                gameSpeed += gameSpeedIncrease;
+                invaderSpeed += invaderSpeedIncrease;
 
-            if (window.BOSS_SYSTEM && typeof isBossLevel === 'function' && isBossLevel(nextLevel)) {
-                level = nextLevel;
-
-                if (!window.BOSS_SYSTEM.canvas && canvas) {
-                    window.BOSS_SYSTEM.canvas = canvas;
-                    window.BOSS_SYSTEM.ctx = ctx;
-                }
-
-                if (window.BOSS_SYSTEM.canvas) {
-                    window.BOSS_SYSTEM.createBoss(level);
-                    bossActive = true;
-                } else {
-                    console.error('❌ Cannot create boss: canvas not available');
-                    // Fallback: создаем обычный уровень
-                    createInvaders();
+                if (window.BOSS_SYSTEM && typeof isBossLevel === 'function' && isBossLevel(nextLevel)) {
                     level = nextLevel;
+
+                    if (!window.BOSS_SYSTEM.canvas && canvas) {
+                        window.BOSS_SYSTEM.canvas = canvas;
+                        window.BOSS_SYSTEM.ctx = ctx;
+                    }
+
+                    if (window.BOSS_SYSTEM.canvas) {
+                        window.BOSS_SYSTEM.createBoss(level);
+                        bossActive = true;
+                    } else {
+                        Logger.error('Cannot create boss: canvas not available');
+                        // Fallback: создаем обычный уровень
+                        createInvaders();
+                        level = nextLevel;
+                    }
+                } else {
+                    level = nextLevel;
+                    createInvaders();
                 }
-            } else {
-                level = nextLevel;
-                createInvaders();
-            }
+                
+                levelTransitionActive = false;
+            }, 2000); // 2 секунды задержки
         }
 
         updateUI();
@@ -915,7 +1049,7 @@ async function submitTournamentScore() {
 
     } catch (error) {
         hideLoading();
-        console.error('❌ Failed to submit score:', error);
+        Logger.error('Failed to submit score:', error);
         alert('Failed to submit score: ' + error.message);
     }
 }
@@ -986,7 +1120,7 @@ async function startGame() {
 
     } catch (error) {
         hideLoading();
-        console.error('❌ Error starting game:', error);
+        Logger.error('Error starting game:', error);
         alert('Error: ' + error.message);
     }
 }
@@ -998,6 +1132,20 @@ function actuallyStartGame() {
     level = 1;
     gameSpeed = 1;
 
+    // 🚀 Инициализация оптимизатора производительности
+    if (!performanceOptimizer && typeof PerformanceOptimizer !== 'undefined') {
+        performanceOptimizer = new PerformanceOptimizer();
+    }
+    
+    // 🚀 Инициализация монитора производительности  
+    if (!performanceMonitor && typeof getPerformanceMonitor !== 'undefined') {
+        performanceMonitor = getPerformanceMonitor();
+        // Включаем монитор только в debug режиме
+        if (GAME_CONFIG && GAME_CONFIG.DEBUG_MODE) {
+            performanceMonitor.enable();
+        }
+    }
+
     invaderSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.CRAB_SPEED_BASE)
         ? GAME_CONFIG.CRAB_SPEED_BASE
         : 1;
@@ -1007,14 +1155,27 @@ function actuallyStartGame() {
         : 5;
 
     bossActive = false;
+    levelTransitionActive = false;
     if (window.BOSS_SYSTEM) {
         window.BOSS_SYSTEM.clearBossSystem();
     }
 
+    // 🚀 Используем object pooling вместо создания новых массивов
     bullets = [];
     invaderBullets = [];
     particles = [];
     ripples = [];
+
+    // Загружаем настройки игрока если доступен
+    if (performanceOptimizer) {
+        const playerSettings = performanceOptimizer.loadPlayerSettings();
+        if (playerSettings.playerName) {
+            const playerNameEl = document.getElementById('playerName');
+            if (playerNameEl) {
+                playerNameEl.value = playerSettings.playerName;
+            }
+        }
+    }
 
     player.x = canvas.width / 2 - 30;
     player.y = canvas.height - 80;
@@ -1052,6 +1213,29 @@ function actuallyStartGame() {
 
 function showGameOver() {
     document.body.classList.add('game-over-active');
+
+    // 🚀 Сохраняем статистику игрока и обновляем рекорд если доступен
+    if (performanceOptimizer) {
+        const playerSettings = performanceOptimizer.loadPlayerSettings();
+        playerSettings.gamesPlayed = (playerSettings.gamesPlayed || 0) + 1;
+        
+        if (score > (playerSettings.highScore || 0)) {
+            playerSettings.highScore = score;
+        }
+        
+        // Сохраняем имя игрока если введено
+        const playerNameEl = document.getElementById('playerName');
+        if (playerNameEl && playerNameEl.value && playerNameEl.value.trim()) {
+            playerSettings.playerName = playerNameEl.value.trim();
+        }
+        
+        performanceOptimizer.savePlayerSettings(playerSettings);
+        
+        // Выводим статистику производительности в консоль (только в debug режиме)
+        if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG && GAME_CONFIG.DEBUG_MODE) {
+            console.log('Performance Stats:', performanceOptimizer.getPerformanceStats());
+        }
+    }
 
     const finalScoreEl = document.getElementById('finalScore');
     const gameOverEl = document.getElementById('gameOver');
@@ -1097,6 +1281,15 @@ function showGameOver() {
 function restartGame() {
     document.body.classList.remove('game-over-active');
 
+    // 🚀 Очищаем пулы объектов для предотвращения утечек памяти если доступен
+    if (performanceOptimizer) {
+        // Возвращаем все активные объекты в пулы
+        bullets.forEach(bullet => performanceOptimizer.returnToPool('playerBullets', bullet));
+        invaderBullets.forEach(bullet => performanceOptimizer.returnToPool('crabBullets', bullet));
+    }
+    bullets.length = 0;
+    invaderBullets.length = 0;
+
     const gameOverEl = document.getElementById('gameOver');
     const startScreenEl = document.getElementById('startScreen');
 
@@ -1139,7 +1332,7 @@ async function saveScoreToBlockchain() {
     // 🔐 ПРОВЕРКА ПОДОЗРИТЕЛЬНЫХ СЧЕТОВ
     const maxTheoreticalScore = calculateMaxScore();
     if (score > maxTheoreticalScore) {
-        console.warn(`⚠️ Suspicious score detected: ${score} > ${maxTheoreticalScore}`);
+        Logger.warn(`Suspicious score detected: ${score} > ${maxTheoreticalScore}`);
         alert('Score validation failed. Please contact support if this is an error.');
         return;
     }
@@ -1168,7 +1361,7 @@ async function saveScoreToBlockchain() {
 
     } catch (error) {
         hideLoading();
-        console.error('Save score error:', error);
+        Logger.error('Save score error:', error);
         alert('Failed to save score: ' + error.message);
     }
 }
@@ -1214,7 +1407,7 @@ window.ctx = ctx;
 
 // Инициализация при загрузке страницы
 window.addEventListener('load', () => {
-    console.log('🎮 Full game loaded and ready!');
+    Logger.log('Full game loaded and ready!');
 
     initCanvas();
 
@@ -1279,5 +1472,5 @@ window.createSafeTimeout = createSafeTimeout;
 window.clearAllGameTimers = clearAllGameTimers;
 window.stopGame = stopGame;
 
-console.log('✅ Full game.js loaded successfully with tournament mode!');
-console.log('🔧 Game variables exported to window');
+Logger.log('Full game.js loaded successfully with tournament mode!');
+Logger.log('Game variables exported to window');

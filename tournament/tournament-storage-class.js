@@ -13,7 +13,7 @@ class TournamentStorage {
 
         // Инициализация хранилища
         this.initStorage();
-        console.log('💾 Tournament Storage initialized for tournament:', tournamentId);
+        Logger.log('💾 Tournament Storage initialized for tournament:', tournamentId);
     }
 
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -34,9 +34,9 @@ class TournamentStorage {
                 this.saveTournamentStatus('not-started');
             }
 
-            console.log('💾 Storage initialized successfully');
+            Logger.log('💾 Storage initialized successfully');
         } catch (error) {
-            console.error('❌ Error initializing storage:', error);
+            Logger.error('❌ Error initializing storage:', error);
         }
     }
 
@@ -45,7 +45,7 @@ class TournamentStorage {
     // Увеличить количество попыток игрока
     incrementPlayerAttempts(playerAddress) {
         if (!playerAddress) {
-            console.error('❌ incrementPlayerAttempts: No player address provided');
+            Logger.error('❌ incrementPlayerAttempts: No player address provided');
             return;
         }
 
@@ -55,7 +55,7 @@ class TournamentStorage {
 
             // ИСПРАВЛЕНО: Не позволяем превышать лимит попыток
             if (currentAttempts >= 3) {
-                console.warn(`⚠️ Attempt to increment beyond limit: ${currentAttempts}/3 for ${playerAddress}`);
+                Logger.warn(`⚠️ Attempt to increment beyond limit: ${currentAttempts}/3 for ${playerAddress}`);
                 return currentAttempts; // Возвращаем текущее значение без изменений
             }
 
@@ -63,11 +63,11 @@ class TournamentStorage {
             attempts[playerAddress.toLowerCase()] = newAttempts;
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
 
-            console.log(`💾 Player attempts incremented: ${currentAttempts} → ${newAttempts} for ${playerAddress}`);
+            Logger.log(`💾 Player attempts incremented: ${currentAttempts} → ${newAttempts} for ${playerAddress}`);
             return newAttempts;
 
         } catch (error) {
-            console.error('❌ Error incrementing player attempts:', error);
+            Logger.error('❌ Error incrementing player attempts:', error);
             return 0;
         }
     }
@@ -75,7 +75,7 @@ class TournamentStorage {
     // Проверить, может ли игрок играть
     canPlayerPlay(playerAddress) {
         if (!playerAddress) {
-            console.error('❌ canPlayerPlay: No player address provided');
+            Logger.error('❌ canPlayerPlay: No player address provided');
             return false;
         }
 
@@ -83,24 +83,24 @@ class TournamentStorage {
         const playerAttempts = attempts[playerAddress.toLowerCase()] || 0;
         const canPlay = playerAttempts < 3;
 
-        console.log(`💾 Can player play: ${canPlay} (${playerAttempts}/3 attempts) for ${playerAddress}`);
+        Logger.log(`💾 Can player play: ${canPlay} (${playerAttempts}/3 attempts) for ${playerAddress}`);
         return canPlay;
     }
 
     // Получить количество попыток игрока
     getPlayerAttempts(playerAddress) {
         if (!playerAddress) {
-            console.error('❌ getPlayerAttempts: No player address provided');
+            Logger.error('❌ getPlayerAttempts: No player address provided');
             return 0;
         }
 
         try {
             const attempts = this.getStoredPlayerAttempts();
             const playerAttempts = attempts[playerAddress.toLowerCase()] || 0;
-            console.log(`💾 Player attempts: ${playerAttempts}/3 for ${playerAddress}`);
+            Logger.log(`💾 Player attempts: ${playerAttempts}/3 for ${playerAddress}`);
             return playerAttempts;
         } catch (error) {
-            console.error('❌ Error getting player attempts:', error);
+            Logger.error('❌ Error getting player attempts:', error);
             return 0;
         }
     }
@@ -108,7 +108,7 @@ class TournamentStorage {
     // Сбросить попытки игрока
     resetPlayerAttempts(playerAddress) {
         if (!playerAddress) {
-            console.error('❌ resetPlayerAttempts: No player address provided');
+            Logger.error('❌ resetPlayerAttempts: No player address provided');
             return false;
         }
 
@@ -117,11 +117,11 @@ class TournamentStorage {
             attempts[playerAddress.toLowerCase()] = 0;
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
 
-            console.log(`💾 Player attempts reset to 0 for ${playerAddress}`);
+            Logger.log(`💾 Player attempts reset to 0 for ${playerAddress}`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error resetting player attempts:', error);
+            Logger.error('❌ Error resetting player attempts:', error);
             return false;
         }
     }
@@ -129,12 +129,12 @@ class TournamentStorage {
     // Очистить данные игрока при регистрации
     clearPlayerDataOnRegistration(playerAddress) {
         if (!playerAddress) {
-            console.error('❌ clearPlayerDataOnRegistration: No player address provided');
+            Logger.error('❌ clearPlayerDataOnRegistration: No player address provided');
             return false;
         }
 
         try {
-            console.log(`💾 Clearing player data for registration: ${playerAddress}`);
+            Logger.log(`💾 Clearing player data for registration: ${playerAddress}`);
 
             // 1. Сбрасываем попытки
             const attempts = this.getStoredPlayerAttempts();
@@ -146,11 +146,11 @@ class TournamentStorage {
             delete games[playerAddress.toLowerCase()];
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            console.log(`✅ Player data cleared for registration: ${playerAddress}`);
+            Logger.log(`✅ Player data cleared for registration: ${playerAddress}`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error clearing player data:', error);
+            Logger.error('❌ Error clearing player data:', error);
             return false;
         }
     }
@@ -160,7 +160,7 @@ class TournamentStorage {
     // Сохранить результат игры
     saveGameResult(playerAddress, gameData) {
         if (!playerAddress || !gameData) {
-            console.error('❌ saveGameResult: Invalid parameters');
+            Logger.error('❌ saveGameResult: Invalid parameters');
             return false;
         }
 
@@ -193,11 +193,11 @@ class TournamentStorage {
 
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            console.log(`💾 Game result saved for ${playerAddress}: score ${gameData.score}, total games: ${player.totalGames}`);
+            Logger.log(`💾 Game result saved for ${playerAddress}: score ${gameData.score}, total games: ${player.totalGames}`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error saving game result:', error);
+            Logger.error('❌ Error saving game result:', error);
             return false;
         }
     }
@@ -205,7 +205,7 @@ class TournamentStorage {
     // Получить данные игр игрока
     getPlayerGameData(playerAddress) {
         if (!playerAddress) {
-            console.error('❌ getPlayerGameData: No player address provided');
+            Logger.error('❌ getPlayerGameData: No player address provided');
             return null;
         }
 
@@ -226,7 +226,7 @@ class TournamentStorage {
             return playerData;
 
         } catch (error) {
-            console.error('❌ Error getting player game data:', error);
+            Logger.error('❌ Error getting player game data:', error);
             return null;
         }
     }
@@ -249,11 +249,11 @@ class TournamentStorage {
             };
 
             localStorage.setItem(this.tournamentStatusKey, JSON.stringify(tournamentData));
-            console.log(`💾 Tournament status saved: ${status}`);
+            Logger.log(`💾 Tournament status saved: ${status}`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error saving tournament status:', error);
+            Logger.error('❌ Error saving tournament status:', error);
             return false;
         }
     }
@@ -269,7 +269,7 @@ class TournamentStorage {
             return 'not-started';
 
         } catch (error) {
-            console.error('❌ Error getting tournament status:', error);
+            Logger.error('❌ Error getting tournament status:', error);
             return 'not-started';
         }
     }
@@ -280,7 +280,7 @@ class TournamentStorage {
             const data = localStorage.getItem(this.tournamentStatusKey);
             return data ? JSON.parse(data) : null;
         } catch (error) {
-            console.error('❌ Error getting tournament status data:', error);
+            Logger.error('❌ Error getting tournament status data:', error);
             return null;
         }
     }
@@ -296,11 +296,11 @@ class TournamentStorage {
             };
 
             localStorage.setItem(this.tournamentInfoKey, JSON.stringify(tournamentInfo));
-            console.log('💾 Tournament info saved');
+            Logger.log('💾 Tournament info saved');
             return true;
 
         } catch (error) {
-            console.error('❌ Error saving tournament info:', error);
+            Logger.error('❌ Error saving tournament info:', error);
             return false;
         }
     }
@@ -311,7 +311,7 @@ class TournamentStorage {
             const data = localStorage.getItem(this.tournamentInfoKey);
             return data ? JSON.parse(data) : null;
         } catch (error) {
-            console.error('❌ Error getting tournament info:', error);
+            Logger.error('❌ Error getting tournament info:', error);
             return null;
         }
     }
@@ -327,11 +327,11 @@ class TournamentStorage {
             };
 
             localStorage.setItem(this.leaderboardKey, JSON.stringify(leaderboardData));
-            console.log(`💾 Leaderboard saved with ${leaderboard.length} entries`);
+            Logger.log(`💾 Leaderboard saved with ${leaderboard.length} entries`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error saving leaderboard:', error);
+            Logger.error('❌ Error saving leaderboard:', error);
             return false;
         }
     }
@@ -347,7 +347,7 @@ class TournamentStorage {
             return [];
 
         } catch (error) {
-            console.error('❌ Error getting leaderboard:', error);
+            Logger.error('❌ Error getting leaderboard:', error);
             return [];
         }
     }
@@ -360,7 +360,7 @@ class TournamentStorage {
             const data = localStorage.getItem(this.playerAttemptsKey);
             return data ? JSON.parse(data) : {};
         } catch (error) {
-            console.error('❌ Error parsing stored attempts:', error);
+            Logger.error('❌ Error parsing stored attempts:', error);
             return {};
         }
     }
@@ -371,7 +371,7 @@ class TournamentStorage {
             const data = localStorage.getItem(this.playerGamesKey);
             return data ? JSON.parse(data) : {};
         } catch (error) {
-            console.error('❌ Error parsing stored games:', error);
+            Logger.error('❌ Error parsing stored games:', error);
             return {};
         }
     }
@@ -398,7 +398,7 @@ class TournamentStorage {
             return stats;
 
         } catch (error) {
-            console.error('❌ Error getting storage stats:', error);
+            Logger.error('❌ Error getting storage stats:', error);
             return null;
         }
     }
@@ -465,7 +465,7 @@ class TournamentStorage {
             };
 
         } catch (error) {
-            console.error('❌ Error calculating storage usage:', error);
+            Logger.error('❌ Error calculating storage usage:', error);
             return { bytes: 0, kb: 0, formatted: 'unknown' };
         }
     }
@@ -513,11 +513,11 @@ class TournamentStorage {
                 }
             });
 
-            console.log(`💾 Data validation: ${isValid ? '✅ Valid' : '❌ Issues found'}`, issues);
+            Logger.log(`💾 Data validation: ${isValid ? '✅ Valid' : '❌ Issues found'}`, issues);
             return { isValid, issues };
 
         } catch (error) {
-            console.error('❌ Error validating data:', error);
+            Logger.error('❌ Error validating data:', error);
             return { isValid: false, issues: [error.message] };
         }
     }
@@ -525,7 +525,7 @@ class TournamentStorage {
     // Починить поврежденные данные
     repairData() {
         try {
-            console.log('🔧 Starting data repair...');
+            Logger.log('🔧 Starting data repair...');
 
             const attempts = this.getStoredPlayerAttempts();
             const games = this.getStoredPlayerGames();
@@ -568,11 +568,11 @@ class TournamentStorage {
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            console.log(`🔧 Data repair completed. Fixed ${repaired} issues.`);
+            Logger.log(`🔧 Data repair completed. Fixed ${repaired} issues.`);
             return repaired;
 
         } catch (error) {
-            console.error('❌ Error repairing data:', error);
+            Logger.error('❌ Error repairing data:', error);
             return 0;
         }
     }
@@ -605,11 +605,11 @@ class TournamentStorage {
                 version: '1.0'
             };
 
-            console.log('💾 Tournament data exported:', data);
+            Logger.log('💾 Tournament data exported:', data);
             return data;
 
         } catch (error) {
-            console.error('❌ Error exporting data:', error);
+            Logger.error('❌ Error exporting data:', error);
             return null;
         }
     }
@@ -648,11 +648,11 @@ class TournamentStorage {
                 imported++;
             }
 
-            console.log(`💾 Tournament data imported successfully. ${imported} sections imported.`);
+            Logger.log(`💾 Tournament data imported successfully. ${imported} sections imported.`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error importing data:', error);
+            Logger.error('❌ Error importing data:', error);
             return false;
         }
     }
@@ -674,11 +674,11 @@ class TournamentStorage {
                 localStorage.removeItem(key);
             });
 
-            console.log('💾 All tournament data cleared');
+            Logger.log('💾 All tournament data cleared');
             return true;
 
         } catch (error) {
-            console.error('❌ Error clearing tournament data:', error);
+            Logger.error('❌ Error clearing tournament data:', error);
             return false;
         }
     }
@@ -686,7 +686,7 @@ class TournamentStorage {
     // Очистить данные игрока
     clearPlayerData(playerAddress) {
         if (!playerAddress) {
-            console.error('❌ clearPlayerData: No player address provided');
+            Logger.error('❌ clearPlayerData: No player address provided');
             return false;
         }
 
@@ -700,11 +700,11 @@ class TournamentStorage {
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            console.log(`💾 Player data cleared for ${playerAddress}`);
+            Logger.log(`💾 Player data cleared for ${playerAddress}`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error clearing player data:', error);
+            Logger.error('❌ Error clearing player data:', error);
             return false;
         }
     }
@@ -739,4 +739,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TournamentStorage = TournamentStorage;
 }
 
-console.log('💾 TournamentStorage class loaded');
+Logger.log('💾 TournamentStorage class loaded');

@@ -34,7 +34,7 @@ class TournamentLobby {
 
 
         } catch (error) {
-            console.error('❌ Failed to initialize Tournament Lobby:', error);
+            Logger.error('❌ Failed to initialize Tournament Lobby:', error);
             this.showError('Failed to initialize tournament system. Please refresh the page.');
         }
     }
@@ -46,17 +46,17 @@ class TournamentLobby {
             if (typeof TournamentLeaderboard !== 'undefined') {
                 this.leaderboard = new TournamentLeaderboard(this.currentTournamentId);
             } else {
-                console.error('❌ TournamentLeaderboard not found');
+                Logger.error('❌ TournamentLeaderboard not found');
             }
 
             // Инициализируем TournamentStorage
             if (typeof TournamentStorage !== 'undefined') {
                 this.storage = new TournamentStorage(this.currentTournamentId);
             } else {
-                console.error('❌ TournamentStorage not found');
+                Logger.error('❌ TournamentStorage not found');
             }
         } catch (error) {
-            console.error('❌ Failed to initialize dependencies:', error);
+            Logger.error('❌ Failed to initialize dependencies:', error);
         }
     }
 
@@ -173,7 +173,7 @@ class TournamentLobby {
 
         } catch (error) {
             this.hideLoading();
-            console.error('Registration error:', error);
+            Logger.error('Registration error:', error);
             this.showError('Failed to register: ' + error.message);
         }
     }
@@ -237,7 +237,7 @@ class TournamentLobby {
 
         } catch (error) {
             this.hideLoading();
-            console.error('Score submission error:', error);
+            Logger.error('Score submission error:', error);
             this.showError('Failed to submit score: ' + error.message);
         }
     }
@@ -309,16 +309,16 @@ class TournamentLobby {
 
     // Обновление статуса пользователя
     updateUserStatus(status) {
-        console.trace('👤 Call stack for updateUserStatus:');
+        Logger.debug('Call stack for updateUserStatus');
 
         if (typeof status === 'object') {
-            console.error('🚨 CRITICAL: OBJECT FOUND! Source must be fixed!');
+            Logger.error('🚨 CRITICAL: OBJECT FOUND! Source must be fixed!');
             alert('DEVELOPMENT ERROR: Object passed to updateUserStatus! Check console for details.');
             return;
         }
 
         if (typeof status !== 'string') {
-            console.error('❌ CRITICAL: Not a string:', status);
+            Logger.error('❌ CRITICAL: Not a string:', status);
             return;
         }
 
@@ -547,7 +547,7 @@ class TournamentLobby {
             this.checkAdminStatus();
             this.updateLeaderboard();
         } catch (error) {
-            console.error('Update error:', error);
+            Logger.error('Update error:', error);
         }
     }
 
@@ -662,7 +662,7 @@ class TournamentLobby {
         } else {
             alert('Error: ' + message);
         }
-        console.error('Tournament Error:', message);
+        Logger.error('Tournament Error:', message);
     }
 
     showSuccess(message) {
@@ -767,7 +767,7 @@ window.addEventListener('load', async () => {
         }, 2000);
 
     } catch (error) {
-        console.error('❌ Failed to initialize tournament lobby:', error);
+        Logger.error('❌ Failed to initialize tournament lobby:', error);
     }
 });
 

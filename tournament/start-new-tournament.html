@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚀 Start New Tournament (Alternative IDs)</title>
+    <style>
+        body { font-family: monospace; background: #001122; color: #00ddff; padding: 20px; }
+        button { background: #00ddff; color: #001122; border: none; padding: 10px 15px; margin: 5px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .success { color: #00ff88; }
+        .error { color: #ff4444; }
+        .warning { color: #ffaa00; }
+        #log { background: #000; padding: 15px; height: 300px; overflow-y: auto; border: 1px solid #333; margin: 15px 0; font-size: 12px; }
+        .big-button { font-size: 16px; padding: 15px 25px; background: #00ff88; color: #001122; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Start New Tournament</h1>
+    <p>Try different tournament IDs to find one that works</p>
+    
+    <button class="big-button" onclick="startTournament(2)">🎯 START TOURNAMENT ID: 2</button>
+    <button class="big-button" onclick="startTournament(3)">🎯 START TOURNAMENT ID: 3</button>
+    <button class="big-button" onclick="startTournament(4)">🎯 START TOURNAMENT ID: 4</button>
+    
+    <br><br>
+    
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <button onclick="checkTournamentStates()">Check States of IDs 1-5</button>
+    
+    <div id="connection-status">Not connected</div>
+    <div id="log"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.2.2/dist/web3.min.js"></script>
+    <script>
+        let web3 = null;
+        let account = null;
+        let connected = false;
+        
+        const CONTRACT_ADDRESS = '0x454064eA4517A80b0388EEeFFFBf2Efb85a86061';
+        const ENTRY_FEE = '0.005'; // PHRS
+        const DURATION = 3600; // 1 hour
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logDiv.innerHTML += `<span class="${className}">${timestamp}: ${message}</span><br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) throw new Error('MetaMask not found');
+                
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                web3 = new Web3(window.ethereum);
+                account = accounts[0];
+                connected = true;
+                
+                document.getElementById('connection-status').innerHTML = `✅ Connected: ${account.substring(0,8)}...`;
+                log(`✅ Connected: ${account}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkTournamentStates() {
+            try {
+                if (!connected) {
+                    await connectWallet();
+                }
+                
+                log('🔍 Checking tournament states...');
+                
+                const abi = [{
+                    "inputs": [{"name": "_tournamentId", "type": "uint256"}],
+                    "name": "getTournamentInfo",
+                    "outputs": [
+                        {"name": "entryFee", "type": "uint256"},
+                        {"name": "startTime", "type": "uint256"},
+                        {"name": "endTime", "type": "uint256"},
+                        {"name": "prizePool", "type": "uint256"},
+                        {"name": "isActive", "type": "bool"},
+                        {"name": "isFinished", "type": "bool"},
+                        {"name": "participantCount", "type": "uint256"}
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                }];
+                
+                const contract = new web3.eth.Contract(abi, CONTRACT_ADDRESS);
+                
+                for (let id = 1; id <= 5; id++) {
+                    try {
+                        const info = await contract.methods.getTournamentInfo(id).call();
+                        const neverStarted = info.startTime.toString() === '0';
+                        const status = neverStarted ? 'AVAILABLE' : 
+                                     info.isActive ? 'ACTIVE' : 
+                                     info.isFinished ? 'FINISHED' : 'INACTIVE';
+                        
+                        const color = neverStarted ? 'success' : 'warning';
+                        log(`Tournament ${id}: ${status}`, color);
+                        
+                        if (neverStarted) {
+                            log(`   ✅ Tournament ${id} is ready to start!`, 'success');
+                        }
+                        
+                    } catch (e) {
+                        log(`Tournament ${id}: Error checking state`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ State check failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function startTournament(tournamentId) {
+            try {
+                if (!connected) {
+                    await connectWallet();
+                    if (!connected) return;
+                }
+                
+                log(`🚀 Attempting to start tournament ${tournamentId}...`);
+                
+                const entryFee = web3.utils.toWei(ENTRY_FEE, 'ether');
+                
+                log(`📋 Parameters: ID=${tournamentId}, Fee=${ENTRY_FEE} PHRS, Duration=${DURATION}s`);
+                
+                // Minimal ABI
+                const abi = [{
+                    "inputs": [
+                        {"name": "_tournamentId", "type": "uint256"},
+                        {"name": "_entryFee", "type": "uint256"},
+                        {"name": "_duration", "type": "uint256"}
+                    ],
+                    "name": "startTournament",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }];
+                
+                const contract = new web3.eth.Contract(abi, CONTRACT_ADDRESS);
+                
+                // Method 1: Try normal call
+                try {
+                    log('📋 Method 1: Standard contract call');
+                    const tx = await contract.methods
+                        .startTournament(tournamentId, entryFee, DURATION)
+                        .send({
+                            from: account,
+                            gas: 200000
+                        });
+                    
+                    log(`🎉 SUCCESS! Tournament ${tournamentId} started!`, 'success');
+                    log(`📄 Transaction: ${tx.transactionHash}`, 'success');
+                    log(`🎯 Players can now register for tournament ${tournamentId}!`, 'success');
+                    return;
+                    
+                } catch (standardError) {
+                    log(`⚠️ Standard method failed: ${standardError.message}`, 'warning');
+                    
+                    if (!standardError.message.includes('circuit breaker')) {
+                        throw standardError;
+                    }
+                }
+                
+                // Method 2: Raw transaction bypass
+                try {
+                    log('📋 Method 2: Raw transaction (circuit breaker bypass)');
+                    
+                    const methodId = '0x' + web3.utils.keccak256('startTournament(uint256,uint256,uint256)').substring(2, 10);
+                    const tournamentIdHex = web3.utils.padLeft(web3.utils.numberToHex(tournamentId), 64);
+                    const entryFeeHex = web3.utils.padLeft(web3.utils.toHex(entryFee), 64);
+                    const durationHex = web3.utils.padLeft(web3.utils.numberToHex(DURATION), 64);
+                    
+                    const data = methodId + tournamentIdHex.substring(2) + entryFeeHex.substring(2) + durationHex.substring(2);
+                    
+                    const txParams = {
+                        from: account,
+                        to: CONTRACT_ADDRESS,
+                        data: data,
+                        gas: '0x30D40' // 200000
+                    };
+
+                    const txHash = await window.ethereum.request({
+                        method: 'eth_sendTransaction',
+                        params: [txParams]
+                    });
+
+                    log(`🎉 SUCCESS! Tournament ${tournamentId} started via raw transaction!`, 'success');
+                    log(`📄 Transaction: ${txHash}`, 'success');
+                    log(`🎯 Players can now register for tournament ${tournamentId}!`, 'success');
+                    
+                } catch (rawError) {
+                    log(`❌ Raw transaction also failed: ${rawError.message}`, 'error');
+                    throw rawError;
+                }
+                
+            } catch (error) {
+                log(`❌ Failed to start tournament ${tournamentId}: ${error.message}`, 'error');
+                
+                if (error.message.includes('revert')) {
+                    log(`💡 Tournament ${tournamentId} might already be used. Try a higher ID.`, 'warning');
+                }
+            }
+        }
+
+        // Auto-load
+        log('🚀 Alternative Tournament Starter loaded');
+        log('💡 Connect wallet and try starting tournament with different IDs');
+        log('🎯 If tournament ID 1 is blocked, try IDs 2, 3, 4...');
+    </script>
+</body>
+</html>

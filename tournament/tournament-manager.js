@@ -5,6 +5,7 @@ class TournamentManager {
     constructor() {
         this.web3 = null;
         this.contract = null;
+        this.publicContract = null; // Для чтения данных без кошелька
         this.account = null;
         this.connected = false;
         this.currentTournamentId = null;
@@ -337,6 +338,19 @@ class TournamentManager {
 
     }
 
+    // Создать публичный контракт для чтения данных без кошелька
+    getPublicContract() {
+        if (!this.publicContract) {
+            const Web3 = window.Web3;
+            const publicWeb3 = new Web3(this.config.RPC_URL);
+            this.publicContract = new publicWeb3.eth.Contract(
+                this.contractABI,
+                this.config.CONTRACT_ADDRESS
+            );
+        }
+        return this.publicContract;
+    }
+
     // Connect to Web3
     async connect(walletConnector) {
         try {
@@ -355,10 +369,10 @@ class TournamentManager {
             // Проверяем доступность контракта
             await this.testContractAccess();
 
-            console.log('✅ Tournament contract connected');
+            Logger.log('✅ Tournament contract connected');
             return true;
         } catch (error) {
-            console.error('❌ Failed to connect tournament contract:', error);
+            Logger.error('❌ Failed to connect tournament contract:', error);
             this.connected = false;
             return false;
         }
@@ -372,7 +386,7 @@ class TournamentManager {
             const code = await this.web3.eth.getCode(this.config.CONTRACT_ADDRESS);
             
             if (code === '0x' || code === '0x0') {
-                console.warn('⚠️ Contract not found at this address!');
+                Logger.warn('⚠️ Contract not found at this address!');
                 return false;
             }
 
@@ -381,16 +395,16 @@ class TournamentManager {
             return true;
 
         } catch (error) {
-            console.error('❌ Contract access test failed:', error);
+            Logger.error('❌ Contract access test failed:', error);
             
             if (error.message && error.message.includes('circuit breaker')) {
-                console.error('🚨 MetaMask Circuit Breaker is active for this contract!');
-                console.error('💡 Most likely cause: Contract not deployed at this address');
-                console.error('🔧 Solutions:');
-                console.error('   1. Check tournament/check-contracts.html to verify contract existence');
-                console.error('   2. Use tournament/debug-contract.html for detailed diagnostics');
-                console.error('   3. Verify you are on Pharos Testnet (Chain ID: 688688)');
-                console.error('   4. Confirm contract address is correct');
+                Logger.error('🚨 MetaMask Circuit Breaker is active for this contract!');
+                Logger.error('💡 Most likely cause: Contract not deployed at this address');
+                Logger.error('🔧 Solutions:');
+                Logger.error('   1. Check tournament/check-contracts.html to verify contract existence');
+                Logger.error('   2. Use tournament/debug-contract.html for detailed diagnostics');
+                Logger.error('   3. Verify you are on Pharos Testnet (Chain ID: 688688)');
+                Logger.error('   4. Confirm contract address is correct');
             }
             
             return false;
@@ -485,7 +499,7 @@ class TournamentManager {
             
             
         } catch (error) {
-            console.error('❌ Batch processing failed:', error);
+            Logger.error('❌ Batch processing failed:', error);
             currentBatch.forEach(item => item.reject(error));
         }
     }
@@ -520,7 +534,7 @@ class TournamentManager {
             return results;
             
         } catch (error) {
-            console.error('❌ Failed to load multiple tournaments:', error);
+            Logger.error('❌ Failed to load multiple tournaments:', error);
             throw error;
         }
     }
@@ -573,7 +587,7 @@ class TournamentManager {
                         gas: TOURNAMENT_CONSTANTS.GAS.TOURNAMENT_REGISTRATION
                     });
                 
-                console.log('✅ Registration successful! TX:', tx.transactionHash);
+                Logger.log('✅ Registration successful! TX:', tx.transactionHash);
                 
                 // Очищаем кеш информации о турнире (количество участников изменилось)
                 this.invalidateCache(tournamentId);
@@ -581,14 +595,14 @@ class TournamentManager {
                 return tx.transactionHash;
                 
             } catch (standardError) {
-                console.warn('⚠️ Standard method failed:', standardError.message);
+                Logger.warn('⚠️ Standard method failed:', standardError.message);
                 
                 if (!standardError.message.includes('circuit breaker')) {
                     // If it's not circuit breaker, throw the error
                     throw standardError;
                 }
                 
-                console.log('🔄 Attempting circuit breaker bypass...');
+                Logger.log('🔄 Attempting circuit breaker bypass...');
             }
 
             // Method 2: Try raw transaction
@@ -610,11 +624,11 @@ class TournamentManager {
                     params: [txParams]
                 });
 
-                console.log('✅ Raw transaction successful! TX:', txHash);
+                Logger.log('✅ Raw transaction successful! TX:', txHash);
                 return txHash;
                 
             } catch (rawError) {
-                console.warn('⚠️ Raw transaction failed:', rawError.message);
+                Logger.warn('⚠️ Raw transaction failed:', rawError.message);
             }
 
             // Method 3: Try minimal ABI
@@ -636,18 +650,18 @@ class TournamentManager {
                     gas: 200000
                 });
                 
-                console.log('✅ Minimal ABI successful! TX:', tx.transactionHash);
+                Logger.log('✅ Minimal ABI successful! TX:', tx.transactionHash);
                 return tx.transactionHash;
                 
             } catch (minimalError) {
-                console.warn('⚠️ Minimal ABI failed:', minimalError.message);
+                Logger.warn('⚠️ Minimal ABI failed:', minimalError.message);
             }
 
             // If all methods failed, throw the original error with instructions
             throw new Error(`❌ All registration methods failed due to MetaMask Circuit Breaker.\n\n🔧 Solutions:\n1. Open tournament/bypass-circuit-breaker.html\n2. Try "Reset MetaMask State"\n3. Use OKX Wallet instead of MetaMask\n4. Wait 15-30 minutes and try again`);
 
         } catch (error) {
-            console.error('❌ Failed to register:', error);
+            Logger.error('❌ Failed to register:', error);
             
             // Более понятные сообщения об ошибках
             if (error.message && error.message.includes('circuit breaker')) {
@@ -670,7 +684,7 @@ class TournamentManager {
             }
 
             // Подробная диагностика
-            console.log('📊 Submitting score:', {
+            Logger.log('📊 Submitting score:', {
                 tournamentId: tournamentId,
                 score: score,
                 playerName: playerName,
@@ -699,16 +713,16 @@ class TournamentManager {
                 
                 // Проверяем лимит попыток
                 if (currentAttempts >= 3) {
-                    console.warn(`⚠️ Player has ${currentAttempts}/3 attempts used. Contract may reject.`);
+                    Logger.warn(`⚠️ Player has ${currentAttempts}/3 attempts used. Contract may reject.`);
                 }
                 
                 // Проверяем улучшение счета 
                 if (currentScore > 0 && score <= currentScore) {
-                    console.warn(`⚠️ New score ${score} ≤ current score ${currentScore}. Contract may reject.`);
+                    Logger.warn(`⚠️ New score ${score} ≤ current score ${currentScore}. Contract may reject.`);
                 }
                 
             } catch (scoreCheckError) {
-                console.warn('⚠️ Score check warning:', scoreCheckError.message);
+                Logger.warn('⚠️ Score check warning:', scoreCheckError.message);
                 // ⚡ ВСЕГДА продолжаем - пусть контракт решает
             }
             
@@ -718,17 +732,17 @@ class TournamentManager {
                 
                 if (!tournamentInfo.isActive) {
                     const errorMsg = `Tournament ${tournamentId} is not active`;
-                    console.error('❌', errorMsg);
+                    Logger.error('❌', errorMsg);
                     throw new Error(errorMsg);
                 }
                 
                 if (tournamentInfo.isFinished) {
                     const errorMsg = `Tournament ${tournamentId} is already finished`;
-                    console.error('❌', errorMsg);
+                    Logger.error('❌', errorMsg);
                     throw new Error(errorMsg);
                 }
             } catch (checkError) {
-                console.warn('⚠️ Tournament info check failed:', checkError.message);
+                Logger.warn('⚠️ Tournament info check failed:', checkError.message);
                 // Не блокируем выполнение, так как это может быть нормально для некоторых контрактов
             }
             
@@ -740,7 +754,7 @@ class TournamentManager {
                     throw new Error(`Player ${this.account} is not registered for tournament ${tournamentId}`);
                 }
             } catch (regError) {
-                console.warn('⚠️ Registration check failed:', regError.message);
+                Logger.warn('⚠️ Registration check failed:', regError.message);
             }
             
             // Проверяем количество попыток игрока
@@ -751,7 +765,7 @@ class TournamentManager {
                     throw new Error(`Player ${this.account} has already used all attempts (${playerAttempts}/3) for tournament ${tournamentId}`);
                 }
             } catch (attemptsError) {
-                console.warn('⚠️ Attempts check failed:', attemptsError.message);
+                Logger.warn('⚠️ Attempts check failed:', attemptsError.message);
                 
                 // Альтернативная проверка через прямой вызов контракта
                 try {
@@ -759,7 +773,7 @@ class TournamentManager {
                         .getPlayerScore(tournamentId, this.account)
                         .call();
                 } catch (directError) {
-                    console.warn('⚠️ Direct contract check failed:', directError.message);
+                    Logger.warn('⚠️ Direct contract check failed:', directError.message);
                 }
             }
 
@@ -781,7 +795,7 @@ class TournamentManager {
                 );
             }
             
-            console.log('🏷️ Player name conversion:', {
+            Logger.log('🏷️ Player name conversion:', {
                 originalName: playerName,
                 finalPlayerName: finalPlayerName,
                 playerNameBytes32: playerNameBytes32,
@@ -805,23 +819,23 @@ class TournamentManager {
                     throw new Error(`FINAL CHECK FAILED: Player has ${finalAttempts}/3 attempts used`);
                 }
             } catch (finalError) {
-                console.error('⚡ FINAL: Attempt check failed:', finalError.message);
+                Logger.error('⚡ FINAL: Attempt check failed:', finalError.message);
                 // Продолжаем, так как это может быть проблема с блокчейн запросом
             }
 
             // Try gas estimation first, fallback if it fails
             let gasLimit = 300000; // Default gas limit
             try {
-                console.log('⛽ Estimating gas for submitScore...');
+                Logger.log('⛽ Estimating gas for submitScore...');
                 const gasEstimate = await this.contract.methods
                     .submitScore(tournamentId, score, playerNameBytes32, gameHash)
                     .estimateGas({ from: this.account });
                     
                 gasLimit = Math.round(gasEstimate * 1.2);
-                console.log('⛽ Gas estimate successful:', gasEstimate, 'using:', gasLimit);
+                Logger.log('⛽ Gas estimate successful:', gasEstimate, 'using:', gasLimit);
             } catch (gasError) {
-                console.warn('⚠️ Gas estimation failed, using default gas limit:', gasLimit);
-                console.warn('⚠️ Gas estimation error:', gasError.message);
+                Logger.warn('⚠️ Gas estimation failed, using default gas limit:', gasLimit);
+                Logger.warn('⚠️ Gas estimation error:', gasError.message);
             }
 
             // Проверим, существует ли метод submitScore в контракте
@@ -832,22 +846,22 @@ class TournamentManager {
                 await this.contract.methods
                     .submitScore(tournamentId, score, playerNameBytes32, gameHash)
                     .call({ from: this.account });
-                console.log('✅ Dry-run call successful - parameters are valid');
+                Logger.log('✅ Dry-run call successful - parameters are valid');
                 
             } catch (dryRunError) {
-                console.error('❌ DRY-RUN FAILED:', dryRunError.message);
-                console.error('❌ This indicates why the real transaction will fail:', {
+                Logger.error('❌ DRY-RUN FAILED:', dryRunError.message);
+                Logger.error('❌ This indicates why the real transaction will fail:', {
                     message: dryRunError.message,
                     code: dryRunError.code,
                     data: dryRunError.data
                 });
                 
                 // Не блокируем выполнение, просто информируем
-                console.warn('⚠️ Continuing with transaction despite dry-run failure...');
+                Logger.warn('⚠️ Continuing with transaction despite dry-run failure...');
             }
 
             // Submit score
-            console.log('📤 Sending submitScore transaction with gas:', gasLimit);
+            Logger.log('📤 Sending submitScore transaction with gas:', gasLimit);
             const tx = await this.contract.methods
                 .submitScore(tournamentId, score, playerNameBytes32, gameHash)
                 .send({
@@ -855,7 +869,7 @@ class TournamentManager {
                     gas: gasLimit
                 });
 
-            console.log('✅ Score submitted! TX:', tx.transactionHash);
+            Logger.log('✅ Score submitted! TX:', tx.transactionHash);
             
             // Очищаем кеш лидерборда и информации о турнире (данные изменились)
             this.invalidateCache(tournamentId);
@@ -863,7 +877,7 @@ class TournamentManager {
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to submit score:', error);
+            Logger.error('❌ Failed to submit score:', error);
             throw error;
         }
     }
@@ -871,7 +885,7 @@ class TournamentManager {
     // Generate game hash
     async generateGameHash(tournamentId, nonce) {
         try {
-            console.log('🔧 generateGameHash inputs:', {
+            Logger.log('🔧 generateGameHash inputs:', {
                 tournamentId: tournamentId,
                 nonce: nonce,
                 tournamentIdType: typeof tournamentId,
@@ -883,7 +897,7 @@ class TournamentManager {
                 .generateGameHash(tournamentId, nonce)
                 .call({ from: this.account });
 
-            console.log('🔒 Game hash generated successfully:', {
+            Logger.log('🔒 Game hash generated successfully:', {
                 gameHash: gameHash,
                 length: gameHash.length,
                 isValidHex: gameHash.startsWith('0x')
@@ -891,8 +905,8 @@ class TournamentManager {
             
             return gameHash;
         } catch (error) {
-            console.error('❌ Failed to generate game hash:', error);
-            console.error('❌ Hash generation error details:', {
+            Logger.error('❌ Failed to generate game hash:', error);
+            Logger.error('❌ Hash generation error details:', {
                 message: error.message,
                 code: error.code,
                 data: error.data
@@ -905,10 +919,10 @@ class TournamentManager {
     async getGameContractAddress() {
         try {
             const gameContractAddress = await this.contract.methods.gameContractAddress().call();
-            console.log('🎮 Game contract address from tournament contract:', gameContractAddress);
+            Logger.log('🎮 Game contract address from tournament contract:', gameContractAddress);
             return gameContractAddress;
         } catch (error) {
-            console.error('❌ Failed to get game contract address:', error);
+            Logger.error('❌ Failed to get game contract address:', error);
             throw error;
         }
     }
@@ -920,7 +934,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`🔧 Updating game contract address to: ${newAddress}`);
+            Logger.log(`🔧 Updating game contract address to: ${newAddress}`);
 
             const tx = await this.contract.methods
                 .updateGameContract(newAddress)
@@ -929,11 +943,11 @@ class TournamentManager {
                     gas: 100000
                 });
 
-            console.log('✅ Game contract address updated! TX:', tx.transactionHash);
+            Logger.log('✅ Game contract address updated! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to update game contract:', error);
+            Logger.error('❌ Failed to update game contract:', error);
             throw error;
         }
     }
@@ -941,57 +955,86 @@ class TournamentManager {
     // Find active tournament by checking recent tournament IDs
     async findActiveTournament() {
         try {
-            if (!this.contract) {
-                throw new Error('Contract not connected');
-            }
-
+            Logger.log('🔍 Starting findActiveTournament...');
+            Logger.log('🔍 Contract available:', !!this.contract);
+            
+            // Создаем публичный контракт если основной не подключен
+            const contract = this.contract || this.getPublicContract();
+            Logger.log('🔍 Using contract:', contract ? 'Available' : 'Not available');
 
             // Получаем текущий счетчик турниров
-            const tournamentCounter = await this.contract.methods.tournamentCounter().call();
+            Logger.log('🔍 Getting tournament counter...');
+            const tournamentCounter = await contract.methods.tournamentCounter().call();
             const currentCount = parseInt(tournamentCounter);
-            console.log('📊 Tournament counter:', currentCount);
+            Logger.log('📊 Tournament counter:', currentCount);
 
             // Проверяем последние несколько турниров (max 10)
             const checkRange = Math.min(10, currentCount);
             const startId = Math.max(1, currentCount - checkRange + 1);
             
+            Logger.log(`🔍 Checking tournaments from ${currentCount} down to ${startId}`);
+
+            let lastActiveTournament = null; // Для fallback
 
             for (let tournamentId = currentCount; tournamentId >= startId; tournamentId--) {
+                Logger.log(`🔍 Checking tournament ID: ${tournamentId}`);
                 try {
                     const tournamentInfo = await this.getTournamentInfo(tournamentId);
                     
                     const now = Math.floor(Date.now() / 1000);
-                    const isActive = tournamentInfo.isActive && 
-                                   now >= tournamentInfo.startTime && 
-                                   now <= tournamentInfo.endTime;
+                    const isCurrentlyActive = tournamentInfo.isActive && 
+                                           now >= tournamentInfo.startTime && 
+                                           now <= tournamentInfo.endTime;
 
-                    console.log(`🔍 Tournament ${tournamentId}:`, {
+                    Logger.log(`🔍 Tournament ${tournamentId}:`, {
                         isActive: tournamentInfo.isActive,
                         isFinished: tournamentInfo.isFinished,
                         startTime: new Date(tournamentInfo.startTime * 1000).toLocaleString(),
                         endTime: new Date(tournamentInfo.endTime * 1000).toLocaleString(),
-                        timeActive: isActive,
+                        currentlyActive: isCurrentlyActive,
                         participantCount: tournamentInfo.participantCount
                     });
 
-                    if (isActive) {
-                        console.log(`✅ Found active tournament: ${tournamentId}`);
+                    // Запоминаем последний турнир, который был активен (даже если сейчас завершен)
+                    if (tournamentInfo.isActive || tournamentInfo.isFinished) {
+                        if (!lastActiveTournament || tournamentId > lastActiveTournament.tournamentId) {
+                            lastActiveTournament = {
+                                tournamentId,
+                                info: tournamentInfo,
+                                wasActive: true
+                            };
+                        }
+                    }
+
+                    // Если нашли активный сейчас - возвращаем его
+                    if (isCurrentlyActive) {
+                        Logger.log(`✅ Found active tournament: ${tournamentId}`);
                         return {
                             tournamentId: tournamentId,
                             ...tournamentInfo
                         };
                     }
                 } catch (tournamentError) {
-                    console.log(`⚠️ Tournament ${tournamentId} not found or error:`, tournamentError.message);
+                    Logger.log(`⚠️ Tournament ${tournamentId} not found or error:`, tournamentError.message);
                     continue;
                 }
             }
 
-            console.log('❌ No active tournaments found');
+            // Если активный турнир не найден, возвращаем последний активный
+            if (lastActiveTournament) {
+                Logger.log(`🔄 No currently active tournament, using last active: ${lastActiveTournament.tournamentId}`);
+                return {
+                    tournamentId: lastActiveTournament.tournamentId,
+                    ...lastActiveTournament.info,
+                    fallback: true // Маркер что это fallback
+                };
+            }
+
+            Logger.log('❌ No active or recent tournaments found');
             return null;
 
         } catch (error) {
-            console.error('❌ Failed to find active tournament:', error);
+            Logger.error('❌ Failed to find active tournament:', error);
             throw error;
         }
     }
@@ -1011,7 +1054,7 @@ class TournamentManager {
             return isRegistered;
 
         } catch (error) {
-            console.error('❌ Failed to check player registration:', error);
+            Logger.error('❌ Failed to check player registration:', error);
             return false;
         }
     }
@@ -1028,8 +1071,10 @@ class TournamentManager {
             }
             
             // Если в кеше нет, запрашиваем из блокчейна (через батчинг)
+            // Создаем публичный контракт если основной не подключен
+            const contract = this.contract || this.getPublicContract();
             const info = await this.batchCall(
-                this.contract.methods.getTournamentInfo(tournamentId).call
+                contract.methods.getTournamentInfo(tournamentId).call
             );
 
             const result = {
@@ -1047,7 +1092,7 @@ class TournamentManager {
             return result;
             
         } catch (error) {
-            console.error('❌ Failed to get tournament info:', error);
+            Logger.error('❌ Failed to get tournament info:', error);
             throw error;
         }
     }
@@ -1064,8 +1109,10 @@ class TournamentManager {
             }
             
             // Если в кеше нет, запрашиваем из блокчейна (через батчинг)
+            // Создаем публичный контракт если основной не подключен
+            const contract = this.contract || this.getPublicContract();
             const result = await this.batchCall(
-                this.contract.methods.getTournamentLeaderboard(tournamentId).call
+                contract.methods.getTournamentLeaderboard(tournamentId).call
             );
 
             const players = result.players || result[0] || [];
@@ -1095,13 +1142,13 @@ class TournamentManager {
             this.setCacheData(cacheKey, leaderboard);
             return leaderboard;
         } catch (error) {
-            console.error('❌ Failed to get tournament leaderboard:', error);
+            Logger.error('❌ Failed to get tournament leaderboard:', error);
             return [];
         }
     }
 
     // Get top players (новая функция)
-    async getTopPlayers(tournamentId, limit = 10) {
+    async getTopPlayers(tournamentId, limit = 100) {
         try {
             const result = await this.contract.methods
                 .getTopPlayers(tournamentId, limit)
@@ -1132,7 +1179,7 @@ class TournamentManager {
 
             return topPlayers;
         } catch (error) {
-            console.error('❌ Failed to get top players:', error);
+            Logger.error('❌ Failed to get top players:', error);
             return [];
         }
     }
@@ -1175,7 +1222,7 @@ class TournamentManager {
                 attempts: parseInt(result.attempts)
             };
         } catch (error) {
-            console.error('❌ Failed to get player score:', error);
+            Logger.error('❌ Failed to get player score:', error);
             return {
                 score: 0,
                 playerName: `Player${(playerAddress || this.account).slice(-4)}`,
@@ -1208,7 +1255,7 @@ class TournamentManager {
                 ownerFee: this.web3.utils.fromWei(result.ownerFee, 'ether')
             };
         } catch (error) {
-            console.error('❌ Failed to get prize distribution:', error);
+            Logger.error('❌ Failed to get prize distribution:', error);
             return {
                 first: '0',
                 second: '0',
@@ -1227,7 +1274,7 @@ class TournamentManager {
 
             return this.web3.utils.fromWei(balance, 'ether');
         } catch (error) {
-            console.error('❌ Failed to get contract balance:', error);
+            Logger.error('❌ Failed to get contract balance:', error);
             return '0';
         }
     }
@@ -1241,7 +1288,7 @@ class TournamentManager {
 
             return parseInt(counter);
         } catch (error) {
-            console.error('❌ Failed to get tournament counter:', error);
+            Logger.error('❌ Failed to get tournament counter:', error);
             return 0;
         }
     }
@@ -1258,15 +1305,15 @@ class TournamentManager {
 
             // Auto-generate Tournament ID if not provided
             if (tournamentId === null || tournamentId === undefined) {
-                console.log('🎲 Auto-generating Tournament ID...');
+                Logger.log('🎲 Auto-generating Tournament ID...');
                 tournamentId = await this.generateSmartTournamentId('timestamp');
             }
 
-            console.log(`🚀 Starting tournament ${tournamentId}...`);
+            Logger.log(`🚀 Starting tournament ${tournamentId}...`);
 
             const entryFeeWei = this.web3.utils.toWei(entryFee.toString(), 'ether');
             
-            console.log('🚀 Starting tournament with params:', {
+            Logger.log('🚀 Starting tournament with params:', {
                 tournamentId: tournamentId,
                 entryFee: entryFee,
                 entryFeeWei: entryFeeWei,
@@ -1284,20 +1331,20 @@ class TournamentManager {
                         gas: TOURNAMENT_CONSTANTS.GAS.TOURNAMENT_REGISTRATION
                     });
 
-                console.log('✅ Tournament started! TX:', tx.transactionHash);
+                Logger.log('✅ Tournament started! TX:', tx.transactionHash);
                 return { 
                     transactionHash: tx.transactionHash,
                     tournamentId: tournamentId 
                 };
                 
             } catch (standardError) {
-                console.warn('⚠️ Standard startTournament failed:', standardError.message);
+                Logger.warn('⚠️ Standard startTournament failed:', standardError.message);
                 
                 if (!standardError.message.includes('circuit breaker')) {
                     throw standardError;
                 }
                 
-                console.log('🔄 Attempting circuit breaker bypass for startTournament...');
+                Logger.log('🔄 Attempting circuit breaker bypass for startTournament...');
             }
 
             // Method 2: Try raw transaction
@@ -1321,14 +1368,14 @@ class TournamentManager {
                     params: [txParams]
                 });
 
-                console.log('✅ Raw startTournament successful! TX:', txHash);
+                Logger.log('✅ Raw startTournament successful! TX:', txHash);
                 return {
                     transactionHash: txHash,
                     tournamentId: tournamentId
                 };
                 
             } catch (rawError) {
-                console.warn('⚠️ Raw startTournament failed:', rawError.message);
+                Logger.warn('⚠️ Raw startTournament failed:', rawError.message);
             }
 
             // Method 3: Try minimal ABI
@@ -1349,20 +1396,20 @@ class TournamentManager {
                     gas: 200000
                 });
                 
-                console.log('✅ Minimal ABI startTournament successful! TX:', tx.transactionHash);
+                Logger.log('✅ Minimal ABI startTournament successful! TX:', tx.transactionHash);
                 return {
                     transactionHash: tx.transactionHash,
                     tournamentId: tournamentId
                 };
                 
             } catch (minimalError) {
-                console.warn('⚠️ Minimal ABI startTournament failed:', minimalError.message);
+                Logger.warn('⚠️ Minimal ABI startTournament failed:', minimalError.message);
             }
 
             throw new Error('❌ All startTournament methods failed. Check if you have admin rights and tournament is not already started.');
 
         } catch (error) {
-            console.error('❌ Failed to start tournament:', error);
+            Logger.error('❌ Failed to start tournament:', error);
             throw error;
         }
     }
@@ -1374,7 +1421,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`🏁 Ending tournament ${tournamentId}...`);
+            Logger.log(`🏁 Ending tournament ${tournamentId}...`);
 
             const gasEstimate = await this.contract.methods
                 .endTournament(tournamentId)
@@ -1387,11 +1434,15 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Tournament ended! TX:', tx.transactionHash);
+            Logger.log('✅ Tournament ended! TX:', tx.transactionHash);
+            
+            // Очищаем кеш турнира (состояние изменилось)
+            this.invalidateCache(tournamentId);
+            
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to end tournament:', error);
+            Logger.error('❌ Failed to end tournament:', error);
             throw error;
         }
     }
@@ -1403,7 +1454,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`💰 Distributing prizes for tournament ${tournamentId}...`);
+            Logger.log(`💰 Distributing prizes for tournament ${tournamentId}...`);
             
             // ⚡ НОВОЕ: Предварительная проверка статуса турнира
             try {
@@ -1414,9 +1465,9 @@ class TournamentManager {
                 if (!tournamentInfo.prizePool || tournamentInfo.prizePool === 0) {
                     throw new Error(`Tournament ${tournamentId} has no prize pool (prizePool: ${tournamentInfo.prizePool})`);
                 }
-                console.log(`✅ Pre-check passed. Prize pool: ${tournamentInfo.prizePool} wei, isFinished: ${tournamentInfo.isFinished}`);
+                Logger.log(`✅ Pre-check passed. Prize pool: ${tournamentInfo.prizePool} wei, isFinished: ${tournamentInfo.isFinished}`);
             } catch (preCheckError) {
-                console.warn('⚠️ Pre-check failed:', preCheckError.message);
+                Logger.warn('⚠️ Pre-check failed:', preCheckError.message);
                 throw new Error(`Cannot distribute prizes: ${preCheckError.message}`);
             }
 
@@ -1431,11 +1482,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Prizes distributed! TX:', tx.transactionHash);
+            Logger.log('✅ Prizes distributed! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to distribute prizes:', error);
+            Logger.error('❌ Failed to distribute prizes:', error);
             
             // Более информативные сообщения об ошибках
             if (error.message.includes('Tournament not finished')) {
@@ -1457,7 +1508,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`👑 Transferring ownership to ${newOwnerAddress}...`);
+            Logger.log(`👑 Transferring ownership to ${newOwnerAddress}...`);
 
             const gasEstimate = await this.contract.methods
                 .transferOwnership(newOwnerAddress)
@@ -1470,11 +1521,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Ownership transferred! TX:', tx.transactionHash);
+            Logger.log('✅ Ownership transferred! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to transfer ownership:', error);
+            Logger.error('❌ Failed to transfer ownership:', error);
             throw error;
         }
     }
@@ -1486,7 +1537,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`⏰ Auto ending tournament ${tournamentId}...`);
+            Logger.log(`⏰ Auto ending tournament ${tournamentId}...`);
 
             const gasEstimate = await this.contract.methods
                 .autoEndTournament(tournamentId)
@@ -1499,11 +1550,15 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Tournament auto-ended! TX:', tx.transactionHash);
+            Logger.log('✅ Tournament auto-ended! TX:', tx.transactionHash);
+            
+            // Очищаем кеш турнира (состояние изменилось)
+            this.invalidateCache(tournamentId);
+            
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to auto-end tournament:', error);
+            Logger.error('❌ Failed to auto-end tournament:', error);
             throw error;
         }
     }
@@ -1515,7 +1570,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`🔄 Updating game contract to ${newGameContractAddress}...`);
+            Logger.log(`🔄 Updating game contract to ${newGameContractAddress}...`);
 
             const gasEstimate = await this.contract.methods
                 .updateGameContract(newGameContractAddress)
@@ -1528,11 +1583,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Game contract updated! TX:', tx.transactionHash);
+            Logger.log('✅ Game contract updated! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to update game contract:', error);
+            Logger.error('❌ Failed to update game contract:', error);
             throw error;
         }
     }
@@ -1544,7 +1599,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`🔐 Setting auto-end permission for ${userAddress}: ${permission}...`);
+            Logger.log(`🔐 Setting auto-end permission for ${userAddress}: ${permission}...`);
 
             const gasEstimate = await this.contract.methods
                 .setAutoEndPermission(userAddress, permission)
@@ -1557,11 +1612,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Auto-end permission updated! TX:', tx.transactionHash);
+            Logger.log('✅ Auto-end permission updated! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to set auto-end permission:', error);
+            Logger.error('❌ Failed to set auto-end permission:', error);
             throw error;
         }
     }
@@ -1573,7 +1628,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`💰 Enabling refunds for tournament ${tournamentId}...`);
+            Logger.log(`💰 Enabling refunds for tournament ${tournamentId}...`);
 
             const gasEstimate = await this.contract.methods
                 .enableRefunds(tournamentId)
@@ -1586,11 +1641,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Refunds enabled! TX:', tx.transactionHash);
+            Logger.log('✅ Refunds enabled! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to enable refunds:', error);
+            Logger.error('❌ Failed to enable refunds:', error);
             throw error;
         }
     }
@@ -1602,7 +1657,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`💰 Claiming refund for tournament ${tournamentId}...`);
+            Logger.log(`💰 Claiming refund for tournament ${tournamentId}...`);
 
             const gasEstimate = await this.contract.methods
                 .claimRefund(tournamentId)
@@ -1615,11 +1670,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Refund claimed! TX:', tx.transactionHash);
+            Logger.log('✅ Refund claimed! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to claim refund:', error);
+            Logger.error('❌ Failed to claim refund:', error);
             throw error;
         }
     }
@@ -1631,7 +1686,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log(`🚨 Emergency stopping tournament ${tournamentId}...`);
+            Logger.log(`🚨 Emergency stopping tournament ${tournamentId}...`);
 
             const gasEstimate = await this.contract.methods
                 .emergencyStopTournament(tournamentId)
@@ -1644,11 +1699,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Tournament emergency stopped! TX:', tx.transactionHash);
+            Logger.log('✅ Tournament emergency stopped! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to emergency stop tournament:', error);
+            Logger.error('❌ Failed to emergency stop tournament:', error);
             throw error;
         }
     }
@@ -1660,7 +1715,7 @@ class TournamentManager {
                 throw new Error('Not connected to contract');
             }
 
-            console.log('💰 Withdrawing fees...');
+            Logger.log('💰 Withdrawing fees...');
 
             const gasEstimate = await this.contract.methods
                 .withdrawFees()
@@ -1673,11 +1728,11 @@ class TournamentManager {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            console.log('✅ Fees withdrawn! TX:', tx.transactionHash);
+            Logger.log('✅ Fees withdrawn! TX:', tx.transactionHash);
             return tx.transactionHash;
 
         } catch (error) {
-            console.error('❌ Failed to withdraw fees:', error);
+            Logger.error('❌ Failed to withdraw fees:', error);
             throw error;
         }
     }
@@ -1694,14 +1749,14 @@ class TournamentManager {
         
         // Convert to number (base36 to handle letters)
         const numericId = parseInt(result, 36);
-        console.log(`🎲 Generated Tournament ID: ${result} -> ${numericId}`);
+        Logger.log(`🎲 Generated Tournament ID: ${result} -> ${numericId}`);
         return numericId;
     }
 
     // Generate timestamp-based Tournament ID
     generateTimestampTournamentId() {
         const tournamentId = Date.now();
-        console.log(`⏰ Generated Timestamp Tournament ID: ${tournamentId}`);
+        Logger.log(`⏰ Generated Timestamp Tournament ID: ${tournamentId}`);
         return tournamentId;
     }
 
@@ -1715,24 +1770,24 @@ class TournamentManager {
                     
                     // If startTime is 0, tournament was never created
                     if (info.startTime === 0 || info.startTime === '0') {
-                        console.log(`✅ Found available Tournament ID: ${id}`);
+                        Logger.log(`✅ Found available Tournament ID: ${id}`);
                         return id;
                     } else {
-                        console.log(`⚠️ Tournament ID ${id} is already used`);
+                        Logger.log(`⚠️ Tournament ID ${id} is already used`);
                     }
                 } catch (error) {
                     // If error getting info, probably doesn't exist - safe to use
-                    console.log(`✅ Found available Tournament ID: ${id} (error suggests unused)`);
+                    Logger.log(`✅ Found available Tournament ID: ${id} (error suggests unused)`);
                     return id;
                 }
             }
             
             // Fallback to random if no sequential ID found
-            console.warn('⚠️ No sequential ID found, using random');
+            Logger.warn('⚠️ No sequential ID found, using random');
             return this.generateRandomTournamentId();
             
         } catch (error) {
-            console.error('❌ Error finding available ID:', error);
+            Logger.error('❌ Error finding available ID:', error);
             // Fallback to timestamp
             return this.generateTimestampTournamentId();
         }
@@ -1751,7 +1806,7 @@ class TournamentManager {
                 return this.generateTimestampTournamentId();
             
             default:
-                console.log('🔄 Using default sequential strategy');
+                Logger.log('🔄 Using default sequential strategy');
                 return await this.findNextAvailableTournamentId();
         }
     }
@@ -1815,7 +1870,7 @@ class TournamentManager {
             };
 
         } catch (error) {
-            console.error('Error getting tournament status:', error);
+            Logger.error('Error getting tournament status:', error);
             return {
                 status: 'ERROR',
                 info: null,
@@ -1837,15 +1892,15 @@ class TournamentManager {
             
             // Пробуем сделать простой read-only вызов
             const counter = await this.contract.methods.tournamentCounter().call();
-            console.log('✅ Circuit breaker OK, tournament counter:', counter);
+            Logger.log('✅ Circuit breaker OK, tournament counter:', counter);
             return true;
             
         } catch (error) {
             if (error.message && error.message.includes('circuit breaker')) {
-                console.error('🚨 Circuit breaker is ACTIVE');
+                Logger.error('🚨 Circuit breaker is ACTIVE');
                 return false;
             } else {
-                console.error('❌ Other error:', error.message);
+                Logger.error('❌ Other error:', error.message);
                 return false;
             }
         }
@@ -1859,7 +1914,7 @@ class TournamentManager {
                 .call();
             return owner;
         } catch (error) {
-            console.error('❌ Failed to get owner address:', error);
+            Logger.error('❌ Failed to get owner address:', error);
             return null;
         }
     }
@@ -1908,7 +1963,7 @@ class TournamentManager {
             }
         });
 
-        console.log(`🔔 Subscribed to tournament ${tournamentId} events`);
+        Logger.log(`🔔 Subscribed to tournament ${tournamentId} events`);
     }
 }
 
@@ -1919,7 +1974,7 @@ window.tournamentManager = new TournamentManager();
 window.checkGameContract = async function() {
     
     if (!window.tournamentManager.contract) {
-        console.log('❌ Tournament contract not connected');
+        Logger.log('❌ Tournament contract not connected');
         return;
     }
     
@@ -1927,7 +1982,7 @@ window.checkGameContract = async function() {
     const methods = Object.keys(window.tournamentManager.contract.methods);
     methods.forEach(method => {
         if (!method.includes('(')) { // Показываем только основные методы, без перегрузок
-            console.log('  -', method);
+            Logger.log('  -', method);
         }
     });
     
@@ -1937,33 +1992,33 @@ window.checkGameContract = async function() {
         // Способ 1: Прямое обращение к public переменной
         try {
             const gameContractAddress1 = await window.tournamentManager.contract.methods.gameContractAddress().call();
-            console.log('✅ Method 1 (gameContractAddress()): ', gameContractAddress1);
+            Logger.log('✅ Method 1 (gameContractAddress()): ', gameContractAddress1);
         } catch (e) {
-            console.log('❌ Method 1 failed:', e.message);
+            Logger.log('❌ Method 1 failed:', e.message);
         }
         
         // Способ 2: Через call без параметров
         try {
             const gameContractAddress2 = await window.tournamentManager.contract.methods['gameContractAddress()']().call();
-            console.log('✅ Method 2 (explicit call):', gameContractAddress2);  
+            Logger.log('✅ Method 2 (explicit call):', gameContractAddress2);  
         } catch (e) {
-            console.log('❌ Method 2 failed:', e.message);
+            Logger.log('❌ Method 2 failed:', e.message);
         }
         
         // Способ 3: Проверим, есть ли вообще такая переменная в контракте
         const hasGameContract = methods.includes('gameContractAddress');
         
         if (!hasGameContract) {
-            console.log('⚠️ gameContractAddress method is NOT available in contract ABI');
-            console.log('💡 This might mean:');
-            console.log('   1. Variable is not public in smart contract');
-            console.log('   2. ABI is incomplete');
-            console.log('   3. Contract is different version');
-            console.log('✅ LIKELY SOLUTION: Game verification is probably DISABLED by default');
+            Logger.log('⚠️ gameContractAddress method is NOT available in contract ABI');
+            Logger.log('💡 This might mean:');
+            Logger.log('   1. Variable is not public in smart contract');
+            Logger.log('   2. ABI is incomplete');
+            Logger.log('   3. Contract is different version');
+            Logger.log('✅ LIKELY SOLUTION: Game verification is probably DISABLED by default');
         }
         
     } catch (error) {
-        console.error('❌ Failed to check game contract:', error);
+        Logger.error('❌ Failed to check game contract:', error);
     }
     
 };
@@ -1972,21 +2027,21 @@ window.checkGameContract = async function() {
 window.testGameHashProblem = async function() {
     
     if (!window.tournamentManager.contract) {
-        console.log('❌ Tournament contract not connected');
+        Logger.log('❌ Tournament contract not connected');
         return;
     }
     
     const tournamentId = 9;
     const nonce = Date.now();
     
-    console.log('🧪 Testing gameHash generation vs submission timing...');
+    Logger.log('🧪 Testing gameHash generation vs submission timing...');
     
     try {
         // Генерируем хеш первый раз
         const hash1 = await window.tournamentManager.contract.methods
             .generateGameHash(tournamentId, nonce)
             .call({ from: window.tournamentManager.account });
-        console.log('🔒 Hash 1 (immediate):', hash1);
+        Logger.log('🔒 Hash 1 (immediate):', hash1);
         
         // Ждём небольшую задержку  
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1995,18 +2050,18 @@ window.testGameHashProblem = async function() {
         const hash2 = await window.tournamentManager.contract.methods
             .generateGameHash(tournamentId, nonce)
             .call({ from: window.tournamentManager.account });
-        console.log('🔒 Hash 2 (after delay):', hash2);
+        Logger.log('🔒 Hash 2 (after delay):', hash2);
         
         
         if (hash1 !== hash2) {
-            console.log('❌ PROBLEM CONFIRMED: gameHash changes over time due to block.timestamp!');
-            console.log('💡 SOLUTION: Need to generate hash at submission time, not beforehand');
+            Logger.log('❌ PROBLEM CONFIRMED: gameHash changes over time due to block.timestamp!');
+            Logger.log('💡 SOLUTION: Need to generate hash at submission time, not beforehand');
         } else {
-            console.log('✅ Hashes match - not the problem');
+            Logger.log('✅ Hashes match - not the problem');
         }
         
     } catch (error) {
-        console.error('❌ Test failed:', error);
+        Logger.error('❌ Test failed:', error);
     }
     
 };
@@ -2015,7 +2070,7 @@ window.testGameHashProblem = async function() {
 window.testHashDuplication = async function() {
     
     if (!window.tournamentManager.contract) {
-        console.log('❌ Tournament contract not connected');
+        Logger.log('❌ Tournament contract not connected');
         return;
     }
     
@@ -2039,29 +2094,29 @@ window.testHashDuplication = async function() {
             .generateGameHash(tournamentId, nonce3)
             .call({ from: window.tournamentManager.account });
         
-        console.log('🔒 Generated hashes:');
-        console.log('  Hash 1 (nonce', nonce1, '):', hash1);
-        console.log('  Hash 2 (nonce', nonce2, '):', hash2);
-        console.log('  Hash 3 (nonce', nonce3, '):', hash3);
+        Logger.log('🔒 Generated hashes:');
+        Logger.log('  Hash 1 (nonce', nonce1, '):', hash1);
+        Logger.log('  Hash 2 (nonce', nonce2, '):', hash2);
+        Logger.log('  Hash 3 (nonce', nonce3, '):', hash3);
         
-        console.log('  Hash1 == Hash2:', hash1 === hash2);
-        console.log('  Hash1 == Hash3:', hash1 === hash3);
-        console.log('  Hash2 == Hash3:', hash2 === hash3);
+        Logger.log('  Hash1 == Hash2:', hash1 === hash2);
+        Logger.log('  Hash1 == Hash3:', hash1 === hash3);
+        Logger.log('  Hash2 == Hash3:', hash2 === hash3);
         
         if (hash1 === hash2 || hash1 === hash3 || hash2 === hash3) {
-            console.log('❌ PROBLEM: Duplicate hashes detected!');
-            console.log('💡 This could cause "Hash used" error in contract');
+            Logger.log('❌ PROBLEM: Duplicate hashes detected!');
+            Logger.log('💡 This could cause "Hash used" error in contract');
         } else {
-            console.log('✅ All hashes are unique');
+            Logger.log('✅ All hashes are unique');
         }
         
         // Попробуем найти проблему в параметрах
-        console.log('  Tournament ID:', tournamentId);
-        console.log('  Account:', window.tournamentManager.account);
-        console.log('  Nonce range:', nonce1, '->', nonce3);
+        Logger.log('  Tournament ID:', tournamentId);
+        Logger.log('  Account:', window.tournamentManager.account);
+        Logger.log('  Nonce range:', nonce1, '->', nonce3);
         
     } catch (error) {
-        console.error('❌ Test failed:', error);
+        Logger.error('❌ Test failed:', error);
     }
     
 };
@@ -2070,7 +2125,7 @@ window.testHashDuplication = async function() {
 window.getGameContractAddressDirect = async function() {
     
     if (!window.tournamentManager.contract) {
-        console.log('❌ Tournament contract not connected');
+        Logger.log('❌ Tournament contract not connected');
         return;
     }
     
@@ -2084,79 +2139,79 @@ window.getGameContractAddressDirect = async function() {
         
         // Если это address, то последние 20 bytes
         const gameContractFromStorage = '0x' + storageSlot0.slice(-40);
-        console.log('🎮 Game contract address from storage:', gameContractFromStorage);
+        Logger.log('🎮 Game contract address from storage:', gameContractFromStorage);
         
         const isZero = gameContractFromStorage === '0x0000000000000000000000000000000000000000';
         
         if (isZero) {
-            console.log('✅ CONFIRMED: Game contract verification is DISABLED');
-            console.log('💡 Problem is NOT in game contract verification');
+            Logger.log('✅ CONFIRMED: Game contract verification is DISABLED');
+            Logger.log('💡 Problem is NOT in game contract verification');
         } else {
-            console.log('⚠️ CONFIRMED: Game contract verification is ENABLED');
+            Logger.log('⚠️ CONFIRMED: Game contract verification is ENABLED');
             const matches = gameContractFromStorage.toLowerCase() === '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e';
             
             if (!matches) {
-                console.log('❌ PROBLEM FOUND: Wrong game contract address!');
-                console.log('💡 This could be causing verification failures');
+                Logger.log('❌ PROBLEM FOUND: Wrong game contract address!');
+                Logger.log('💡 This could be causing verification failures');
             }
         }
         
         return gameContractFromStorage;
         
     } catch (error) {
-        console.error('❌ Direct storage read failed:', error);
+        Logger.error('❌ Direct storage read failed:', error);
     }
     
 };
 
 // БЫСТРОЕ ИСПРАВЛЕНИЕ проблемы с gameContract
 window.fixGameContract = async function() {
-    console.log('🔧 === FIXING GAME CONTRACT ADDRESS ===');
+    Logger.log('🔧 === FIXING GAME CONTRACT ADDRESS ===');
     
     if (!window.tournamentManager.contract) {
-        console.log('❌ Tournament contract not connected');
+        Logger.log('❌ Tournament contract not connected');
         return;
     }
     
-    console.log('🔧 Solution options:');
-    console.log('  1. Disable verification: 0x0000000000000000000000000000000000000000');
-    console.log('  2. Enable with correct contract: 0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e');
+    Logger.log('🔧 Solution options:');
+    Logger.log('  1. Disable verification: 0x0000000000000000000000000000000000000000');
+    Logger.log('  2. Enable with correct contract: 0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e');
     
     const choice = prompt('Choose option (1 to disable, 2 to enable with correct contract):');
     
     let newAddress;
     if (choice === '1') {
         newAddress = '0x0000000000000000000000000000000000000000';
-        console.log('🔧 Will DISABLE game verification');
+        Logger.log('🔧 Will DISABLE game verification');
     } else if (choice === '2') {
         newAddress = '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e';
-        console.log('🔧 Will ENABLE game verification with correct contract');
+        Logger.log('🔧 Will ENABLE game verification with correct contract');
     } else {
-        console.log('❌ Invalid choice. Cancelled.');
+        Logger.log('❌ Invalid choice. Cancelled.');
         return;
     }
     
     try {
-        console.log('🔧 Updating game contract address...');
+        Logger.log('🔧 Updating game contract address...');
         const txHash = await window.tournamentManager.updateGameContract(newAddress);
-        console.log('✅ Game contract address updated successfully!');
-        console.log('💡 Now try playing the game again - score submission should work!');
+        Logger.log('✅ Game contract address updated successfully!');
+        Logger.log('💡 Now try playing the game again - score submission should work!');
         
     } catch (error) {
-        console.error('❌ Failed to update game contract:', error.message);
+        Logger.error('❌ Failed to update game contract:', error.message);
         if (error.message.includes('Ownable')) {
-            console.log('💡 Make sure you are connected with the admin wallet');
+            Logger.log('💡 Make sure you are connected with the admin wallet');
         }
     }
     
-    console.log('🔧 === FIX COMPLETE ===');
+    Logger.log('🔧 === FIX COMPLETE ===');
 };
 
 // ТЕСТИРОВАНИЕ автоматического поиска турниров
 window.testTournamentSearch = async function() {
     
     if (!window.tournamentManager || !window.tournamentManager.connected) {
-        console.log('❌ Tournament manager not connected');
+        Logger.log('❌ Tournament manager not connected');
         return;
     }
     
@@ -2164,22 +2219,22 @@ window.testTournamentSearch = async function() {
         const activeTournament = await window.tournamentManager.findActiveTournament();
         
         if (activeTournament) {
-            console.log('✅ Found active tournament:', activeTournament);
+            Logger.log('✅ Found active tournament:', activeTournament);
             
             if (window.tournamentLobby) {
                 await window.tournamentLobby.searchForActiveTournaments();
             }
         } else {
-            console.log('❌ No active tournaments found');
+            Logger.log('❌ No active tournaments found');
         }
         
     } catch (error) {
-        console.error('❌ Test failed:', error);
+        Logger.error('❌ Test failed:', error);
     }
     
 };
 
-console.log('🏆 Tournament Manager loaded');
-console.log('💡 Run checkGameContract() in console to diagnose game contract verification');
-console.log('🧪 Run testGameHashProblem() to test hash timing issue');
-console.log('🔧 Run fixGameContract() to fix the game contract address problem!');
+Logger.log('🏆 Tournament Manager loaded');
+Logger.log('💡 Run checkGameContract() in console to diagnose game contract verification');
+Logger.log('🧪 Run testGameHashProblem() to test hash timing issue');
+Logger.log('🔧 Run fixGameContract() to fix the game contract address problem!');

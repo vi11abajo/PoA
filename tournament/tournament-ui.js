@@ -12,7 +12,7 @@ class TournamentUI {
         this.gameOverProcessed = false;
         this.closeGameTimer = null;
         this.init();
-        console.log('🎨 Tournament UI initialized');
+        Logger.log('🎨 Tournament UI initialized');
     }
 
 
@@ -65,7 +65,7 @@ class TournamentUI {
             distributePrizesBtn: document.getElementById('distributePrizesBtn')
         };
 
-        console.log('📋 Elements cached:', Object.keys(this.elements).length);
+        Logger.log('📋 Elements cached:', Object.keys(this.elements).length);
     }
 
     // Создание игрового модала
@@ -97,7 +97,7 @@ class TournamentUI {
         document.body.appendChild(modal);
         this.gameModal = modal;
 
-        console.log('🎮 Game modal created');
+        Logger.log('🎮 Game modal created');
     }
 
     // Настройка обработчиков событий
@@ -118,7 +118,7 @@ class TournamentUI {
             }
         });
 
-        console.log('🎯 Event listeners setup');
+        Logger.log('🎯 Event listeners setup');
     }
 
     // ========== ОБНОВЛЕНИЕ ДАННЫХ ==========
@@ -132,7 +132,7 @@ class TournamentUI {
                 )} PHRS`;
         }
 
-        console.log('📊 Tournament info updated');
+        Logger.log('📊 Tournament info updated');
     }
 
     // Обновить статус пользователя
@@ -221,7 +221,7 @@ class TournamentUI {
 
             // Обработчик клика
             backButton.addEventListener('click', () => {
-                console.log('🏆 Back to Tournament clicked');
+                Logger.log('🏆 Back to Tournament clicked');
                 this.closeGame();
             });
 
@@ -234,21 +234,21 @@ class TournamentUI {
                 closeBtn.style.display = 'none';
             }
 
-            console.log('✅ Back to Tournament button added to modal');
+            Logger.log('✅ Back to Tournament button added to modal');
         }
     }
 
     // Обновить индикаторы попыток
     updateAttemptIndicators(attempts) {
         if (!this.elements.attemptIndicators) {
-            console.log('❌ attemptIndicators element not found');
+            Logger.log('❌ attemptIndicators element not found');
             return;
         }
 
         const dots = this.elements.attemptIndicators.querySelectorAll('.attempt-dot');
         
         if (dots.length === 0) {
-            console.log('❌ No .attempt-dot elements found');
+            Logger.log('❌ No .attempt-dot elements found');
             return;
         }
         
@@ -268,24 +268,78 @@ class TournamentUI {
             // Остальные остаются базовыми (неиспользованными)
         });
         
-        console.log(`🎯 Attempt indicators updated: ${attempts}/3 attempts used`);
+        Logger.log(`🎯 Attempt indicators updated: ${attempts}/3 attempts used`);
     }
 
     // Обновить статус турнира
-    updateTournamentStatus(status, timeRemaining) {
+    updateTournamentStatus(status, timeRemaining, tournamentId = null) {
         if (!this.elements.tournamentStatus) return;
 
         this.elements.tournamentStatus.className = `tournament-status ${status}`;
 
-        const statusText = TournamentUtils.getStatusText(status);
+        let statusText = TournamentUtils.getStatusText(status);
+        
+        // Добавляем ID турнира если он активен
+        if (status.toLowerCase() === 'active' && tournamentId) {
+            statusText += ` (ID: ${tournamentId})`;
+        }
+        
         this.elements.tournamentStatus.textContent = statusText;
 
         // Обновляем таймер
-        if (status.toLowerCase() === 'active' && timeRemaining > 0) {
-            this.showTournamentTimer(timeRemaining);
+        if (status.toLowerCase() === 'active') {
+            this.showTimer();
+            if (timeRemaining !== undefined && timeRemaining > 0) {
+                this.updateTimer(timeRemaining);
+            }
         } else {
-            this.hideTournamentTimer();
+            this.hideTimer();
         }
+    }
+
+    // Показать таймер
+    showTimer() {
+        const timerSection = document.getElementById('tournamentTimerSection');
+        if (timerSection) {
+            timerSection.style.display = 'block';
+        }
+    }
+
+    // Скрыть таймер
+    hideTimer() {
+        const timerSection = document.getElementById('tournamentTimerSection');
+        if (timerSection) {
+            timerSection.style.display = 'none';
+        }
+    }
+
+    // Обновить таймер
+    updateTimer(seconds) {
+        const timerElement = document.getElementById('tournamentTimer');
+        if (!timerElement) return;
+
+        if (seconds <= 0) {
+            timerElement.textContent = '00:00';
+            timerElement.className = 'info-value timer-display critical';
+            return;
+        }
+
+        // Форматируем время
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        
+        timerElement.textContent = timeString;
+
+        // Меняем стиль в зависимости от оставшегося времени
+        timerElement.className = 'info-value timer-display';
+        if (seconds <= 60) {
+            timerElement.classList.add('critical');
+        } else if (seconds <= 300) { // 5 минут
+            timerElement.classList.add('warning');
+        }
+
+        // Logger.log(`⏰ Timer updated: ${timeString}`); // Убран - слишком частые логи
     }
 
     // Показать таймер турнира
@@ -338,9 +392,18 @@ class TournamentUI {
     updatePrizePool(totalPrizeWei) {
         if (!totalPrizeWei) return;
 
-        const totalPrize = window.web3 ?
-            window.web3.utils.fromWei(totalPrizeWei, 'ether') :
-            totalPrizeWei;
+        // Конвертируем wei в ether
+        let totalPrize;
+        if (window.web3 && window.web3.utils) {
+            totalPrize = window.web3.utils.fromWei(totalPrizeWei, 'ether');
+        } else if (window.Web3) {
+            // Создаем временный экземпляр Web3 для конвертации
+            const tempWeb3 = new window.Web3();
+            totalPrize = tempWeb3.utils.fromWei(totalPrizeWei, 'ether');
+        } else {
+            // Fallback: простое деление на 10^18
+            totalPrize = (parseFloat(totalPrizeWei) / 1e18).toString();
+        }
 
         // Обновляем общий приз
         if (this.elements.totalPrize) {
@@ -361,11 +424,23 @@ class TournamentUI {
 
         const total = parseFloat(totalPrizeAmount);
 
+        // Конвертируем ether обратно в wei для расчета призов
+        let totalPrizeWei;
+        if (window.web3 && window.web3.utils) {
+            totalPrizeWei = window.web3.utils.toWei(totalPrizeAmount, 'ether');
+        } else if (window.Web3) {
+            const tempWeb3 = new window.Web3();
+            totalPrizeWei = tempWeb3.utils.toWei(totalPrizeAmount, 'ether');
+        } else {
+            // Fallback: умножение на 10^18
+            totalPrizeWei = (parseFloat(totalPrizeAmount) * 1e18).toString();
+        }
+
+        // Создаем фоллбек Web3 объект если основной недоступен
+        const web3Instance = window.web3 || this.createWeb3Fallback();
+
         // Расчет призов по конфигурации
-        const prizes = TOURNAMENT_CONFIG.calculatePrizes(
-            window.web3 ? window.web3.utils.toWei(totalPrizeAmount, 'ether') : totalPrizeAmount,
-            window.web3 || { utils: { fromWei: (v) => v, toBN: (v) => ({ mul: () => ({ div: () => v }) }) } }
-        );
+        const prizes = TOURNAMENT_CONFIG.calculatePrizes(totalPrizeWei, web3Instance);
 
         if (this.elements.firstPrize) {
             this.elements.firstPrize.textContent = `${TournamentUtils.formatCurrency(prizes.first)} PHRS`;
@@ -385,17 +460,17 @@ class TournamentUI {
         if (!this.elements.leaderboardBody || !Array.isArray(leaderboard)) return;
 
         const sortedBoard = TournamentUtils.sortByScore(leaderboard);
-        const topPlayers = sortedBoard.slice(0, TOURNAMENT_CONFIG.LEADERBOARD_UPDATE_LIMIT || 10);
+        const topPlayers = sortedBoard.slice(0, TOURNAMENT_CONFIG.LEADERBOARD_MAX_ENTRIES || 100);
 
         // 📊 Проверяем, изменился ли лидерборд
         if (this.lastLeaderboardHash && this.isSameLeaderboard(topPlayers)) {
-            console.log('⚡ Leaderboard unchanged, skipping update');
+            Logger.log('⚡ Leaderboard unchanged, skipping update');
             return;
         }
 
         // Сохраняем хеш для следующего сравнения
         this.lastLeaderboardHash = this.generateLeaderboardHash(topPlayers);
-        console.log('🔄 Updating leaderboard DOM');
+        Logger.log('🔄 Updating leaderboard DOM');
 
         let html = '';
 
@@ -427,7 +502,7 @@ class TournamentUI {
         }
 
         this.elements.leaderboardBody.innerHTML = html;
-        console.log(`📊 Leaderboard updated with ${topPlayers.length} entries`);
+        Logger.log(`📊 Leaderboard updated with ${topPlayers.length} entries`);
     }
 
     // 🔍 Генерировать хеш для сравнения лидерборда
@@ -463,7 +538,7 @@ class TournamentUI {
             const cells = playerRow.querySelectorAll('td');
             if (cells.length >= 4) {
                 cells[3].textContent = TournamentUtils.formatNumber(newScore);
-                console.log(`⚡ Updated player ${player} score to ${newScore}`);
+                Logger.log(`⚡ Updated player ${player} score to ${newScore}`);
                 return true;
             }
         }
@@ -482,7 +557,7 @@ class TournamentUI {
             return this.updateLeaderboard(leaderboard);
         }
         
-        console.log(`📱 Using virtualization for ${sortedBoard.length} players (showing top ${maxVisible})`);
+        Logger.log(`📱 Using virtualization for ${sortedBoard.length} players (showing top ${maxVisible})`);
         
         // Показываем только верхние результаты + счетчик остальных
         const topPlayers = sortedBoard.slice(0, maxVisible);
@@ -523,7 +598,7 @@ class TournamentUI {
         }
         
         this.elements.leaderboardBody.innerHTML = html;
-        console.log(`📱 Virtualized leaderboard: ${topPlayers.length} visible, ${remainingCount} hidden`);
+        Logger.log(`📱 Virtualized leaderboard: ${topPlayers.length} visible, ${remainingCount} hidden`);
         
         // Сохраняем полный список для функции "показать всех"
         this.fullLeaderboardData = sortedBoard;
@@ -557,7 +632,7 @@ class TournamentUI {
         
         // Проверяем доступность адаптера
         if (!window.tournamentAdapter) {
-            console.error('❌ Tournament Adapter not loaded');
+            Logger.error('❌ Tournament Adapter not loaded');
             this.showError('Tournament system not ready. Please refresh the page.');
             return;
         }
@@ -565,7 +640,7 @@ class TournamentUI {
         // Получаем данные турнира
         const tournamentData = this.getTournamentData();
         if (!tournamentData) {
-            console.error('❌ No tournament data available');
+            Logger.error('❌ No tournament data available');
             this.showError('Tournament data not available');
             return;
         }
@@ -594,7 +669,7 @@ class TournamentUI {
 
         // Проверяем, что модальное окно существует в DOM
         if (!this.gameModal || !document.body.contains(this.gameModal)) {
-            console.log('🔄 Modal was removed from DOM, recreating...');
+            Logger.log('🔄 Modal was removed from DOM, recreating...');
             this.createGameModal();
             this.setupEventListeners();
         }
@@ -603,7 +678,7 @@ class TournamentUI {
         this.gameModal.style.display = 'flex';
         this.gameModal.classList.add('active');
         
-        console.log('🎮 Modal opened:', {
+        Logger.log('🎮 Modal opened:', {
             exists: !!this.gameModal,
             inDOM: document.body.contains(this.gameModal),
             hasActiveClass: this.gameModal.classList.contains('active'),
@@ -613,17 +688,17 @@ class TournamentUI {
         // Загружаем основные файлы игры и запускаем
         this.loadAndStartGame();
 
-        console.log('🎮 Tournament game opened with adapter');
+        Logger.log('🎮 Tournament game opened with adapter');
     }
 
     // Инициализация canvas для игры
     initGameCanvas() {
-        console.log('🎨 Initializing game canvas...');
+        Logger.log('🎨 Initializing game canvas...');
 
         // Найдем canvas для игры
         const canvas = document.getElementById('tournamentGameCanvas');
         if (!canvas) {
-            console.error('❌ Tournament game canvas not found');
+            Logger.error('❌ Tournament game canvas not found');
             return;
         }
 
@@ -644,23 +719,23 @@ class TournamentUI {
             ctx.textAlign = 'center';
             ctx.fillText('🎮 Loading Tournament Game...', canvas.width / 2, canvas.height / 2);
             
-            console.log(`🎨 Canvas initialized: ${canvas.width}x${canvas.height} (logical), display: ${canvas.clientWidth}x${canvas.clientHeight}`);
+            Logger.log(`🎨 Canvas initialized: ${canvas.width}x${canvas.height} (logical), display: ${canvas.clientWidth}x${canvas.clientHeight}`);
             
             // Устанавливаем глобальную переменную для игры
             window.tournamentCanvas = canvas;
             window.tournamentCtx = ctx;
         }
 
-        console.log('✅ Game canvas initialized');
+        Logger.log('✅ Game canvas initialized');
     }
     
     // Загрузить основные файлы игры и запустить
     loadAndStartGame() {
         // Проверяем, загружены ли основные функции игры
-        console.log('🔍 Checking game availability...');
-        console.log('startGame:', typeof window.startGame);
-        console.log('actuallyStartGame:', typeof window.actuallyStartGame);
-        console.log('initCanvas:', typeof window.initCanvas);
+        Logger.log('🔍 Checking game availability...');
+        Logger.log('startGame:', typeof window.startGame);
+        Logger.log('actuallyStartGame:', typeof window.actuallyStartGame);
+        Logger.log('initCanvas:', typeof window.initCanvas);
 
         // Пробуем разные варианты запуска игры
         if (typeof window.startGame === 'function') {
@@ -682,16 +757,16 @@ class TournamentUI {
             key.toLowerCase().includes('init')
         );
 
-        console.log('🔍 Available game-related functions:', gameFunctions);
+        Logger.log('🔍 Available game-related functions:', gameFunctions);
 
         // Если ничего не найдено, выводим детальную информацию
-        console.error('❌ Game files not properly loaded. Available functions:', gameFunctions);
+        Logger.error('❌ Game files not properly loaded. Available functions:', gameFunctions);
         this.showError('Game engine not available. Please check that all game scripts are loaded correctly.');
     }
 
     // Принудительно выйти из игры с завершением попытки
     forceExitGame() {
-        console.log('🚪 Force exit game triggered');
+        Logger.log('🚪 Force exit game triggered');
         
         // Получаем текущий счет из игры
         let currentScore = 0;
@@ -710,7 +785,7 @@ class TournamentUI {
             forceExit: true
         };
         
-        console.log('🏁 Force exit with result:', gameResult);
+        Logger.log('🏁 Force exit with result:', gameResult);
         
         // Отправляем результат
         if (window.tournamentLobby && typeof window.tournamentLobby.submitGameScore === 'function') {
@@ -725,7 +800,7 @@ class TournamentUI {
     closeGame() {
         // Предотвращаем множественные вызовы
         if (this.isClosing) {
-            console.log('🔄 closeGame already in progress, skipping');
+            Logger.log('🔄 closeGame already in progress, skipping');
             return;
         }
         this.isClosing = true;
@@ -746,7 +821,7 @@ class TournamentUI {
             screen.remove();
         });
 
-        console.log('🧹 All game screens cleared');
+        Logger.log('🧹 All game screens cleared');
 
         // Очищаем добавленные кнопки при закрытии
         const backBtn = document.getElementById('backToTournamentBtn');
@@ -760,7 +835,7 @@ class TournamentUI {
             closeBtn.style.display = 'block';
         }
 
-        console.log('🎮 Tournament game closed');
+        Logger.log('🎮 Tournament game closed');
 
         // Очищаем таймеры
         if (this.closeGameTimer) {
@@ -779,7 +854,7 @@ class TournamentUI {
     handleGameOver(gameResult) {
         // Защита от множественных вызовов
         if (this.gameOverProcessed) {
-            console.log('🔄 handleGameOver already processed, skipping');
+            Logger.log('🔄 handleGameOver already processed, skipping');
             return;
         }
         this.gameOverProcessed = true;
@@ -807,21 +882,21 @@ class TournamentUI {
                 attempts = window.tournamentLobby.storage.getPlayerAttempts(window.tournamentLobby.walletConnector.account);
             }
 
-            console.log(`🎯 Current attempts after score submission: ${attempts}/3`);
+            Logger.log(`🎯 Current attempts after score submission: ${attempts}/3`);
 
             if (attempts >= 3) {
-                console.log('🔒 All attempts completed');
+                Logger.log('🔒 All attempts completed');
                 this.addBackToTournamentButton();
-                console.log('✅ Game over modal ready with Back to Tournament button');
+                Logger.log('✅ Game over modal ready with Back to Tournament button');
             } else {
-                console.log(`🎮 Game completed. Attempts remaining: ${3 - attempts}`);
+                Logger.log(`🎮 Game completed. Attempts remaining: ${3 - attempts}`);
                 
                 // Защита от множественных таймеров закрытия
                 if (this.closeGameTimer) {
                     clearTimeout(this.closeGameTimer);
                 }
                 this.closeGameTimer = setTimeout(() => {
-                    console.log('⏰ Auto-closing game after 3 seconds');
+                    Logger.log('⏰ Auto-closing game after 3 seconds');
                     this.closeGame();
                 }, 3000);
             }
@@ -873,19 +948,19 @@ class TournamentUI {
     // Показать ошибку
     showError(message) {
         this.showNotification(message, 'error');
-        console.error('🚨 UI Error:', message);
+        Logger.error('🚨 UI Error:', message);
     }
 
     // Показать успех
     showSuccess(message) {
         this.showNotification(message, 'success');
-        console.log('✅ UI Success:', message);
+        Logger.log('✅ UI Success:', message);
     }
 
     // Показать предупреждение
     showWarning(message) {
         this.showNotification(message, 'warning');
-        console.warn('⚠️ UI Warning:', message);
+        Logger.warn('⚠️ UI Warning:', message);
     }
 
     // ========== УТИЛИТЫ ==========
@@ -977,7 +1052,7 @@ class TournamentUI {
             this.closeGame();
         }
 
-        console.log('🧹 UI cleanup completed');
+        Logger.log('🧹 UI cleanup completed');
     }
 
     // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ АДАПТЕРА ==========
@@ -990,7 +1065,7 @@ class TournamentUI {
             try {
                 return JSON.parse(savedData);
             } catch (error) {
-                console.error('❌ Error parsing tournament data:', error);
+                Logger.error('❌ Error parsing tournament data:', error);
             }
         }
 
@@ -1331,7 +1406,31 @@ class TournamentUI {
         `;
 
         document.head.appendChild(style);
-        console.log('🎨 UI styles injected');
+        Logger.log('🎨 UI styles injected');
+    }
+
+    // Создать фоллбек Web3 объект для расчетов
+    createWeb3Fallback() {
+        return {
+            utils: {
+                fromWei: (value, unit) => {
+                    if (unit === 'ether') {
+                        return (parseFloat(value) / 1e18).toString();
+                    }
+                    return value;
+                },
+                toBN: (value) => {
+                    const num = parseFloat(value);
+                    return {
+                        mul: (other) => ({
+                            div: (divisor) => Math.floor(num * parseFloat(other.toString()) / parseFloat(divisor.toString())).toString()
+                        }),
+                        sub: (other) => (num - parseFloat(other.toString())).toString(),
+                        toString: () => Math.floor(num).toString()
+                    };
+                }
+            }
+        };
     }
 }
 
@@ -1340,7 +1439,7 @@ window.tournamentUI = new TournamentUI();
 
 // ЭКСТРЕННАЯ ФУНКЦИЯ ПОЛНОЙ ОЧИСТКИ
 window.emergencyCleanup = function() {
-    console.log('🚨 EMERGENCY CLEANUP STARTED');
+    Logger.log('🚨 EMERGENCY CLEANUP STARTED');
     
     // 1. Останавливаем все игровые циклы
     if (typeof window.stopGame === 'function') window.stopGame();
@@ -1363,7 +1462,7 @@ window.emergencyCleanup = function() {
     `);
     
     gameOverScreens.forEach(screen => {
-        console.log('🧹 Emergency removing game over screen:', screen.id || screen.className);
+        Logger.log('🧹 Emergency removing game over screen:', screen.id || screen.className);
         screen.style.display = 'none';
         screen.remove();
     });
@@ -1373,7 +1472,7 @@ window.emergencyCleanup = function() {
     if (tournamentModal) {
         tournamentModal.style.display = 'none';
         tournamentModal.classList.remove('active');
-        console.log('🎮 Main tournament modal hidden (not removed)');
+        Logger.log('🎮 Main tournament modal hidden (not removed)');
     }
     
     // 5. Деактивируем Tournament Adapter
@@ -1381,20 +1480,20 @@ window.emergencyCleanup = function() {
         window.tournamentAdapter.deactivate();
     }
     
-    console.log('✅ EMERGENCY CLEANUP COMPLETED');
+    Logger.log('✅ EMERGENCY CLEANUP COMPLETED');
 };
 
-console.log('🚨 Emergency cleanup function available: emergencyCleanup()');
+Logger.log('🚨 Emergency cleanup function available: emergencyCleanup()');
 // ========== DEBUG И ТЕСТИРОВАНИЕ ==========
 
 // Debug функции для тестирования адаптера
 window.debugTournamentUI = {
     // Тест адаптера
     testAdapter: () => {
-        console.log('🧪 Testing Tournament Adapter...');
+        Logger.log('🧪 Testing Tournament Adapter...');
 
         if (!window.tournamentAdapter) {
-            console.error('❌ Tournament Adapter not found');
+            Logger.error('❌ Tournament Adapter not found');
             return;
         }
 
@@ -1406,18 +1505,18 @@ window.debugTournamentUI = {
         };
 
         const testCallbacks = {
-            onScoreUpdate: (score) => console.log('🎯 Test Score:', score),
-            onLivesChange: (lives) => console.log('❤️ Test Lives:', lives),
-            onLevelChange: (level) => console.log('🆙 Test Level:', level),
-            onGameOver: (result) => console.log('🏁 Test Game Over:', result)
+            onScoreUpdate: (score) => Logger.log('🎯 Test Score:', score),
+            onLivesChange: (lives) => Logger.log('❤️ Test Lives:', lives),
+            onLevelChange: (level) => Logger.log('🆙 Test Level:', level),
+            onGameOver: (result) => Logger.log('🏁 Test Game Over:', result)
         };
 
         window.tournamentAdapter.activate(testData, testCallbacks);
-        console.log('✅ Adapter activated for testing');
+        Logger.log('✅ Adapter activated for testing');
 
         // Показываем статус
         setTimeout(() => {
-            console.log('📊 Adapter Status:', window.tournamentAdapter.getStatus());
+            Logger.log('📊 Adapter Status:', window.tournamentAdapter.getStatus());
         }, 1000);
     },
 
@@ -1425,13 +1524,13 @@ window.debugTournamentUI = {
     deactivateAdapter: () => {
         if (window.tournamentAdapter) {
             window.tournamentAdapter.deactivate();
-            console.log('✅ Adapter deactivated');
+            Logger.log('✅ Adapter deactivated');
         }
     },
 
     // Тест открытия игры
     testGameOpen: () => {
-        console.log('🧪 Testing game opening...');
+        Logger.log('🧪 Testing game opening...');
         if (window.tournamentUI) {
             window.tournamentUI.openGame();
         }
@@ -1439,7 +1538,7 @@ window.debugTournamentUI = {
 
     // Симуляция результата игры
     simulateGameOver: (score = 12345) => {
-        console.log('🧪 Simulating game over with score:', score);
+        Logger.log('🧪 Simulating game over with score:', score);
 
         const gameResult = {
             score: score,
@@ -1464,9 +1563,9 @@ window.debugTournamentUI = {
             adapterStatus: window.tournamentAdapter ? window.tournamentAdapter.getStatus() : null
         };
 
-        console.log('🔍 System Status:', status);
+        Logger.log('🔍 System Status:', status);
         return status;
     }
 };
 
-console.log('🧪 Debug functions available at window.debugTournamentUI');
+Logger.log('🧪 Debug functions available at window.debugTournamentUI');

@@ -54,4 +54,7 @@ const GAME_CONSTANTS = {
 // Вычисляемые константы
 GAME_CONSTANTS.FRAME_TIME = 1000 / GAME_CONSTANTS.TARGET_FPS;
 
-console.log('🎮 Game constants loaded');
+// Logger protection added
+if (typeof Logger !== 'undefined' && Logger.log) {
+    Logger.log('Game constants loaded');
+}

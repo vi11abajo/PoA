@@ -1,7 +1,7 @@
 // 👑 PHAROS INVADERS - BOSS RENDERER
 // Система отрисовки боссов с эффектами
 
-console.log('🎨 Loading boss renderer...');
+// Logger.log('🎨 Loading boss renderer...'); // Removed - Logger not available yet
 
 // Отрисовка босса
 function drawBoss(ctx) {
@@ -102,7 +102,7 @@ function drawBossHealthBar(ctx) {
                document.getElementById('tournamentGameCanvas');
 
         if (!canvas) {
-            console.error('❌ Canvas not found in drawBossHealthBar');
+            Logger.error('❌ Canvas not found in drawBossHealthBar');
             return;
         }
     const barWidth = 300;
@@ -278,7 +278,7 @@ function drawBossWarning(ctx, level) {
                    document.getElementById('tournamentGameCanvas');
 
     if (!canvas) {
-        console.error('❌ Canvas not found in drawBossHealthBar');
+        Logger.error('❌ Canvas not found in drawBossHealthBar');
         return;
     }
     const bossNumber = getBossNumber(level);
@@ -323,7 +323,7 @@ function drawBossIndicator(ctx) {
                    document.getElementById('tournamentGameCanvas');
 
     if (!canvas) {
-        console.error('❌ Canvas not found in drawBossHealthBar');
+        Logger.error('❌ Canvas not found in drawBossHealthBar');
         return;
     }
 
@@ -394,4 +394,4 @@ window.BOSS_RENDERER = {
     drawBossIndicator
 };
 
-console.log('🎨 Boss renderer loaded successfully!');
+Logger.log('🎨 Boss renderer loaded successfully!');
