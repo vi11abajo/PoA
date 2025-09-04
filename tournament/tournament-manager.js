@@ -25,7 +25,7 @@ class TournamentManager {
             NETWORK_NAME: 'Pharos Testnet',
             RPC_URL: 'https://testnet.dplabs-internal.com',
             CHAIN_ID: TOURNAMENT_CONSTANTS.BLOCKCHAIN.PHAROS_TESTNET_CHAIN_ID,
-            CONTRACT_ADDRESS: '0x454064eA4517A80b0388EEeFFFBf2Efb85a86061',
+            CONTRACT_ADDRESS: '0x494E3fb474fC5399E40EB2e0ED04D3DB9266A2d4', // v2 contract with 50+ leaderboard
             ENTRY_FEE: '0.005'
         };
 
@@ -1150,7 +1150,9 @@ class TournamentManager {
     // Get top players (новая функция)
     async getTopPlayers(tournamentId, limit = 100) {
         try {
-            const result = await this.contract.methods
+            // Используем публичный контракт для чтения без кошелька
+            const contract = this.connected ? this.contract : this.getPublicContract();
+            const result = await contract.methods
                 .getTopPlayers(tournamentId, limit)
                 .call();
 
@@ -1164,7 +1166,9 @@ class TournamentManager {
                 let playerName = 'Player';
                 try {
                     if (names[i] && names[i] !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
-                        playerName = this.web3.utils.hexToUtf8(names[i]).replace(/\0/g, '');
+                        // Используем Web3 из публичного контракта если нет подключенного
+                        const web3Instance = this.web3 || new (window.Web3)(this.config.RPC_URL);
+                        playerName = web3Instance.utils.hexToUtf8(names[i]).replace(/\0/g, '');
                     }
                 } catch (e) {
                     playerName = `Player${players[i].slice(-4)}`;
@@ -2148,7 +2152,7 @@ window.getGameContractAddressDirect = async function() {
             Logger.log('💡 Problem is NOT in game contract verification');
         } else {
             Logger.log('⚠️ CONFIRMED: Game contract verification is ENABLED');
-            const matches = gameContractFromStorage.toLowerCase() === '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e';
+            const matches = gameContractFromStorage.toLowerCase() === '0x494E3fb474fC5399E40EB2e0ED04D3DB9266A2d4';
             
             if (!matches) {
                 Logger.log('❌ PROBLEM FOUND: Wrong game contract address!');
@@ -2175,7 +2179,7 @@ window.fixGameContract = async function() {
     
     Logger.log('🔧 Solution options:');
     Logger.log('  1. Disable verification: 0x0000000000000000000000000000000000000000');
-    Logger.log('  2. Enable with correct contract: 0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e');
+    Logger.log('  2. Enable with correct contract: 0x494E3fb474fC5399E40EB2e0ED04D3DB9266A2d4');
     
     const choice = prompt('Choose option (1 to disable, 2 to enable with correct contract):');
     
@@ -2184,7 +2188,7 @@ window.fixGameContract = async function() {
         newAddress = '0x0000000000000000000000000000000000000000';
         Logger.log('🔧 Will DISABLE game verification');
     } else if (choice === '2') {
-        newAddress = '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e';
+        newAddress = '0x494E3fb474fC5399E40EB2e0ED04D3DB9266A2d4';
         Logger.log('🔧 Will ENABLE game verification with correct contract');
     } else {
         Logger.log('❌ Invalid choice. Cancelled.');

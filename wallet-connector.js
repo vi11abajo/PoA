@@ -11,7 +11,7 @@ class WalletConnector {
             NETWORK_NAME: 'Pharos Testnet',
             RPC_URL: 'https://testnet.dplabs-internal.com',
             CHAIN_ID: '688688',
-            CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
+            CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e', // game contract (single player)
             GAME_FEE: '0.001'
         };
         

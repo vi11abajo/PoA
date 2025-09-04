@@ -27,8 +27,12 @@ class TournamentLobby {
             intervals: new Map(),      // именованные интервалы
             timeouts: new Set(),       // все timeout'ы
             updateLoop: null,          // основной цикл обновления
-            monitoring: null           // мониторинг турниров
+            monitoring: null,          // мониторинг турниров
+            leaderboardUpdate: null    // автообновление лидерборда
         };
+        
+        // 🏆 Автообновление лидерборда каждую минуту
+        this.startLeaderboardAutoUpdate();
         
         // ⚡ Локальные попытки для случаев, когда счет не улучшен
         this.playerAttempts = 0;
@@ -47,7 +51,7 @@ class TournamentLobby {
         
         const intervalId = setInterval(callback, delay);
         this.timers.intervals.set(name, intervalId);
-        Logger.log(`⏰ Created safe interval: ${name}`);
+        // Logger.log(`⏰ Created safe interval: ${name}`); // Removed: too verbose
         return intervalId;
     }
     
@@ -68,7 +72,7 @@ class TournamentLobby {
         if (this.timers.intervals.has(name)) {
             clearInterval(this.timers.intervals.get(name));
             this.timers.intervals.delete(name);
-            Logger.log(`🧹 Cleared safe interval: ${name}`);
+            // Logger.log(`🧹 Cleared safe interval: ${name}`); // Removed: too verbose
         }
     }
     
@@ -77,7 +81,7 @@ class TournamentLobby {
         // Очищаем все интервалы
         this.timers.intervals.forEach((intervalId, name) => {
             clearInterval(intervalId);
-            Logger.log(`🧹 Cleared interval: ${name}`);
+            // Logger.log(`🧹 Cleared interval: ${name}`); // Removed: too verbose
         });
         this.timers.intervals.clear();
         
@@ -121,7 +125,7 @@ async init() {
         // ДОБАВЛЕНО: Очистка некорректных данных при инициализации
         const oldAttempts = parseInt(localStorage.getItem('tournament_attempts') || '0');
         if (oldAttempts > 3) {
-            Logger.log(`🧹 Cleaning invalid attempts on init: ${oldAttempts} -> removed`);
+            // Logger.log(`🧹 Cleaning invalid attempts on init: ${oldAttempts} -> removed`); // Removed: too verbose
             localStorage.removeItem('tournament_attempts');
         }
 
@@ -251,14 +255,57 @@ async initDependencies() {
             playBtn.onclick = () => this.handlePlayTournamentGame();
         }
 
-        // Кнопка обновления
+        // Кнопка обновления с кулдауном
         const refreshBtn = document.getElementById('refreshButton');
         if (refreshBtn) {
-            refreshBtn.onclick = () => this.updateData();
+            this.setupRefreshButton(refreshBtn);
         }
 
         // Админ кнопки
         this.setupAdminButtons();
+    }
+
+    // Настройка кнопки обновления с кулдауном
+    setupRefreshButton(refreshBtn) {
+        if (!this.refreshCooldown) {
+            this.refreshCooldown = 0;
+        }
+
+        const originalText = refreshBtn.innerHTML;
+        
+        refreshBtn.onclick = async () => {
+            const now = Date.now();
+            
+            // Проверяем кулдаун
+            if (now < this.refreshCooldown) {
+                const remaining = Math.ceil((this.refreshCooldown - now) / 1000);
+                Logger.log(`⏱️ Refresh cooldown: ${remaining} seconds remaining`);
+                return;
+            }
+
+            // Устанавливаем кулдаун на 10 секунд
+            this.refreshCooldown = now + 10000;
+            
+            // Показываем индикатор загрузки
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '⏳';
+            refreshBtn.style.opacity = '0.6';
+            
+            try {
+                Logger.log('🔄 Manual refresh triggered...');
+                await this.updateData();
+                Logger.log('✅ Manual refresh completed');
+            } catch (error) {
+                Logger.error('❌ Manual refresh failed:', error);
+            } finally {
+                // Восстанавливаем кнопку
+                setTimeout(() => {
+                    refreshBtn.disabled = false;
+                    refreshBtn.innerHTML = originalText;
+                    refreshBtn.style.opacity = '1';
+                }, 1000);
+            }
+        };
     }
 
     // Настройка админ кнопок
@@ -355,13 +402,8 @@ async initDependencies() {
         // 🔥 ИСПРАВЛЕНИЕ: Подключаем TournamentManager к кошельку
         if (window.tournamentManager && this.walletConnector) {
             try {
-                Logger.log('🔗 Connecting TournamentManager to wallet...');
-                Logger.log('🔧 WalletConnector details:', {
-                    connected: this.walletConnector.connected,
-                    account: this.walletConnector.account,
-                    hasWeb3: !!this.walletConnector.web3,
-                    web3Type: typeof this.walletConnector.web3
-                });
+                // Logger.log('🔗 Connecting TournamentManager to wallet...'); // Removed: too verbose
+                // Logger.log(`🔧 WalletConnector: connected=${this.walletConnector.connected}, account=${this.walletConnector.account?.slice(0, 8)}...`); // Removed: too verbose
                 
                 const connected = await window.tournamentManager.connect(this.walletConnector);
                 if (connected) {
@@ -373,10 +415,7 @@ async initDependencies() {
                 Logger.error('❌ Error connecting TournamentManager:', error);
             }
         } else {
-            Logger.log('🔧 Connection check failed:', {
-                tournamentManagerAvailable: !!window.tournamentManager,
-                walletConnectorAvailable: !!this.walletConnector
-            });
+            Logger.error('🔧 Connection check failed: TournamentManager or WalletConnector not available');
         }
 
         // Обновляем обычные кнопки для ВСЕХ пользователей (включая админа)
@@ -417,7 +456,7 @@ async initDependencies() {
 
             Logger.log('🔍 Calling findActiveTournament...');
             const activeTournament = await window.tournamentManager.findActiveTournament();
-            Logger.log('🔍 findActiveTournament result:', activeTournament);
+            Logger.log(`🔍 Active tournament found: ID=${activeTournament?.id || 'none'}`);
             
             if (activeTournament) {
                 if (activeTournament.fallback) {
@@ -697,7 +736,7 @@ async initDependencies() {
                 attempts: attempts
             };
 
-            Logger.log('🔄 Updating UI with status:', statusData);
+            // Logger.log(`🔄 UI status: ${statusData.status}, attempts: ${statusData.attempts}`); // Removed: too verbose
             window.tournamentUI.updateUserStatus(statusData);
             window.tournamentUI.updateAttemptIndicators(attempts);
         }
@@ -960,7 +999,8 @@ async submitGameScore(score, playerName = null) {
                 return; // Прекращаем выполнение - не отправляем в блокчейн
                 
             } else if (score > currentScore) {
-                }
+                Logger.log(`✅ Score improved: ${currentScore} → ${score}, submitting to blockchain`);
+            }
             
         } catch (checkError) {
             Logger.error('❌ Error checking current score:', checkError.message);
@@ -1203,12 +1243,7 @@ async submitGameScore(score, playerName = null) {
                 window.startGame();
             } else {
                 Logger.error('❌ No game start function found');
-                Logger.log('Available functions:', {
-                    actuallyStartGame: typeof window.actuallyStartGame,
-                    startGame: typeof window.startGame,
-                    initCanvas: typeof window.initCanvas,
-                    initGame: typeof window.initGame
-                });
+                Logger.error('❌ Game functions not found - check game.js loading');
             }
         }, 100);
     }
@@ -1316,27 +1351,31 @@ async submitGameScore(score, playerName = null) {
             let leaderboard = [];
             let isBlockchainData = false;
 
-            // ТОЛЬКО БЛОКЧЕЙН ДАННЫЕ - никаких fallback!
+            // Простое получение лидерборда из блокчейна
             if (!window.tournamentManager) {
-                Logger.warn('🚫 TournamentManager not available - no leaderboard available');
-                leaderboard = [];
+                Logger.warn('🚫 TournamentManager not available - using local data only');
+                leaderboard = this.leaderboard?.getStoredLeaderboard() || [];
             } else {
                 try {
-                    Logger.log('🔗 Fetching leaderboard from blockchain...');
-                    const blockchainLeaderboard = await window.tournamentManager.getTournamentLeaderboard(this.currentTournamentId);
+                    Logger.log('🔗 Fetching tournament leaderboard from blockchain...');
                     
-                    if (blockchainLeaderboard && blockchainLeaderboard.length > 0) {
-                        leaderboard = blockchainLeaderboard;
+                    // Получаем топ игроков из блокчейна
+                    const topPlayers = await window.tournamentManager.getTopPlayers(this.currentTournamentId, 100);
+                    Logger.log(`🏆 Top 100 players: ${topPlayers?.length || 0} loaded`);
+                    
+                    if (topPlayers && topPlayers.length > 0) {
+                        leaderboard = topPlayers;
                         isBlockchainData = true;
-                        Logger.log(`✅ Blockchain leaderboard loaded: ${leaderboard.length} entries`);
                     } else {
-                        Logger.log('ℹ️ No entries in blockchain leaderboard yet');
-                        leaderboard = [];
-                        isBlockchainData = true;
+                        Logger.log('📊 No blockchain leaderboard data - using local fallback');
+                        leaderboard = this.leaderboard?.getStoredLeaderboard() || [];
                     }
+                    
+                    Logger.log(`✅ Leaderboard loaded: ${leaderboard.length} entries`);
+                    Logger.log('🔍 DEBUG: First few entries:', JSON.stringify(leaderboard.slice(0, 3), null, 2));
                 } catch (blockchainError) {
                     Logger.error('❌ Failed to fetch blockchain leaderboard:', blockchainError);
-                    leaderboard = [];
+                    leaderboard = this.leaderboard?.getStoredLeaderboard() || [];
                 }
             }
 
@@ -1409,14 +1448,7 @@ async updateButtonStates() {
         }
     }
 
-    Logger.log('🔄 Updating buttons with state:', {
-        walletConnected,
-        tournamentStarted,
-        isRegistered,
-        allAttemptsUsed,
-        storageAvailable: !!this.storage,
-        storageType: typeof this.storage
-    });
+    // Logger.log(`🔄 Button update: wallet=${walletConnected}, tournament=${tournamentStarted}, registered=${isRegistered}, attempts=${allAttemptsUsed}`); // Removed: too verbose
 
     // Остальная логика кнопок без изменений...
     if (allAttemptsUsed) {
@@ -1468,12 +1500,7 @@ async updateButtonStates() {
     playButton.textContent = playButtonText;
     playButton.className = playButtonDisabled ? 'action-button no-attempts' : 'action-button tournament-play';
 
-    Logger.log('🎯 Final button states:', {
-        registerText: registerButton.textContent,
-        registerDisabled: registerButton.disabled,
-        playText: playButton.textContent,
-        playDisabled: playButton.disabled
-    });
+    // Logger.log(`🎯 Buttons set: Register="${registerButton.textContent}" Play="${playButton.textContent}"`); // Removed: too verbose
 }
     // ========== АДМИН ФУНКЦИИ ==========
 
@@ -1490,15 +1517,7 @@ async updateButtonStates() {
         }
 
         const isAdmin = window.TOURNAMENT_CONFIG.isAdmin(this.walletConnector.account);
-        Logger.log('🔧 Admin check result:', {
-            account: this.walletConnector.account,
-            accountLower: this.walletConnector.account?.toLowerCase(),
-            isAdmin: isAdmin,
-            adminAddress: window.TOURNAMENT_CONFIG.ADMIN_ADDRESS,
-            adminAddressLower: window.TOURNAMENT_CONFIG.ADMIN_ADDRESS?.toLowerCase(),
-            configAvailable: !!window.TOURNAMENT_CONFIG,
-            accountMatch: this.walletConnector.account?.toLowerCase() === window.TOURNAMENT_CONFIG.ADMIN_ADDRESS?.toLowerCase()
-        });
+        Logger.log(`🔧 Admin check: ${this.walletConnector.account} -> ${isAdmin ? 'ADMIN' : 'USER'}`);
 
         return isAdmin;
     }
@@ -2246,6 +2265,40 @@ showSuccess(message) {
         // Скрываем секцию после сохранения
         this.createSafeTimeout(() => this.hidePlayerNameSection(), 2000);
     }
+
+    // ========== АВТООБНОВЛЕНИЕ ЛИДЕРБОРДА ==========
+    
+    // Запуск автообновления лидерборда каждую минуту
+    startLeaderboardAutoUpdate() {
+        // Очистим предыдущий таймер если есть
+        if (this.timers.leaderboardUpdate) {
+            clearInterval(this.timers.leaderboardUpdate);
+        }
+        
+        Logger.log('🏆 Starting leaderboard auto-update (every 60 seconds)');
+        
+        // Обновляем лидерборд сразу при запуске
+        this.updateLeaderboard().catch(error => {
+            Logger.warn('⚠️ Initial leaderboard update failed:', error.message);
+        });
+        
+        // Устанавливаем таймер на каждую минуту
+        this.timers.leaderboardUpdate = setInterval(() => {
+            Logger.log('🔄 Auto-updating leaderboard...');
+            this.updateLeaderboard().catch(error => {
+                Logger.warn('⚠️ Auto leaderboard update failed:', error.message);
+            });
+        }, 60000); // 60 секунд
+    }
+    
+    // Остановка автообновления лидерборда
+    stopLeaderboardAutoUpdate() {
+        if (this.timers.leaderboardUpdate) {
+            clearInterval(this.timers.leaderboardUpdate);
+            this.timers.leaderboardUpdate = null;
+            Logger.log('🛑 Leaderboard auto-update stopped');
+        }
+    }
 }
 
 // ========== ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========
@@ -2431,17 +2484,59 @@ window.debugTournamentLobby = {
             const tournamentId = window.tournamentLobby.currentTournamentId;
             Logger.log(`📋 Fetching leaderboard for tournament ${tournamentId}...`);
 
-            const leaderboard = await window.tournamentManager.getTournamentLeaderboard(tournamentId);
-            Logger.log('📊 Blockchain leaderboard result:', leaderboard);
+            // ОЧИЩАЕМ КЕSH ДЛЯ СВЕЖИХ ДАННЫХ
+            if (window.tournamentManager.clearCache) {
+                window.tournamentManager.clearCache();
+                Logger.log('🗑️ Cache cleared');
+            }
 
-            const topPlayers = await window.tournamentManager.getTopPlayers(tournamentId, 5);
-            Logger.log('🏆 Top 5 players:', topPlayers);
+            const leaderboard = await window.tournamentManager.getTournamentLeaderboard(tournamentId);
+            Logger.log(`📊 Blockchain leaderboard: ${leaderboard?.length || 0} entries`);
+            Logger.log('🔍 ALL ENTRIES:', JSON.stringify(leaderboard, null, 2));
+
+            const topPlayers = await window.tournamentManager.getTopPlayers(tournamentId, 100);
+            Logger.log(`🏆 Top 100 players: ${topPlayers?.length || 0} loaded`);
 
             // Принудительное обновление UI лидерборда
             await window.tournamentLobby.updateLeaderboard();
 
         } catch (error) {
             Logger.error('❌ Blockchain leaderboard test failed:', error);
+        }
+    },
+
+    // Тестирование разных лимитов
+    testContractLimits: async () => {
+        Logger.log('🔍 Testing contract limits...');
+        try {
+            if (!window.tournamentManager || !window.tournamentManager.connected) {
+                Logger.log('❌ TournamentManager not connected');
+                return;
+            }
+
+            const tournamentId = window.tournamentLobby.currentTournamentId;
+            
+            // Тестируем разные лимиты
+            for (const limit of [3, 5, 10, 100]) {
+                try {
+                    const result = await window.tournamentManager.getTopPlayers(tournamentId, limit);
+                    Logger.log(`📊 Limit ${limit}: got ${result?.length || 0} entries`);
+                } catch (error) {
+                    Logger.log(`❌ Limit ${limit}: ${error.message}`);
+                }
+            }
+            
+            // Прямой вызов getTournamentLeaderboard 
+            try {
+                const full = await window.tournamentManager.getTournamentLeaderboard(tournamentId);
+                Logger.log(`📋 Full leaderboard: ${full?.length || 0} entries`);
+                Logger.log('📋 Full data:', JSON.stringify(full, null, 2));
+            } catch (error) {
+                Logger.log(`❌ Full leaderboard: ${error.message}`);
+            }
+
+        } catch (error) {
+            Logger.error('❌ Contract limits test failed:', error);
         }
     },
 

@@ -29,7 +29,7 @@ class TournamentAdapter {
         this.tournamentData = tournamentData;
         this.tournamentCallbacks = { ...this.tournamentCallbacks, ...callbacks };
 
-        Logger.log('🏆 Activating tournament mode with data:', tournamentData);
+        Logger.log(`🏆 Activating tournament mode: ID=${tournamentData?.id || 'unknown'}`);
 
         // Сохраняем оригинальные функции
         this.saveOriginalFunctions();
@@ -156,7 +156,7 @@ class TournamentAdapter {
             };
 
             // Логируем результат
-            Logger.log('🎮 Tournament game completed:', gameResult);
+            Logger.log(`🎮 Tournament game completed: score=${gameResult.score}, level=${gameResult.level}`);
 
             // Показываем турнирный экран завершения
             this.showTournamentGameOver(gameResult);

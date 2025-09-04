@@ -65,7 +65,7 @@ class TournamentUI {
             distributePrizesBtn: document.getElementById('distributePrizesBtn')
         };
 
-        Logger.log('📋 Elements cached:', Object.keys(this.elements).length);
+        // Logger.log('📋 Elements cached:', Object.keys(this.elements).length); // Removed: too verbose
     }
 
     // Создание игрового модала
@@ -97,7 +97,7 @@ class TournamentUI {
         document.body.appendChild(modal);
         this.gameModal = modal;
 
-        Logger.log('🎮 Game modal created');
+        // Logger.log('🎮 Game modal created'); // Removed: too verbose
     }
 
     // Настройка обработчиков событий
@@ -461,6 +461,8 @@ class TournamentUI {
 
         const sortedBoard = TournamentUtils.sortByScore(leaderboard);
         const topPlayers = sortedBoard.slice(0, TOURNAMENT_CONFIG.LEADERBOARD_MAX_ENTRIES || 100);
+        
+        Logger.log(`🔍 DEBUG UI: Received ${leaderboard.length} entries, showing ${topPlayers.length}`);
 
         // 📊 Проверяем, изменился ли лидерборд
         if (this.lastLeaderboardHash && this.isSameLeaderboard(topPlayers)) {
@@ -547,7 +549,7 @@ class TournamentUI {
     }
     
     // 📱 Виртуализация для больших списков лидеров
-    updateLeaderboardVirtualized(leaderboard, maxVisible = 50) {
+    updateLeaderboardVirtualized(leaderboard, maxVisible = 100) {
         if (!this.elements.leaderboardBody || !Array.isArray(leaderboard)) return;
         
         const sortedBoard = TournamentUtils.sortByScore(leaderboard);
@@ -785,7 +787,7 @@ class TournamentUI {
             forceExit: true
         };
         
-        Logger.log('🏁 Force exit with result:', gameResult);
+        Logger.log(`🏁 Force exit: score=${gameResult.score}, level=${gameResult.level}`);
         
         // Отправляем результат
         if (window.tournamentLobby && typeof window.tournamentLobby.submitGameScore === 'function') {

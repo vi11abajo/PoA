@@ -2,7 +2,7 @@ export const BLOCKCHAIN_CONFIG = {
   NETWORK_NAME: 'Pharos Testnet',
   RPC_URL: 'https://testnet.dplabs-internal.com', // Замените на актуальный
   CHAIN_ID: '688688', // Замените на актуальный Chain ID
-  CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e', // Вставьте адрес контракта
+  CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e', // game contract (single player)
   GAME_FEE: '0.001' // В PHRS
 };
 

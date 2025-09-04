@@ -61,7 +61,7 @@ class TournamentLeaderboard {
                     leaderboard[playerIndex].playerName = playerName.trim();
                 }
 
-                Logger.log(`✅ Updated existing player. Scores: ${leaderboard[playerIndex].scores.length}, Best: ${leaderboard[playerIndex].bestScore}`);
+                // Logger.log(`✅ Updated existing player. Scores: ${leaderboard[playerIndex].scores.length}, Best: ${leaderboard[playerIndex].bestScore}`); // Removed: too verbose
             } else {
                 // Новый игрок
                 const newPlayer = {
@@ -83,7 +83,7 @@ class TournamentLeaderboard {
             // Сохраняем обновленный лидерборд
             this.saveLeaderboard(leaderboard);
 
-            Logger.log(`🏆 Leaderboard updated. Total players: ${leaderboard.length}`);
+            // Logger.log(`🏆 Leaderboard updated. Total players: ${leaderboard.length}`); // Removed: too verbose
 
             return leaderboard;
 
@@ -149,7 +149,7 @@ class TournamentLeaderboard {
         // Получаем реальные данные лидерборда
         const leaderboard = this.getStoredLeaderboard();
 
-        Logger.log(`🏆 Updating leaderboard UI with ${leaderboard.length} players`);
+        // Logger.log(`🏆 Updating leaderboard UI with ${leaderboard.length} players`); // Removed: too verbose
 
         leaderboardBody.innerHTML = '';
 
@@ -164,8 +164,8 @@ class TournamentLeaderboard {
             return;
         }
 
-        // Показываем топ-10 игроков (или другое количество если указано)
-        const maxPlayers = options.maxPlayers || 10;
+        // Показываем топ-100 игроков (или другое количество если указано)
+        const maxPlayers = options.maxPlayers || (TOURNAMENT_CONFIG.LEADERBOARD_MAX_ENTRIES || 100);
         const topPlayers = leaderboard.slice(0, maxPlayers);
         const currentWallet = options.currentWallet;
 
@@ -236,7 +236,7 @@ class TournamentLeaderboard {
     }
 
     // Получить топ игроков (для других модулей)
-    getTopPlayers(limit = 10) {
+    getTopPlayers(limit = 100) {
         const leaderboard = this.getStoredLeaderboard();
         return leaderboard.slice(0, limit);
     }

@@ -6,8 +6,8 @@ const TOURNAMENT_CONFIG = {
     NETWORK_NAME: 'Pharos Testnet',
     RPC_URL: 'https://testnet.dplabs-internal.com',
     CHAIN_ID: '688688',
-    TOURNAMENT_CONTRACT_ADDRESS: '0x454064eA4517A80b0388EEeFFFBf2Efb85a86061',
-    GAME_CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e',
+    TOURNAMENT_CONTRACT_ADDRESS: '0x494E3fb474fC5399E40EB2e0ED04D3DB9266A2d4', // v2 contract with 50+ leaderboard
+    GAME_CONTRACT_ADDRESS: '0xaf655fe9fa8cdf421a024509b1cfc15dee89d85e', // game contract (single player)
 
     // 👑 АДМИНИСТРИРОВАНИЕ
     ADMIN_ADDRESS: '0x59F74eD82A08F80cff5D7E8055f6a24A18595F64',

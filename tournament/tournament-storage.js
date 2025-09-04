@@ -593,7 +593,7 @@ class TournamentLobby {
                 ? this.walletConnector.account : null;
 
             this.leaderboard.updateLeaderboardUI(leaderboardBody, {
-                maxPlayers: 10,
+                maxPlayers: TOURNAMENT_CONFIG.LEADERBOARD_MAX_ENTRIES || 100,
                 currentWallet: currentWallet
             });
 

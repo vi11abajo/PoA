@@ -92,12 +92,12 @@ class TournamentGame {
 
             this.images.crabs[color.toLowerCase()].onload = () => {
                 this.images.loaded.crabs[color.toLowerCase()] = true;
-                Logger.log(`🦀 ${color} crab loaded`);
+                // Logger.log(`🦀 ${color} crab loaded`); // Removed: too verbose
             };
 
             this.images.crabs[color.toLowerCase()].onerror = () => {
                 this.images.loaded.crabs[color.toLowerCase()] = false;
-                Logger.log(`❌ ${color} crab failed`);
+                // Logger.log(`❌ ${color} crab failed`); // Removed: too verbose
             };
         });
     }

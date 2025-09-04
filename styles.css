@@ -279,7 +279,7 @@ button:disabled {
 #leaderboard-container {
     margin-top: 15px;
     text-align: left;
-    max-height: 200px;
+    max-height: 600px;
     overflow-y: auto;
     font-size: 12px;
 }
@@ -427,7 +427,7 @@ button:disabled {
     }
     
     #leaderboard-container {
-        max-height: 150px;
+        max-height: 400px;
         font-size: 11px;
     }
 }
