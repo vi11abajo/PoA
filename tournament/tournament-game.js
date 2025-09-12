@@ -105,6 +105,11 @@ class TournamentGame {
 
         // Предотвращаем скролл на пробел
         document.addEventListener('keydown', (e) => {
+            // Игнорируем игровые клавиши если пользователь печатает в поле ввода
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+            
             if (e.code === 'Space' && this.gameState === 'playing') {
                 e.preventDefault();
             }
@@ -112,6 +117,11 @@ class TournamentGame {
     }
 
     handleKeyDown(e) {
+        // Игнорируем игровые клавиши если пользователь печатает в поле ввода
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
         this.keys[e.code] = true;
 
         if (e.code === 'KeyP' && this.gameState === 'playing') {
@@ -126,6 +136,11 @@ class TournamentGame {
     }
 
     handleKeyUp(e) {
+        // Игнорируем игровые клавиши если пользователь печатает в поле ввода
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
         this.keys[e.code] = false;
     }
 

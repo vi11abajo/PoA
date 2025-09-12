@@ -415,6 +415,11 @@ function createBubbles() {
 
 // Keyboard events
 document.addEventListener('keydown', (e) => {
+    // Игнорируем игровые клавиши если пользователь печатает в поле ввода
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+    
     keys[e.code] = true;
 
     if (e.code === 'KeyP' && gameState === 'playing') {
@@ -433,6 +438,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('keyup', (e) => {
+    // Игнорируем игровые клавиши если пользователь печатает в поле ввода
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+    
     keys[e.code] = false;
 });
 
