@@ -516,11 +516,11 @@
     </style>
     
     <script>
-        // Немедленная защита паролем
+        
         const password = "turik";
         let userInput = null;
         
-        // Блокируем загрузку страницы
+        
         window.addEventListener('DOMContentLoaded', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -528,7 +528,7 @@
             userInput = prompt("pswd:");
             
             if (userInput !== password || userInput === null || userInput === "") {
-                // Полностью очищаем страницу
+                
                 document.documentElement.innerHTML = `
                 <html><head><title>LOCKED</title></head><body style="
                     margin: 0;
@@ -553,7 +553,7 @@
                 </body></html>
                 `;
                 
-                // Блокируем все события
+                
                 window.stop();
                 return false;
             }
