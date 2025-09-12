@@ -51,7 +51,6 @@ class TournamentLobby {
         
         const intervalId = setInterval(callback, delay);
         this.timers.intervals.set(name, intervalId);
-        // Logger.log(`⏰ Created safe interval: ${name}`); // Removed: too verbose
         return intervalId;
     }
     
@@ -72,7 +71,6 @@ class TournamentLobby {
         if (this.timers.intervals.has(name)) {
             clearInterval(this.timers.intervals.get(name));
             this.timers.intervals.delete(name);
-            // Logger.log(`🧹 Cleared safe interval: ${name}`); // Removed: too verbose
         }
     }
     
@@ -81,7 +79,6 @@ class TournamentLobby {
         // Очищаем все интервалы
         this.timers.intervals.forEach((intervalId, name) => {
             clearInterval(intervalId);
-            // Logger.log(`🧹 Cleared interval: ${name}`); // Removed: too verbose
         });
         this.timers.intervals.clear();
         
@@ -99,7 +96,6 @@ class TournamentLobby {
             this.tournamentMonitorInterval = null;
         }
         
-        Logger.log('🧹 All timers cleared - no memory leaks!');
     }
 
     // ⚡ КРИТИЧЕСКАЯ ПРОВЕРКА БЛОКЧЕЙН ПОДКЛЮЧЕНИЯ ⚡
@@ -112,7 +108,6 @@ class TournamentLobby {
             throw new Error(`🚫 ${operation} requires blockchain connection! Tournament works ONLY with smart contracts.`);
         }
         
-        Logger.log(`✅ Blockchain connection verified for ${operation}`);
     }
 // УДАЛЕНО: createFallbackStorage - только блокчейн, никаких fallback!
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -120,12 +115,10 @@ class TournamentLobby {
     // Инициализация лобби
 async init() {
     try {
-        Logger.log('🚀 Starting Tournament Lobby...');
 
         // ДОБАВЛЕНО: Очистка некорректных данных при инициализации
         const oldAttempts = parseInt(localStorage.getItem('tournament_attempts') || '0');
         if (oldAttempts > 3) {
-            // Logger.log(`🧹 Cleaning invalid attempts on init: ${oldAttempts} -> removed`); // Removed: too verbose
             localStorage.removeItem('tournament_attempts');
         }
 
@@ -140,7 +133,6 @@ async init() {
         this.setupUI();
         this.startUpdateLoop();
 
-        Logger.log('✅ Tournament Lobby ready');
 
     } catch (error) {
         Logger.error('❌ Failed to initialize Tournament Lobby:', error);
@@ -151,16 +143,12 @@ async init() {
     // Инициализация зависимостей
 async initDependencies() {
     try {
-        Logger.log('🔧 Initializing dependencies...');
 
         // Проверяем доступность классов
-        Logger.log('🔧 TournamentLeaderboard available:', typeof TournamentLeaderboard);
-        Logger.log('🔧 TournamentStorage available:', typeof TournamentStorage);
 
         // Инициализируем TournamentLeaderboard
         if (typeof TournamentLeaderboard !== 'undefined') {
             this.leaderboard = new TournamentLeaderboard(this.currentTournamentId);
-            Logger.log('✅ Tournament Leaderboard ready');
         } else {
             Logger.error('❌ TournamentLeaderboard not found');
         }
@@ -170,12 +158,10 @@ async initDependencies() {
             // Создаем экземпляр только если еще не создан
             if (!this.storage || typeof this.storage.getPlayerAttempts !== 'function') {
                 this.storage = new TournamentStorage(this.currentTournamentId);
-                Logger.log('✅ Tournament Storage created');
             }
 
             // Проверяем корректность методов
             if (this.storage && typeof this.storage.getPlayerAttempts === 'function') {
-                Logger.log('✅ Storage methods verified');
             } else {
                 Logger.error('❌ Storage object invalid');
                 throw new Error('Storage methods not available');
@@ -198,12 +184,9 @@ async initDependencies() {
     initWalletConnector() {
         if (window.tournamentWalletConnector) {
             this.walletConnector = window.tournamentWalletConnector;
-            Logger.log('✅ Tournament wallet connector ready');
         } else if (window.walletConnector) {
             this.walletConnector = window.walletConnector;
-            Logger.log('✅ Main wallet connector ready');
         } else {
-            Logger.log('⏳ Wallet connector not ready yet');
         }
     }
 
@@ -215,7 +198,6 @@ async initDependencies() {
         // Настраиваем кнопки
         this.setupButtons();
 
-        Logger.log('✅ UI setup complete');
     }
 
     // ========== ОБНОВЛЕНИЕ ДАННЫХ ==========
@@ -279,7 +261,6 @@ async initDependencies() {
             // Проверяем кулдаун
             if (now < this.refreshCooldown) {
                 const remaining = Math.ceil((this.refreshCooldown - now) / 1000);
-                Logger.log(`⏱️ Refresh cooldown: ${remaining} seconds remaining`);
                 return;
             }
 
@@ -292,9 +273,7 @@ async initDependencies() {
             refreshBtn.style.opacity = '0.6';
             
             try {
-                Logger.log('🔄 Manual refresh triggered...');
                 await this.updateData();
-                Logger.log('✅ Manual refresh completed');
             } catch (error) {
                 Logger.error('❌ Manual refresh failed:', error);
             } finally {
@@ -336,13 +315,11 @@ async initDependencies() {
         // Первое обновление БЕЗОПАСНО  
         this.createSafeTimeout(() => this.updateData(), 2000);
 
-        Logger.log('⏰ Safe update loop started - no memory leaks');
     }
 
     // Обновление всех данных
     async updateData() {
         try {
-            Logger.log('🔄 Updating tournament data...');
 
             // Проверяем подключение кошелька
             await this.checkWalletConnection();
@@ -360,7 +337,6 @@ async initDependencies() {
             // Обновляем лидерборд (async)
             await this.updateLeaderboard();
 
-            Logger.log('✅ Data update complete');
 
         } catch (error) {
             Logger.error('❌ Error updating data:', error);
@@ -375,10 +351,8 @@ async initDependencies() {
         const isConnected = this.walletConnector && this.walletConnector.connected;
 
         if (isConnected && !wasConnected) {
-            Logger.log('✅ Wallet connected');
             await this.onWalletConnected();
         } else if (!isConnected && wasConnected) {
-            Logger.log('🔌 Wallet disconnected');
             await this.onWalletDisconnected();
         }
     }
@@ -387,7 +361,6 @@ async initDependencies() {
     async onWalletConnected() {
         // Инициализируем walletConnector если еще не инициализирован
         if (!this.walletConnector) {
-            Logger.log('🔧 Initializing wallet connector in onWalletConnected...');
             this.initWalletConnector();
         }
         
@@ -395,19 +368,15 @@ async initDependencies() {
             Logger.error('❌ Wallet connector still not available in onWalletConnected');
             return;
         }
-        Logger.log('👛 Wallet connected:', this.walletConnector.account);
 
         this.currentUserStatus = 'connected';
 
         // 🔥 ИСПРАВЛЕНИЕ: Подключаем TournamentManager к кошельку
         if (window.tournamentManager && this.walletConnector) {
             try {
-                // Logger.log('🔗 Connecting TournamentManager to wallet...'); // Removed: too verbose
-                // Logger.log(`🔧 WalletConnector: connected=${this.walletConnector.connected}, account=${this.walletConnector.account?.slice(0, 8)}...`); // Removed: too verbose
                 
                 const connected = await window.tournamentManager.connect(this.walletConnector);
                 if (connected) {
-                    Logger.log('✅ TournamentManager connected to blockchain');
                 } else {
                     Logger.warn('⚠️ TournamentManager connection failed');
                 }
@@ -426,12 +395,9 @@ async initDependencies() {
         this.updateAdminPanel();
 
         // ДОПОЛНИТЕЛЬНЫЙ DEBUG: Принудительно проверяем админку
-        Logger.log('🔧 User connected, admin panel:', this.isAdmin() ? 'shown' : 'hidden');
-        Logger.log('🔧 FORCE Admin check for address:', this.walletConnector.account);
         
         // Принудительно обновляем админ панель еще раз через секунду
         this.createSafeTimeout(() => {
-            Logger.log('🔧 DELAYED Admin check...');
             this.updateAdminPanel();
         }, 1000);
 
@@ -445,24 +411,16 @@ async initDependencies() {
     // ⚡ ПОИСК АКТИВНЫХ ТУРНИРОВ ⚡
     async searchForActiveTournaments() {
         try {
-            Logger.log('🔍 Searching for active tournaments...');
-            Logger.log('🔍 Wallet connector available:', !!this.walletConnector);
-            Logger.log('🔍 Wallet connected:', this.walletConnector?.connected);
             
             if (!window.tournamentManager) {
-                Logger.log('⚠️ Tournament manager not available, skipping search');
                 return;
             }
 
-            Logger.log('🔍 Calling findActiveTournament...');
             const activeTournament = await window.tournamentManager.findActiveTournament();
-            Logger.log(`🔍 Active tournament found: ID=${activeTournament?.id || 'none'}`);
             
             if (activeTournament) {
                 if (activeTournament.fallback) {
-                    Logger.log('🔄 Found last active tournament (fallback):', activeTournament.tournamentId);
                 } else {
-                    Logger.log('✅ Found active tournament:', activeTournament.tournamentId);
                 }
                 
                 // Обновляем текущий турнир
@@ -482,13 +440,11 @@ async initDependencies() {
                         this.walletConnector.account
                     );
                     
-                    Logger.log('🎯 Player registration status:', isRegistered);
                     
                     // Обновляем UI
                     await this.updateTournamentUI(activeTournament, isRegistered);
                 }
             } else {
-                Logger.log('❌ No active tournaments found');
                 this.currentTournamentStatus = 'NOT_STARTED';
                 this.updateNoActiveTournamentUI();
             }
@@ -501,17 +457,14 @@ async initDependencies() {
     // Обновить UI для активного турнира
     async updateTournamentUI(activeTournament, isRegistered) {
         try {
-            Logger.log('🎨 Updating tournament UI for tournament', activeTournament.tournamentId);
             
             // ⚡ КРИТИЧЕСКИ ВАЖНО: Обновляем состояние игрока
-            Logger.log('🔧 Setting player registration status:', isRegistered);
             this.playerRegistered = isRegistered;
             
             // Получаем количество попыток игрока
             try {
                 if (isRegistered) {
                     const playerAttempts = await this.getUserAttempts();
-                    Logger.log('🎯 Player attempts from blockchain:', playerAttempts);
                     this.playerAttempts = playerAttempts;
                 }
             } catch (attemptsError) {
@@ -530,20 +483,14 @@ async initDependencies() {
             
             // ⚡ Обновляем индикаторы попыток
             if (window.tournamentUI && isRegistered) {
-                Logger.log('🔄 Updating attempt indicators with', this.playerAttempts, 'attempts');
                 window.tournamentUI.updateAttemptIndicators(this.playerAttempts);
             }
             
             // Загружаем лидерборд и обновляем все данные
             await this.updateData();
             
-            // Показываем уведомление
-            this.showSuccess(`🏆 Active Tournament Found! Tournament #${activeTournament.tournamentId}!`);
-            
             if (!isRegistered) {
-                Logger.log('🎯 Player not registered - enabling registration button');
             } else {
-                Logger.log('✅ Player already registered - showing play button, attempts:', this.playerAttempts);
             }
             
         } catch (error) {
@@ -553,7 +500,6 @@ async initDependencies() {
 
     // Обновить UI когда нет активных турниров
     updateNoActiveTournamentUI() {
-        Logger.log('📝 No active tournaments - updating UI');
         this.updateTournamentStatus('NOT_STARTED');
         
         // Показать сообщение
@@ -567,16 +513,13 @@ async initDependencies() {
     // Запустить периодический мониторинг турниров
     startTournamentMonitoring() {
         if (this.isMonitoringActive) {
-            Logger.log('🔄 Tournament monitoring already active');
             return;
         }
         
-        Logger.log('🔄 Starting tournament monitoring (every 60 seconds)...');
         this.isMonitoringActive = true;
         
         // БЕЗОПАСНЫЙ мониторинг турниров
         this.createSafeInterval(async () => {
-            Logger.log('🔄 Periodic tournament check...');
             await this.searchForActiveTournaments();
         }, 60000, 'tournamentMonitoring');
 
@@ -586,7 +529,6 @@ async initDependencies() {
 
     // Остановить мониторинг турниров
     stopTournamentMonitoring() {
-        Logger.log('⏹️ Stopping tournament monitoring');
         this.clearSafeInterval('tournamentMonitoring');
         this.isMonitoringActive = false;
         
@@ -621,7 +563,6 @@ async initDependencies() {
 
     // Обработка отключения кошелька
     async onWalletDisconnected() {
-        Logger.log('🔌 Wallet disconnected');
 
         this.currentUserStatus = 'disconnected';
         
@@ -637,7 +578,6 @@ async initDependencies() {
             window.tournamentManager.contract = null;
             window.tournamentManager.account = null;
             window.tournamentManager.connected = false;
-            Logger.log('🔌 TournamentManager disconnected');
         }
 
         // Скрываем админ панель
@@ -658,7 +598,6 @@ async initDependencies() {
     async updateUserStatus(forceStatus = null) {
         try {
             if (forceStatus) {
-                Logger.log('🔧 Force setting user status to:', forceStatus);
                 this.currentUserStatus = forceStatus;
             } else {
                 // Проверяем реальный статус
@@ -667,7 +606,6 @@ async initDependencies() {
                 } else {
                     // ⚡ ИСПРАВЛЕНО: Правильная проверка регистрации
                     const playerAddress = this.walletConnector.account;
-                    Logger.log('🔍 Checking user status for:', playerAddress, 'in tournament:', this.currentTournamentId);
                     
                     // Проверяем регистрацию через правильный метод блокчейна
                     let isRegistered = false;
@@ -680,17 +618,13 @@ async initDependencies() {
                             
                             // ⚡ ВАЖНО: Обновляем локальное состояние
                             this.playerRegistered = isRegistered;
-                            Logger.log('🔄 Updated playerRegistered:', this.playerRegistered);
                             
                             if (isRegistered) {
                                 // Получаем количество попыток
                                 const attempts = await this.getUserAttempts();
                                 this.playerAttempts = attempts;
-                                Logger.log('🎯 Player attempts updated from blockchain:', attempts);
-                                Logger.log('🔄 Updated playerAttempts:', this.playerAttempts);
                             } else {
                                 this.playerAttempts = 0;
-                                Logger.log('🔄 Reset playerAttempts to 0 (not registered)');
                             }
                             
                         } catch (error) {
@@ -704,16 +638,13 @@ async initDependencies() {
                         const totalAttempts = await this.getUserAttempts();
                         if (totalAttempts >= TOURNAMENT_CONSTANTS.GAME.MAX_ATTEMPTS) {
                             this.currentUserStatus = 'finished';
-                            Logger.log('🏁 Player status: finished (all attempts used)');
                         } else {
                             this.currentUserStatus = 'registered';
-                            Logger.log(`🎮 Player status: registered (${totalAttempts}/3 attempts used)`);
                         }
                     } else {
                         this.currentUserStatus = 'connected';
                     }
                     
-                    Logger.log(`👤 User status determined: ${this.currentUserStatus} (registered: ${isRegistered})`);
                 }
             }
 
@@ -736,7 +667,6 @@ async initDependencies() {
                 attempts: attempts
             };
 
-            // Logger.log(`🔄 UI status: ${statusData.status}, attempts: ${statusData.attempts}`); // Removed: too verbose
             window.tournamentUI.updateUserStatus(statusData);
             window.tournamentUI.updateAttemptIndicators(attempts);
         }
@@ -776,19 +706,16 @@ async initDependencies() {
                 break;
         }
 
-        Logger.log('📝 Status text updated:', statusText);
         statusElement.textContent = statusText;
     }
 
     // Получить количество попыток через блокчейн или локально
     async getUserAttempts() {
         if (!this.walletConnector || !this.walletConnector.connected) {
-            Logger.log('🎯 getUserAttempts: No wallet connection');
             return this.playerAttempts || 0;
         }
 
         if (!window.tournamentManager || !window.tournamentManager.connected) {
-            Logger.log('🎯 getUserAttempts: No blockchain connection, using local attempts:', this.playerAttempts);
             return this.playerAttempts || 0;
         }
 
@@ -821,7 +748,6 @@ async initDependencies() {
     // Обработка регистрации в турнире - ТОЛЬКО БЛОКЧЕЙН
     async handleRegisterForTournament() {
         if (this.isRegistering) {
-            Logger.log('⏳ Registration already in progress');
             return;
         }
 
@@ -846,12 +772,10 @@ async initDependencies() {
             // ⚡ КРИТИЧЕСКАЯ ПРОВЕРКА БЛОКЧЕЙНА
             this.requireBlockchainConnection('Tournament Registration');
 
-            Logger.log('🔗 Registering ONLY via blockchain...');
             const txHash = await window.tournamentManager.registerForTournament(
                 this.currentTournamentId, 
                 playerName
             );
-            Logger.log('✅ Blockchain registration successful:', txHash);
 
             this.hideLoading();
             this.showSuccess(`Successfully registered on blockchain! TX: ${txHash.slice(0, 8)}...`);
@@ -860,7 +784,6 @@ async initDependencies() {
             this.playerAttempts = 0;
             const attemptKey = `tournament_${this.currentTournamentId}_attempts_${this.walletConnector.account}`;
             localStorage.removeItem(attemptKey);
-            Logger.log('🔄 Local attempts reset for new registration');
 
             // Обновляем статус
             this.currentUserStatus = 'registered';
@@ -907,7 +830,6 @@ async initDependencies() {
 
         try {
             // ИСПРАВЛЕНО: НЕ увеличиваем попытки здесь - они увеличиваются в submitGameScore
-            Logger.log(`🎮 Starting game. Current attempts: ${attempts}/3`);
             // Удалили: this.storage.incrementPlayerAttempts(this.walletConnector.account);
 
             // Сохраняем данные для турнирного режима
@@ -918,19 +840,14 @@ async initDependencies() {
                 playerAddress: this.walletConnector.account
             };
             
-            Logger.log('📊 Tournament data prepared:', tournamentData);
 
             localStorage.setItem('tournamentMode', JSON.stringify(tournamentData));
 
             // ИСПРАВЛЕНО: Принудительно используем модальное окно турнирной игры
-            Logger.log('🎮 Opening tournament game in modal window...');
             if (window.tournamentUI && typeof window.tournamentUI.openGame === 'function') {
-                Logger.log('✅ Using tournamentUI.openGame modal');
                 window.tournamentUI.openGame();
             } else {
-                Logger.log('❌ tournamentUI.openGame not available - trying fallback');
                 // ИСПРАВЛЕНО: Простой fallback без сложной логики
-                Logger.log('🔧 Using basic game modal fallback...');
                 
                 // Используем базовое модальное окно - оно уже работает отлично
                 this.createBasicGameModal();
@@ -944,7 +861,6 @@ async initDependencies() {
 
 async submitGameScore(score, playerName = null) {
     try {
-        Logger.log(`📊 Submitting score ONLY to blockchain: ${score}`);
 
         if (!this.walletConnector || !this.walletConnector.connected) {
             throw new Error('Wallet not connected');
@@ -983,7 +899,6 @@ async submitGameScore(score, playerName = null) {
                 this.showSuccess(`✅ Attempt ${currentAttempts}/3 counted! New score ${score} is not better than current ${currentScore}.`);
                 
                 // ⚡ НЕ увеличиваем попытки здесь - это уже сделано в handleGameOver()
-                Logger.log(`📊 Attempt already counted in handleGameOver: ${currentAttempts}/3`);
                 
                 // Обновляем UI без отправки в блокчейн
                 try {
@@ -995,11 +910,9 @@ async submitGameScore(score, playerName = null) {
                     Logger.warn('⚠️ Error updating UI after local attempt count:', updateError);
                 }
                 
-                Logger.log('✅ Local attempt counting complete - no blockchain submission needed');
                 return; // Прекращаем выполнение - не отправляем в блокчейн
                 
             } else if (score > currentScore) {
-                Logger.log(`✅ Score improved: ${currentScore} → ${score}, submitting to blockchain`);
             }
             
         } catch (checkError) {
@@ -1109,7 +1022,6 @@ async submitGameScore(score, playerName = null) {
 
     // ИСПРАВЛЕНО: Базовое модальное окно игры как fallback
     createBasicGameModal() {
-        Logger.log('🛠️ Creating basic game modal as fallback...');
         
         // Удаляем существующее модальное окно если есть
         const existingModal = document.getElementById('tournamentGameModal');
@@ -1152,7 +1064,6 @@ async submitGameScore(score, playerName = null) {
                 <div style="margin-top: 20px;">
                     <button onclick="
                         // ИСПРАВЛЕНО: Полностью останавливаем игру и очищаем все
-                        Logger.log('🛑 Stopping game and closing modal...');
                         
                         // Остановка всех игровых циклов и переменных
                         if (typeof window.stopGame === 'function') window.stopGame();
@@ -1178,7 +1089,6 @@ async submitGameScore(score, playerName = null) {
                         const extraCanvases = document.querySelectorAll('canvas:not(#tournamentGameCanvas)');
                         extraCanvases.forEach(canvas => {
                             if (canvas.id === 'gameCanvas' || canvas.parentElement === document.body) {
-                                Logger.log('🧹 Removing extra canvas:', canvas.id);
                                 canvas.remove();
                             }
                         });
@@ -1187,7 +1097,6 @@ async submitGameScore(score, playerName = null) {
                         window.canvas = null;
                         window.ctx = null;
                         
-                        Logger.log('🎮 Game stopped and modal closed');
                         this.parentElement.parentElement.parentElement.remove();
                     " style="
                         background: #ff4444;
@@ -1206,7 +1115,6 @@ async submitGameScore(score, playerName = null) {
         document.body.appendChild(modal);
         
         // ИСПРАВЛЕНО: Правильно запускаем игру на модальном canvas
-        Logger.log('🚀 Starting tournament game in modal...');
         
         // Ждем пока модальное окно появится в DOM
         this.createSafeTimeout(() => {
@@ -1229,17 +1137,13 @@ async submitGameScore(score, playerName = null) {
             };
             
             localStorage.setItem('tournamentMode', JSON.stringify(tournamentData));
-            Logger.log('🏆 Tournament mode activated:', tournamentData);
-            Logger.log('✅ Tournament canvas set as active:', tournamentCanvas);
             
             // ИСПРАВЛЕНО: НЕ вызываем initCanvas - он создает дополнительный canvas
             // Игра должна использовать уже созданный window.canvas из модального окна
             
             if (typeof window.actuallyStartGame === 'function') {
-                Logger.log('🎮 Starting game directly on tournament canvas...');
                 window.actuallyStartGame();
             } else if (typeof window.startGame === 'function') {
-                Logger.log('🎮 Starting game (fallback) on tournament canvas...');
                 window.startGame();
             } else {
                 Logger.error('❌ No game start function found');
@@ -1276,7 +1180,6 @@ async submitGameScore(score, playerName = null) {
             // Сохраняем обновленный лидерборд
             this.leaderboard.saveLeaderboard(leaderboard);
 
-            Logger.log(`✅ Player ${walletAddress} updated in leaderboard with best score: ${newBestScore}`);
         }
     } catch (error) {
         Logger.error('Error updating player in leaderboard:', error);
@@ -1289,27 +1192,15 @@ async submitGameScore(score, playerName = null) {
     async updateTournamentPrizePool() {
         try {
             if (!this.currentTournamentId || !window.tournamentManager) {
-                Logger.log('🔍 Prize pool update skipped - missing tournament ID or manager');
                 return;
             }
 
-            Logger.log(`🔍 Getting tournament info for ID: ${this.currentTournamentId}`);
 
             // Получаем информацию о турнире с блокчейна
-            Logger.log('🔍 Requesting tournament info for ID:', this.currentTournamentId);
             const tournamentInfo = await window.tournamentManager.getTournamentInfo(this.currentTournamentId);
             
-            Logger.log('🔍 Tournament info received:', {
-                ...tournamentInfo,
-                isActive: tournamentInfo?.isActive,
-                isFinished: tournamentInfo?.isFinished,
-                startTime: tournamentInfo?.startTime,
-                endTime: tournamentInfo?.endTime,
-                currentTime: Math.floor(Date.now() / 1000)
-            });
             
             if (tournamentInfo) {
-                Logger.log(`🔍 Prize pool value: ${tournamentInfo.prizePool} wei (type: ${typeof tournamentInfo.prizePool})`);
                 
                 // Обновляем статус турнира на основе полученной информации
                 if (tournamentInfo.isFinished) {
@@ -1323,19 +1214,15 @@ async submitGameScore(score, playerName = null) {
                 }
                 
                 if (tournamentInfo.prizePool && tournamentInfo.prizePool !== '0') {
-                    Logger.log(`💰 Updating prize pool: ${tournamentInfo.prizePool} wei`);
                     
                     // Обновляем UI через tournamentUI
                     if (window.tournamentUI && typeof window.tournamentUI.updatePrizePool === 'function') {
                         window.tournamentUI.updatePrizePool(tournamentInfo.prizePool);
                     } else {
-                        Logger.log('❌ tournamentUI.updatePrizePool not available');
                     }
                 } else {
-                    Logger.log('💰 Prize pool is 0 or empty, not updating UI');
                 }
             } else {
-                Logger.log('❌ No tournament info received');
             }
 
         } catch (error) {
@@ -1357,22 +1244,17 @@ async submitGameScore(score, playerName = null) {
                 leaderboard = this.leaderboard?.getStoredLeaderboard() || [];
             } else {
                 try {
-                    Logger.log('🔗 Fetching tournament leaderboard from blockchain...');
                     
                     // Получаем топ игроков из блокчейна
                     const topPlayers = await window.tournamentManager.getTopPlayers(this.currentTournamentId, 100);
-                    Logger.log(`🏆 Top 100 players: ${topPlayers?.length || 0} loaded`);
                     
                     if (topPlayers && topPlayers.length > 0) {
                         leaderboard = topPlayers;
                         isBlockchainData = true;
                     } else {
-                        Logger.log('📊 No blockchain leaderboard data - using local fallback');
                         leaderboard = this.leaderboard?.getStoredLeaderboard() || [];
                     }
                     
-                    Logger.log(`✅ Leaderboard loaded: ${leaderboard.length} entries`);
-                    Logger.log('🔍 DEBUG: First few entries:', JSON.stringify(leaderboard.slice(0, 3), null, 2));
                 } catch (blockchainError) {
                     Logger.error('❌ Failed to fetch blockchain leaderboard:', blockchainError);
                     leaderboard = this.leaderboard?.getStoredLeaderboard() || [];
@@ -1390,13 +1272,9 @@ async submitGameScore(score, playerName = null) {
             }
 
             const dataSource = isBlockchainData ? 'blockchain' : 'empty';
-            Logger.log(`📊 Leaderboard updated from ${dataSource}: ${leaderboard.length} entries`);
 
             // Дополнительное логирование для топ-3
             if (leaderboard.length > 0) {
-                Logger.log('🏆 Current top 3:', leaderboard.slice(0, 3).map((entry, i) => 
-                    `${i+1}. ${entry.playerName || 'Unknown'}: ${entry.score || 0}`
-                ));
             }
 
         } catch (error) {
@@ -1427,7 +1305,6 @@ async updateButtonStates() {
     const playButton = document.getElementById('playButton');
 
     if (!registerButton || !playButton) {
-        Logger.log('❌ Button elements not found');
         return;
     }
 
@@ -1441,41 +1318,33 @@ async updateButtonStates() {
         try {
             const attempts = await this.getUserAttempts();
             allAttemptsUsed = attempts >= 3;
-            Logger.log(`🎯 Player attempts from blockchain: ${attempts}/3, All used: ${allAttemptsUsed}`);
         } catch (error) {
-            Logger.log('🎯 Cannot get attempts from blockchain:', error);
             allAttemptsUsed = false;
         }
     }
 
-    // Logger.log(`🔄 Button update: wallet=${walletConnected}, tournament=${tournamentStarted}, registered=${isRegistered}, attempts=${allAttemptsUsed}`); // Removed: too verbose
 
     // Остальная логика кнопок без изменений...
     if (allAttemptsUsed) {
         registerButton.textContent = 'All Attempts Completed';
         registerButton.disabled = true;
         registerButton.className = 'action-button no-attempts';
-        Logger.log('🔒 Set button to: All Attempts Completed (disabled)');
     } else if (isRegistered) {
         registerButton.textContent = 'Registered';
         registerButton.disabled = true;
         registerButton.className = 'action-button';
-        Logger.log('✅ Set button to: Registered (disabled)');
     } else if (!tournamentStarted) {
         registerButton.textContent = 'Tournament Not Started';
         registerButton.disabled = true;
         registerButton.className = 'action-button';
-        Logger.log('⏸️ Set button to: Tournament Not Started (disabled)');
     } else if (!walletConnected && tournamentStarted) {
         registerButton.textContent = 'Connect Wallet to Register';
         registerButton.disabled = false;
         registerButton.className = 'action-button';
-        Logger.log('🔗 Set button to: Connect Wallet to Register (enabled)');
     } else if (walletConnected && tournamentStarted) {
         registerButton.textContent = 'Register for Tournament';
         registerButton.disabled = false;
         registerButton.className = 'action-button';
-        Logger.log('🎯 Set button to: Register for Tournament (enabled)');
     }
 
     // Проверяем наличие Discord username
@@ -1500,24 +1369,20 @@ async updateButtonStates() {
     playButton.textContent = playButtonText;
     playButton.className = playButtonDisabled ? 'action-button no-attempts' : 'action-button tournament-play';
 
-    // Logger.log(`🎯 Buttons set: Register="${registerButton.textContent}" Play="${playButton.textContent}"`); // Removed: too verbose
 }
     // ========== АДМИН ФУНКЦИИ ==========
 
     // Проверка админских прав
     isAdmin() {
         if (!this.walletConnector || !this.walletConnector.connected) {
-            Logger.log('🔧 Admin check: wallet not connected');
             return false;
         }
 
         if (!window.TOURNAMENT_CONFIG) {
-            Logger.log('🔧 Admin check: config not available');
             return false;
         }
 
         const isAdmin = window.TOURNAMENT_CONFIG.isAdmin(this.walletConnector.account);
-        Logger.log(`🔧 Admin check: ${this.walletConnector.account} -> ${isAdmin ? 'ADMIN' : 'USER'}`);
 
         return isAdmin;
     }
@@ -1531,17 +1396,10 @@ async updateButtonStates() {
         }
 
         const isAdmin = this.isAdmin();
-        Logger.log('🔧 Admin check:', {
-            isAdmin,
-            walletConnected: !!(this.walletConnector && this.walletConnector.connected),
-            walletAccount: this.walletConnector?.account,
-            configAvailable: !!window.TOURNAMENT_CONFIG
-        });
 
         if (isAdmin) {
             adminPanel.style.display = 'block';
             adminPanel.classList.add('show');
-            Logger.log('✅ Admin panel shown');
         } else {
             adminPanel.classList.remove('show');
             // Скрываем с анимацией
@@ -1550,7 +1408,6 @@ async updateButtonStates() {
                     adminPanel.style.display = 'none';
                 }
             }, 400); // Время анимации
-            Logger.log('👤 Admin panel hidden (not admin)');
         }
 
         // Также обновляем UI через tournamentUI если доступно
@@ -1572,29 +1429,20 @@ async updateButtonStates() {
             // ⚡ КРИТИЧЕСКАЯ ПРОВЕРКА БЛОКЧЕЙНА
             this.requireBlockchainConnection('Tournament Start');
 
-            Logger.log('🔗 Starting tournament ONLY via blockchain...');
             
             // Параметры турнира
             const entryFeeEth = TOURNAMENT_CONFIG.ENTRY_FEE || '0.005';
             const durationSeconds = TOURNAMENT_CONFIG.TOURNAMENT_DURATION || 600; // 10 минут
             
-            Logger.log('📋 Tournament start parameters:', {
-                tournamentId: this.currentTournamentId,
-                entryFeeEth: entryFeeEth,
-                durationSeconds: durationSeconds,
-                adminAddress: this.walletConnector.account
-            });
             
             // Проверяем текущий статус турнира перед запуском
             try {
                 const existingTournamentInfo = await window.tournamentManager.getTournamentInfo(this.currentTournamentId);
-                Logger.log('🔍 Existing tournament info:', existingTournamentInfo);
                 
                 if (existingTournamentInfo && existingTournamentInfo.status !== 'NOT_STARTED') {
                     throw new Error(`Tournament ${this.currentTournamentId} already exists with status: ${existingTournamentInfo.status}`);
                 }
             } catch (checkError) {
-                Logger.log('🔍 Tournament check error (may be normal if tournament doesn\'t exist):', checkError.message);
             }
             
             // Используем автогенерацию ID турнира для избежания конфликтов
@@ -1608,11 +1456,9 @@ async updateButtonStates() {
             const txHash = typeof result === 'string' ? result : result.transactionHash;
             const newTournamentId = typeof result === 'object' ? result.tournamentId : null;
             
-            Logger.log('✅ Blockchain tournament start successful:', txHash);
             
             // Обновляем текущий ID турнира если получили новый
             if (newTournamentId) {
-                Logger.log(`🔄 Updated tournament ID: ${this.currentTournamentId} → ${newTournamentId}`);
                 this.currentTournamentId = newTournamentId;
             }
 
@@ -1636,14 +1482,12 @@ async updateButtonStates() {
     // Очистка данных турнира - только локальное UI
     async clearTournamentData() {
         try {
-            Logger.log('🧹 Clearing only local UI data - blockchain data managed by smart contracts...');
 
             // Очищаем только localStorage UI данные
             localStorage.removeItem('tournamentMode');
 
             // Сбрасываем UI статус
             if (this.walletConnector && this.walletConnector.connected) {
-                Logger.log('🔄 Resetting UI status to connected');
                 this.currentUserStatus = 'connected';
                 
                 // Обновляем отображение
@@ -1653,7 +1497,6 @@ async updateButtonStates() {
                 this.currentUserStatus = 'disconnected';
             }
 
-            Logger.log('✅ Local UI data cleared - blockchain data intact');
 
         } catch (error) {
             Logger.error('❌ Error clearing UI data:', error);
@@ -1673,10 +1516,8 @@ async updateButtonStates() {
             // ⚡ КРИТИЧЕСКАЯ ПРОВЕРКА БЛОКЧЕЙНА
             this.requireBlockchainConnection('Tournament End');
 
-            Logger.log('🔗 Ending tournament ONLY via blockchain...');
             
             const txHash = await window.tournamentManager.endTournament(this.currentTournamentId);
-            Logger.log('✅ Blockchain tournament end successful:', txHash);
 
             this.hideLoading();
             this.showSuccess(`Tournament ended on blockchain! TX: ${txHash.slice(0, 8)}...`);
@@ -1707,7 +1548,6 @@ async updateButtonStates() {
 
             // ⚡ НОВОЕ: Проверяем статус турнира перед распределением
             const tournamentInfo = await window.tournamentManager.getTournamentInfo(this.currentTournamentId);
-            Logger.log('🔍 Tournament status before prize distribution:', tournamentInfo);
             
             if (!tournamentInfo.isFinished) {
                 throw new Error(`Tournament ${this.currentTournamentId} is not finished yet. Please end the tournament first.`);
@@ -1717,7 +1557,6 @@ async updateButtonStates() {
                 throw new Error(`Tournament ${this.currentTournamentId} has no prize pool to distribute.`);
             }
             
-            Logger.log(`💰 Tournament is ready for prize distribution. Prize pool: ${tournamentInfo.prizePool} wei`);
             
             const txHash = await window.tournamentManager.distributePrizes(this.currentTournamentId);
 
@@ -1747,7 +1586,6 @@ async updateButtonStates() {
             this.requireBlockchainConnection('Tournament Auto-End');
 
             const txHash = await window.tournamentManager.autoEndTournament(this.currentTournamentId);
-            Logger.log('✅ Auto-end successful:', txHash);
 
             this.hideLoading();
             this.showSuccess(`Tournament auto-ended on blockchain! TX: ${txHash.slice(0, 8)}...`);
@@ -1779,7 +1617,6 @@ async updateButtonStates() {
             this.requireBlockchainConnection('Emergency Stop');
 
             const txHash = await window.tournamentManager.emergencyStopTournament(this.currentTournamentId);
-            Logger.log('✅ Emergency stop successful:', txHash);
 
             this.hideLoading();
             this.showSuccess(`Tournament emergency stopped on blockchain! TX: ${txHash.slice(0, 8)}...`);
@@ -1809,7 +1646,6 @@ async updateButtonStates() {
             this.requireBlockchainConnection('Enable Refunds');
 
             const txHash = await window.tournamentManager.enableRefunds(this.currentTournamentId);
-            Logger.log('✅ Enable refunds successful:', txHash);
 
             this.hideLoading();
             this.showSuccess(`Refunds enabled on blockchain! TX: ${txHash.slice(0, 8)}...`);
@@ -1834,7 +1670,6 @@ async updateButtonStates() {
             this.requireBlockchainConnection('Claim Refund');
 
             const txHash = await window.tournamentManager.claimRefund(this.currentTournamentId);
-            Logger.log('✅ Refund claim successful:', txHash);
 
             this.hideLoading();
             this.showSuccess(`Refund claimed from blockchain! TX: ${txHash.slice(0, 8)}...`);
@@ -1862,7 +1697,6 @@ async updateButtonStates() {
             this.requireBlockchainConnection('Withdraw Fees');
 
             const txHash = await window.tournamentManager.withdrawFees();
-            Logger.log('✅ Withdraw fees successful:', txHash);
 
             this.hideLoading();
             this.showSuccess(`Fees withdrawn from blockchain! TX: ${txHash.slice(0, 8)}...`);
@@ -1893,7 +1727,6 @@ async updateButtonStates() {
                 currentTournamentPrizes: prizeDistribution
             };
 
-            Logger.log('📊 Contract Info:', info);
             alert(`📊 Contract Info:\n\nBalance: ${balance} PHRS\nTournament Counter: ${counter}\n\nCurrent Tournament Prizes:\n1st: ${prizeDistribution.first} PHRS\n2nd: ${prizeDistribution.second} PHRS\n3rd: ${prizeDistribution.third} PHRS\nOwner Fee: ${prizeDistribution.ownerFee} PHRS`);
 
             return info;
@@ -2005,34 +1838,8 @@ showWarning(message) {
 }
 
 showSuccess(message) {
-    Logger.log('✅ Success:', message);
-
-    // Простое уведомление без перезагрузки
-    const notification = document.createElement('div');
-    notification.className = 'success-notification';
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #00ff88;
-        color: #001122;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
-        z-index: 10000;
-        font-weight: bold;
-        max-width: 300px;
-    `;
-    notification.textContent = message;
-
-    document.body.appendChild(notification);
-
-    // Удаляем через 4 секунды
-    tournamentLobby.createSafeTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 4000);
+    // Отключено: не показывать success уведомления
+    return;
 }
 
     // ========== ДИАГНОСТИКА ==========
@@ -2050,7 +1857,6 @@ showSuccess(message) {
             currentTournamentStatus: this.currentTournamentStatus
         };
 
-        Logger.log('🏥 Health Check:', status);
         return status;
     }
 
@@ -2106,7 +1912,6 @@ showSuccess(message) {
         // Остановка таймера
         this.stopTournamentTimer();
 
-        Logger.log('🧹 Tournament Lobby cleanup completed');
     }
 
     // Запуск таймера турнира
@@ -2145,7 +1950,6 @@ showSuccess(message) {
 
                         // Если время истекло, проверяем статус
                         if (timeRemaining === 0 && this.currentTournamentStatus === 'ACTIVE') {
-                            Logger.log('⏰ Tournament time expired - checking status...');
                             this.currentTournamentStatus = 'TIME_EXPIRED';
                             this.updateTournamentStatus('TIME_EXPIRED');
                         }
@@ -2156,7 +1960,6 @@ showSuccess(message) {
             }
         }, 1000); // Обновляем каждую секунду
 
-        Logger.log('⏰ Tournament timer started');
     }
 
     // Остановка таймера турнира
@@ -2164,7 +1967,6 @@ showSuccess(message) {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
-            Logger.log('⏰ Tournament timer stopped');
         }
     }
 
@@ -2275,7 +2077,6 @@ showSuccess(message) {
             clearInterval(this.timers.leaderboardUpdate);
         }
         
-        Logger.log('🏆 Starting leaderboard auto-update (every 60 seconds)');
         
         // Обновляем лидерборд сразу при запуске
         this.updateLeaderboard().catch(error => {
@@ -2284,7 +2085,6 @@ showSuccess(message) {
         
         // Устанавливаем таймер на каждую минуту
         this.timers.leaderboardUpdate = setInterval(() => {
-            Logger.log('🔄 Auto-updating leaderboard...');
             this.updateLeaderboard().catch(error => {
                 Logger.warn('⚠️ Auto leaderboard update failed:', error.message);
             });
@@ -2296,7 +2096,6 @@ showSuccess(message) {
         if (this.timers.leaderboardUpdate) {
             clearInterval(this.timers.leaderboardUpdate);
             this.timers.leaderboardUpdate = null;
-            Logger.log('🛑 Leaderboard auto-update stopped');
         }
     }
 }
@@ -2308,7 +2107,6 @@ window.handleRegisterForTournament = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleRegisterForTournament();
     } else {
-        Logger.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -2317,7 +2115,6 @@ window.handlePlayTournamentGame = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handlePlayTournamentGame();
     } else {
-        Logger.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -2326,7 +2123,6 @@ window.handleStartTournament = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleStartTournament();
     } else {
-        Logger.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -2334,7 +2130,6 @@ window.handleEndTournament = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleEndTournament();
     } else {
-        Logger.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -2342,7 +2137,6 @@ window.handleDistributePrizes = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleDistributePrizes();
     } else {
-        Logger.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -2351,7 +2145,6 @@ window.handleSavePlayerName = function() {
     if (window.tournamentLobby) {
         window.tournamentLobby.handleSavePlayerName();
     } else {
-        Logger.log('❌ Tournament lobby not ready');
     }
 };
 
@@ -2362,21 +2155,15 @@ window.tournamentLobby = new TournamentLobby();
 
 // Функция инициализации
 async function initializeTournamentLobby() {
-    Logger.log('🚀 Tournament Lobby initializing...');
-    Logger.log('🔍 window.tournamentLobby:', typeof window.tournamentLobby);
-    Logger.log('🔍 Document ready state:', document.readyState);
 
     try {
-        Logger.log('🔍 Calling init()...');
         await window.tournamentLobby.init();
 
         // Проверка здоровья через 2 секунды
         window.tournamentLobby.createSafeTimeout(() => {
             const health = window.tournamentLobby.healthCheck();
             if (health.walletConnected && health.tournamentManagerReady) {
-                Logger.log('💚 All systems operational');
             } else {
-                Logger.log('💡 System ready for wallet connection');
             }
         }, 2000);
 
@@ -2403,34 +2190,27 @@ window.debugTournamentLobby = {
 
     // Mock функции для тестирования
     mockConnect: () => {
-        Logger.log('🧪 Mock connect - setting status to "connected"');
         window.tournamentLobby.updateUserStatus('connected');
     },
 
     mockRegister: () => {
-        Logger.log('🧪 Mock register - setting status to "registered"');
         window.tournamentLobby.updateUserStatus('registered');
     },
 
     mockDisconnect: () => {
-        Logger.log('🧪 Mock disconnect - setting status to "disconnected"');
         window.tournamentLobby.updateUserStatus('disconnected');
     },
 
     // Тестирование игр
     addTestScore: (score, playerName) => {
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            Logger.log('❌ Wallet not connected for test score');
             return;
         }
-        Logger.log(`🧪 Adding test score: ${score} for ${playerName || 'current player'}`);
         window.tournamentLobby.submitGameScore(score, playerName);
     },
 
     addMultipleTestScores: () => {
-        Logger.log('🧪 Adding multiple test scores...');
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            Logger.log('❌ Wallet not connected');
             return;
         }
 
@@ -2442,7 +2222,6 @@ window.debugTournamentLobby = {
     // Лидерборд
     getLeaderboard: () => {
         const leaderboard = window.tournamentLobby.getStoredLeaderboard();
-        Logger.log('🏆 Current leaderboard:', leaderboard);
         return leaderboard;
     },
 
@@ -2450,52 +2229,41 @@ window.debugTournamentLobby = {
         if (window.tournamentLobby.storage) {
             window.tournamentLobby.storage.saveLeaderboard([]);
         }
-        Logger.log('🧹 Leaderboard cleared');
         window.tournamentLobby.updateLeaderboard();
     },
 
     // Статистика игрока
     getPlayerStats: () => {
         if (!window.tournamentLobby.walletConnector || !window.tournamentLobby.walletConnector.connected) {
-            Logger.log('❌ Wallet not connected');
             return null;
         }
         const stats = window.tournamentLobby.getPlayerStats(window.tournamentLobby.walletConnector.account);
-        Logger.log('📊 Your stats:', stats);
         return stats;
     },
 
     // Симуляция игры
     simulateGame: (finalScore) => {
-        Logger.log(`🎮 Simulating game with score: ${finalScore || 'random'}`);
         const score = finalScore || Math.floor(Math.random() * 10000) + 1000;
         window.tournamentLobby.submitGameScore(score, `Player${Date.now().toString().slice(-4)}`);
     },
 
     // Тестирование блокчейн лидерборда
     testBlockchainLeaderboard: async () => {
-        Logger.log('🔗 Testing blockchain leaderboard...');
         try {
             if (!window.tournamentManager || !window.tournamentManager.connected) {
-                Logger.log('❌ TournamentManager not connected');
                 return;
             }
 
             const tournamentId = window.tournamentLobby.currentTournamentId;
-            Logger.log(`📋 Fetching leaderboard for tournament ${tournamentId}...`);
 
             // ОЧИЩАЕМ КЕSH ДЛЯ СВЕЖИХ ДАННЫХ
             if (window.tournamentManager.clearCache) {
                 window.tournamentManager.clearCache();
-                Logger.log('🗑️ Cache cleared');
             }
 
             const leaderboard = await window.tournamentManager.getTournamentLeaderboard(tournamentId);
-            Logger.log(`📊 Blockchain leaderboard: ${leaderboard?.length || 0} entries`);
-            Logger.log('🔍 ALL ENTRIES:', JSON.stringify(leaderboard, null, 2));
 
             const topPlayers = await window.tournamentManager.getTopPlayers(tournamentId, 100);
-            Logger.log(`🏆 Top 100 players: ${topPlayers?.length || 0} loaded`);
 
             // Принудительное обновление UI лидерборда
             await window.tournamentLobby.updateLeaderboard();
@@ -2507,10 +2275,8 @@ window.debugTournamentLobby = {
 
     // Тестирование разных лимитов
     testContractLimits: async () => {
-        Logger.log('🔍 Testing contract limits...');
         try {
             if (!window.tournamentManager || !window.tournamentManager.connected) {
-                Logger.log('❌ TournamentManager not connected');
                 return;
             }
 
@@ -2520,19 +2286,14 @@ window.debugTournamentLobby = {
             for (const limit of [3, 5, 10, 100]) {
                 try {
                     const result = await window.tournamentManager.getTopPlayers(tournamentId, limit);
-                    Logger.log(`📊 Limit ${limit}: got ${result?.length || 0} entries`);
                 } catch (error) {
-                    Logger.log(`❌ Limit ${limit}: ${error.message}`);
                 }
             }
             
             // Прямой вызов getTournamentLeaderboard 
             try {
                 const full = await window.tournamentManager.getTournamentLeaderboard(tournamentId);
-                Logger.log(`📋 Full leaderboard: ${full?.length || 0} entries`);
-                Logger.log('📋 Full data:', JSON.stringify(full, null, 2));
             } catch (error) {
-                Logger.log(`❌ Full leaderboard: ${error.message}`);
             }
 
         } catch (error) {
@@ -2542,19 +2303,15 @@ window.debugTournamentLobby = {
 
     // Информация о турнире из блокчейна
     getBlockchainTournamentInfo: async () => {
-        Logger.log('🔗 Getting blockchain tournament info...');
         try {
             if (!window.tournamentManager || !window.tournamentManager.connected) {
-                Logger.log('❌ TournamentManager not connected');
                 return;
             }
 
             const tournamentId = window.tournamentLobby.currentTournamentId;
             const info = await window.tournamentManager.getTournamentInfo(tournamentId);
-            Logger.log('📋 Tournament info:', info);
 
             const prizes = await window.tournamentManager.getPrizeDistribution(tournamentId);
-            Logger.log('💰 Prize distribution:', prizes);
 
             return { info, prizes };
 
@@ -2564,5 +2321,3 @@ window.debugTournamentLobby = {
     }
 };
 
-Logger.log('🏆 Tournament Lobby loaded with full functionality');
-Logger.log('🔧 Debug functions available at window.debugTournamentLobby');

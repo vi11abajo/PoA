@@ -84,7 +84,3 @@ const GAME_CONFIG = {
 // GAME_FEE: '0.005'  - Дорого (для турниров)
 // GAME_FEE: '0.01'   - Очень дорого (для премиум режима)
 
-// Logger removed to avoid errors during loading
-if (typeof Logger !== 'undefined' && Logger.log) {
-    Logger.log('🎮 Game config loaded:', GAME_CONFIG);
-}

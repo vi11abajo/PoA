@@ -67,7 +67,6 @@ class TournamentGame {
         this.initImages();
         this.setupEventListeners();
 
-        Logger.log('🎮 Tournament Game initialized');
     }
 
     // Инициализация изображений
@@ -77,11 +76,9 @@ class TournamentGame {
         this.images.octopus.src = TOURNAMENT_CONFIG.IMAGES.OCTOPUS;
         this.images.octopus.onload = () => {
             this.images.loaded.octopus = true;
-            Logger.log('🐙 Octopus image loaded');
         };
         this.images.octopus.onerror = () => {
             this.images.loaded.octopus = false;
-            Logger.log('❌ Octopus image failed');
         };
 
         // Крабы
@@ -92,12 +89,10 @@ class TournamentGame {
 
             this.images.crabs[color.toLowerCase()].onload = () => {
                 this.images.loaded.crabs[color.toLowerCase()] = true;
-                // Logger.log(`🦀 ${color} crab loaded`); // Removed: too verbose
             };
 
             this.images.crabs[color.toLowerCase()].onerror = () => {
                 this.images.loaded.crabs[color.toLowerCase()] = false;
-                // Logger.log(`❌ ${color} crab failed`); // Removed: too verbose
             };
         });
     }
@@ -143,7 +138,6 @@ class TournamentGame {
         this.canvas.width = TOURNAMENT_CONFIG.CANVAS_WIDTH;
         this.canvas.height = TOURNAMENT_CONFIG.CANVAS_HEIGHT;
 
-        Logger.log('✅ Tournament canvas initialized');
     }
 
     // Начать игру
@@ -175,7 +169,6 @@ class TournamentGame {
         // Запускаем игровой цикл
         this.gameLoop(performance.now());
 
-        Logger.log('🚀 Tournament game started');
     }
 
     // Пауза
@@ -198,7 +191,6 @@ class TournamentGame {
         this.gameState = 'gameOver';
         this.gameDuration = Date.now() - this.gameStartTime;
 
-        Logger.log(`🏁 Game ended. Score: ${this.score}, Duration: ${this.gameDuration}ms`);
 
         if (this.onGameOver) {
             this.onGameOver({
@@ -790,7 +782,6 @@ class TournamentGame {
         document.removeEventListener('keydown', this.handleKeyDown);
         document.removeEventListener('keyup', this.handleKeyUp);
 
-        Logger.log('🎮 Tournament game destroyed');
     }
 }
 
@@ -801,4 +792,3 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TournamentGame = TournamentGame;
 }
 
-Logger.log('🎮 Tournament game engine loaded');

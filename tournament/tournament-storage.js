@@ -325,6 +325,7 @@ class TournamentLobby {
         const oldStatus = this.currentUserStatus;
         this.currentUserStatus = status;
 
+        console.log('User status changed:', {
             from: oldStatus,
             to: status,
             currentTournamentStatus: this.currentTournamentStatus
@@ -348,6 +349,7 @@ class TournamentLobby {
         const tournamentStarted = this.currentTournamentStatus === 'active';
         const isRegistered = this.currentUserStatus === 'registered';
 
+        console.log('Updating button states:', {
             walletConnected,
             tournamentStarted,
             isRegistered,
@@ -399,6 +401,7 @@ class TournamentLobby {
         if (wasPlayButtonDisabled && !playButton.disabled) {
         }
 
+        console.log('Button states updated:', {
             registerText: registerButton.textContent,
             registerDisabled: registerButton.disabled,
             playDisabled: playButton.disabled

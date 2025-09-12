@@ -244,7 +244,6 @@ const TournamentUtils = {
                     localStorage.removeItem(key);
                 }
             });
-            Logger.log('Tournament storage cleared');
             return true;
         } catch (error) {
             Logger.error('Error clearing tournament storage:', error);
@@ -351,7 +350,6 @@ const TournamentUtils = {
     playSound(soundName) {
         // Заглушка для будущих звуковых эффектов
         if (TOURNAMENT_CONFIG.DEBUG_MODE) {
-            Logger.log(`🔊 Playing sound: ${soundName}`);
         }
     },
 
@@ -479,7 +477,6 @@ const TournamentUtils = {
         const timestamp = new Date().toISOString();
         const emoji = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : 'ℹ️';
 
-        Logger.log(`${emoji} [${timestamp}] ${message}`);
     }
 };
 
@@ -490,4 +487,3 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TournamentUtils = TournamentUtils;
 }
 
-Logger.log('🛠️ Tournament utilities loaded');

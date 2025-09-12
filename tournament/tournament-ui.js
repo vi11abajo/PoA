@@ -12,7 +12,6 @@ class TournamentUI {
         this.gameOverProcessed = false;
         this.closeGameTimer = null;
         this.init();
-        Logger.log('🎨 Tournament UI initialized');
     }
 
 
@@ -65,7 +64,6 @@ class TournamentUI {
             distributePrizesBtn: document.getElementById('distributePrizesBtn')
         };
 
-        // Logger.log('📋 Elements cached:', Object.keys(this.elements).length); // Removed: too verbose
     }
 
     // Создание игрового модала
@@ -87,6 +85,7 @@ class TournamentUI {
                         <span>Lives: <span id="gameLives">3</span></span>
                         <span>Level: <span id="gameLevel">1</span></span>
                     </div>
+                    
                     <div class="game-controls">
                         <!-- EXIT button removed - close functionality moved to X button in header -->
                     </div>
@@ -97,7 +96,29 @@ class TournamentUI {
         document.body.appendChild(modal);
         this.gameModal = modal;
 
-        // Logger.log('🎮 Game modal created'); // Removed: too verbose
+        // Создаем панель бустов отдельно, вне модального окна
+        this.createExternalBoostPanel();
+
+    }
+
+    // Создание внешней панели бустов
+    createExternalBoostPanel() {
+        const boostPanel = document.createElement('div');
+        boostPanel.id = 'boostPanel';
+        boostPanel.className = 'tournament-boost-panel-external';
+        boostPanel.innerHTML = `
+            <div class="boost-panel-header">
+                <span>⭐ Active Boosts</span>
+            </div>
+            <div id="boostPanelContent" class="boost-panel-content">
+                <!-- Активные бонусы будут добавлены динамически -->
+            </div>
+        `;
+
+        document.body.appendChild(boostPanel);
+        this.boostPanel = boostPanel;
+
+        // Панель скрыта по умолчанию, будет показана BoostManager'ом при наличии бустов
     }
 
     // Настройка обработчиков событий
@@ -118,7 +139,6 @@ class TournamentUI {
             }
         });
 
-        Logger.log('🎯 Event listeners setup');
     }
 
     // ========== ОБНОВЛЕНИЕ ДАННЫХ ==========
@@ -132,7 +152,6 @@ class TournamentUI {
                 )} PHRS`;
         }
 
-        Logger.log('📊 Tournament info updated');
     }
 
     // Обновить статус пользователя
@@ -221,7 +240,6 @@ class TournamentUI {
 
             // Обработчик клика
             backButton.addEventListener('click', () => {
-                Logger.log('🏆 Back to Tournament clicked');
                 this.closeGame();
             });
 
@@ -234,21 +252,18 @@ class TournamentUI {
                 closeBtn.style.display = 'none';
             }
 
-            Logger.log('✅ Back to Tournament button added to modal');
         }
     }
 
     // Обновить индикаторы попыток
     updateAttemptIndicators(attempts) {
         if (!this.elements.attemptIndicators) {
-            Logger.log('❌ attemptIndicators element not found');
             return;
         }
 
         const dots = this.elements.attemptIndicators.querySelectorAll('.attempt-dot');
         
         if (dots.length === 0) {
-            Logger.log('❌ No .attempt-dot elements found');
             return;
         }
         
@@ -268,7 +283,6 @@ class TournamentUI {
             // Остальные остаются базовыми (неиспользованными)
         });
         
-        Logger.log(`🎯 Attempt indicators updated: ${attempts}/3 attempts used`);
     }
 
     // Обновить статус турнира
@@ -339,7 +353,6 @@ class TournamentUI {
             timerElement.classList.add('warning');
         }
 
-        // Logger.log(`⏰ Timer updated: ${timeString}`); // Убран - слишком частые логи
     }
 
     // Показать таймер турнира
@@ -462,17 +475,14 @@ class TournamentUI {
         const sortedBoard = TournamentUtils.sortByScore(leaderboard);
         const topPlayers = sortedBoard.slice(0, TOURNAMENT_CONFIG.LEADERBOARD_MAX_ENTRIES || 100);
         
-        Logger.log(`🔍 DEBUG UI: Received ${leaderboard.length} entries, showing ${topPlayers.length}`);
 
         // 📊 Проверяем, изменился ли лидерборд
         if (this.lastLeaderboardHash && this.isSameLeaderboard(topPlayers)) {
-            Logger.log('⚡ Leaderboard unchanged, skipping update');
             return;
         }
 
         // Сохраняем хеш для следующего сравнения
         this.lastLeaderboardHash = this.generateLeaderboardHash(topPlayers);
-        Logger.log('🔄 Updating leaderboard DOM');
 
         let html = '';
 
@@ -504,7 +514,6 @@ class TournamentUI {
         }
 
         this.elements.leaderboardBody.innerHTML = html;
-        Logger.log(`📊 Leaderboard updated with ${topPlayers.length} entries`);
     }
 
     // 🔍 Генерировать хеш для сравнения лидерборда
@@ -540,7 +549,6 @@ class TournamentUI {
             const cells = playerRow.querySelectorAll('td');
             if (cells.length >= 4) {
                 cells[3].textContent = TournamentUtils.formatNumber(newScore);
-                Logger.log(`⚡ Updated player ${player} score to ${newScore}`);
                 return true;
             }
         }
@@ -559,7 +567,6 @@ class TournamentUI {
             return this.updateLeaderboard(leaderboard);
         }
         
-        Logger.log(`📱 Using virtualization for ${sortedBoard.length} players (showing top ${maxVisible})`);
         
         // Показываем только верхние результаты + счетчик остальных
         const topPlayers = sortedBoard.slice(0, maxVisible);
@@ -600,7 +607,6 @@ class TournamentUI {
         }
         
         this.elements.leaderboardBody.innerHTML = html;
-        Logger.log(`📱 Virtualized leaderboard: ${topPlayers.length} visible, ${remainingCount} hidden`);
         
         // Сохраняем полный список для функции "показать всех"
         this.fullLeaderboardData = sortedBoard;
@@ -671,31 +677,32 @@ class TournamentUI {
 
         // Проверяем, что модальное окно существует в DOM
         if (!this.gameModal || !document.body.contains(this.gameModal)) {
-            Logger.log('🔄 Modal was removed from DOM, recreating...');
             this.createGameModal();
             this.setupEventListeners();
+        }
+
+        // Проверяем, что панель бустов существует
+        if (!this.boostPanel || !document.body.contains(this.boostPanel)) {
+            this.createExternalBoostPanel();
+        }
+
+        // Показываем панель бустов при запуске игры
+        if (this.boostPanel) {
+            this.boostPanel.style.display = 'block';
         }
 
         // Принудительно показываем модал
         this.gameModal.style.display = 'flex';
         this.gameModal.classList.add('active');
         
-        Logger.log('🎮 Modal opened:', {
-            exists: !!this.gameModal,
-            inDOM: document.body.contains(this.gameModal),
-            hasActiveClass: this.gameModal.classList.contains('active'),
-            displayStyle: this.gameModal.style.display
-        });
 
         // Загружаем основные файлы игры и запускаем
         this.loadAndStartGame();
 
-        Logger.log('🎮 Tournament game opened with adapter');
     }
 
     // Инициализация canvas для игры
     initGameCanvas() {
-        Logger.log('🎨 Initializing game canvas...');
 
         // Найдем canvas для игры
         const canvas = document.getElementById('tournamentGameCanvas');
@@ -721,23 +728,17 @@ class TournamentUI {
             ctx.textAlign = 'center';
             ctx.fillText('🎮 Loading Tournament Game...', canvas.width / 2, canvas.height / 2);
             
-            Logger.log(`🎨 Canvas initialized: ${canvas.width}x${canvas.height} (logical), display: ${canvas.clientWidth}x${canvas.clientHeight}`);
             
             // Устанавливаем глобальную переменную для игры
             window.tournamentCanvas = canvas;
             window.tournamentCtx = ctx;
         }
 
-        Logger.log('✅ Game canvas initialized');
     }
     
     // Загрузить основные файлы игры и запустить
     loadAndStartGame() {
         // Проверяем, загружены ли основные функции игры
-        Logger.log('🔍 Checking game availability...');
-        Logger.log('startGame:', typeof window.startGame);
-        Logger.log('actuallyStartGame:', typeof window.actuallyStartGame);
-        Logger.log('initCanvas:', typeof window.initCanvas);
 
         // Пробуем разные варианты запуска игры
         if (typeof window.startGame === 'function') {
@@ -759,7 +760,6 @@ class TournamentUI {
             key.toLowerCase().includes('init')
         );
 
-        Logger.log('🔍 Available game-related functions:', gameFunctions);
 
         // Если ничего не найдено, выводим детальную информацию
         Logger.error('❌ Game files not properly loaded. Available functions:', gameFunctions);
@@ -768,7 +768,6 @@ class TournamentUI {
 
     // Принудительно выйти из игры с завершением попытки
     forceExitGame() {
-        Logger.log('🚪 Force exit game triggered');
         
         // Получаем текущий счет из игры
         let currentScore = 0;
@@ -787,7 +786,6 @@ class TournamentUI {
             forceExit: true
         };
         
-        Logger.log(`🏁 Force exit: score=${gameResult.score}, level=${gameResult.level}`);
         
         // Отправляем результат
         if (window.tournamentLobby && typeof window.tournamentLobby.submitGameScore === 'function') {
@@ -802,7 +800,6 @@ class TournamentUI {
     closeGame() {
         // Предотвращаем множественные вызовы
         if (this.isClosing) {
-            Logger.log('🔄 closeGame already in progress, skipping');
             return;
         }
         this.isClosing = true;
@@ -810,6 +807,12 @@ class TournamentUI {
         // Принудительно скрываем модальное окно
         this.gameModal.style.display = 'none';
         this.gameModal.classList.remove('active');
+
+        // Скрываем внешнюю панель бустов
+        if (this.boostPanel) {
+            this.boostPanel.style.display = 'none';
+            this.boostPanel.classList.remove('show');
+        }
 
         if (this.game) {
             this.game.destroy();
@@ -823,7 +826,6 @@ class TournamentUI {
             screen.remove();
         });
 
-        Logger.log('🧹 All game screens cleared');
 
         // Очищаем добавленные кнопки при закрытии
         const backBtn = document.getElementById('backToTournamentBtn');
@@ -837,7 +839,6 @@ class TournamentUI {
             closeBtn.style.display = 'block';
         }
 
-        Logger.log('🎮 Tournament game closed');
 
         // Очищаем таймеры
         if (this.closeGameTimer) {
@@ -856,7 +857,6 @@ class TournamentUI {
     handleGameOver(gameResult) {
         // Защита от множественных вызовов
         if (this.gameOverProcessed) {
-            Logger.log('🔄 handleGameOver already processed, skipping');
             return;
         }
         this.gameOverProcessed = true;
@@ -884,21 +884,16 @@ class TournamentUI {
                 attempts = window.tournamentLobby.storage.getPlayerAttempts(window.tournamentLobby.walletConnector.account);
             }
 
-            Logger.log(`🎯 Current attempts after score submission: ${attempts}/3`);
 
             if (attempts >= 3) {
-                Logger.log('🔒 All attempts completed');
                 this.addBackToTournamentButton();
-                Logger.log('✅ Game over modal ready with Back to Tournament button');
             } else {
-                Logger.log(`🎮 Game completed. Attempts remaining: ${3 - attempts}`);
                 
                 // Защита от множественных таймеров закрытия
                 if (this.closeGameTimer) {
                     clearTimeout(this.closeGameTimer);
                 }
                 this.closeGameTimer = setTimeout(() => {
-                    Logger.log('⏰ Auto-closing game after 3 seconds');
                     this.closeGame();
                 }, 3000);
             }
@@ -955,8 +950,8 @@ class TournamentUI {
 
     // Показать успех
     showSuccess(message) {
-        this.showNotification(message, 'success');
-        Logger.log('✅ UI Success:', message);
+        // Отключено: не показывать success уведомления
+        return;
     }
 
     // Показать предупреждение
@@ -1054,7 +1049,6 @@ class TournamentUI {
             this.closeGame();
         }
 
-        Logger.log('🧹 UI cleanup completed');
     }
 
     // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ АДАПТЕРА ==========
@@ -1405,10 +1399,123 @@ class TournamentUI {
                     right: 20px;
                 }
             }
+
+            /* Tournament Boost Panel - External (outside modal) */
+            .tournament-boost-panel-external {
+                position: fixed;
+                left: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: linear-gradient(135deg, rgba(0, 20, 40, 0.95), rgba(0, 40, 80, 0.95));
+                border: 2px solid #00ddff;
+                border-radius: 12px;
+                padding: 0;
+                box-shadow: 0 0 20px rgba(0, 221, 255, 0.3);
+                backdrop-filter: blur(10px);
+                min-width: 200px;
+                max-width: 250px;
+                min-height: 40px;
+                opacity: 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: all 0.3s ease;
+                z-index: 10001;
+                display: none;
+            }
+
+            .tournament-boost-panel-external.show {
+                opacity: 1;
+                max-height: 600px;
+                padding: 12px;
+            }
+
+            .boost-panel-header {
+                text-align: center;
+                color: #00ddff;
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .boost-panel-content {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                max-height: 500px;
+                overflow-y: auto;
+            }
+
+            .boost-item {
+                background: rgba(0, 221, 255, 0.1);
+                border: 1px solid #00ddff;
+                border-radius: 8px;
+                padding: 8px;
+                width: 100%;
+                text-align: center;
+                backdrop-filter: blur(5px);
+                transition: all 0.2s ease;
+                box-sizing: border-box;
+            }
+
+            .boost-item:hover {
+                background: rgba(0, 221, 255, 0.2);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 221, 255, 0.4);
+            }
+
+            .boost-name {
+                color: #00ff88;
+                font-size: 12px;
+                font-weight: bold;
+                display: block;
+                margin-bottom: 2px;
+            }
+
+            .boost-timer {
+                color: #66ccff;
+                font-size: 11px;
+                display: block;
+            }
+
+            .boost-progress {
+                width: 100%;
+                height: 3px;
+                background: rgba(0, 221, 255, 0.2);
+                border-radius: 2px;
+                margin-top: 4px;
+                overflow: hidden;
+            }
+
+            .boost-progress-bar {
+                height: 100%;
+                background: linear-gradient(90deg, #00ff88, #00ddff);
+                border-radius: 2px;
+                transition: width 0.1s ease;
+            }
+
+            .boost-progress-bar.critical {
+                background: linear-gradient(90deg, #ff4444, #ff8800);
+                animation: criticalPulse 0.5s ease-in-out infinite alternate;
+            }
+
+            @keyframes criticalPulse {
+                from { opacity: 0.7; }
+                to { opacity: 1; }
+            }
+
+            /* Стили для различных типов бонусов */
+            .boost-item[data-boost="RAPID_FIRE"] { border-color: #ffff00; }
+            .boost-item[data-boost="SHIELD_BARRIER"] { border-color: #0088ff; }
+            .boost-item[data-boost="SCORE_MULTIPLIER"] { border-color: #ffd700; }
+            .boost-item[data-boost="INVINCIBILITY"] { 
+                border-color: #ff00ff; 
+                background: linear-gradient(45deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
+            }
         `;
 
         document.head.appendChild(style);
-        Logger.log('🎨 UI styles injected');
     }
 
     // Создать фоллбек Web3 объект для расчетов
@@ -1441,7 +1548,6 @@ window.tournamentUI = new TournamentUI();
 
 // ЭКСТРЕННАЯ ФУНКЦИЯ ПОЛНОЙ ОЧИСТКИ
 window.emergencyCleanup = function() {
-    Logger.log('🚨 EMERGENCY CLEANUP STARTED');
     
     // 1. Останавливаем все игровые циклы
     if (typeof window.stopGame === 'function') window.stopGame();
@@ -1464,7 +1570,6 @@ window.emergencyCleanup = function() {
     `);
     
     gameOverScreens.forEach(screen => {
-        Logger.log('🧹 Emergency removing game over screen:', screen.id || screen.className);
         screen.style.display = 'none';
         screen.remove();
     });
@@ -1474,7 +1579,6 @@ window.emergencyCleanup = function() {
     if (tournamentModal) {
         tournamentModal.style.display = 'none';
         tournamentModal.classList.remove('active');
-        Logger.log('🎮 Main tournament modal hidden (not removed)');
     }
     
     // 5. Деактивируем Tournament Adapter
@@ -1482,17 +1586,14 @@ window.emergencyCleanup = function() {
         window.tournamentAdapter.deactivate();
     }
     
-    Logger.log('✅ EMERGENCY CLEANUP COMPLETED');
 };
 
-Logger.log('🚨 Emergency cleanup function available: emergencyCleanup()');
 // ========== DEBUG И ТЕСТИРОВАНИЕ ==========
 
 // Debug функции для тестирования адаптера
 window.debugTournamentUI = {
     // Тест адаптера
     testAdapter: () => {
-        Logger.log('🧪 Testing Tournament Adapter...');
 
         if (!window.tournamentAdapter) {
             Logger.error('❌ Tournament Adapter not found');
@@ -1507,18 +1608,12 @@ window.debugTournamentUI = {
         };
 
         const testCallbacks = {
-            onScoreUpdate: (score) => Logger.log('🎯 Test Score:', score),
-            onLivesChange: (lives) => Logger.log('❤️ Test Lives:', lives),
-            onLevelChange: (level) => Logger.log('🆙 Test Level:', level),
-            onGameOver: (result) => Logger.log('🏁 Test Game Over:', result)
         };
 
         window.tournamentAdapter.activate(testData, testCallbacks);
-        Logger.log('✅ Adapter activated for testing');
 
         // Показываем статус
         setTimeout(() => {
-            Logger.log('📊 Adapter Status:', window.tournamentAdapter.getStatus());
         }, 1000);
     },
 
@@ -1526,13 +1621,11 @@ window.debugTournamentUI = {
     deactivateAdapter: () => {
         if (window.tournamentAdapter) {
             window.tournamentAdapter.deactivate();
-            Logger.log('✅ Adapter deactivated');
         }
     },
 
     // Тест открытия игры
     testGameOpen: () => {
-        Logger.log('🧪 Testing game opening...');
         if (window.tournamentUI) {
             window.tournamentUI.openGame();
         }
@@ -1540,7 +1633,6 @@ window.debugTournamentUI = {
 
     // Симуляция результата игры
     simulateGameOver: (score = 12345) => {
-        Logger.log('🧪 Simulating game over with score:', score);
 
         const gameResult = {
             score: score,
@@ -1565,9 +1657,7 @@ window.debugTournamentUI = {
             adapterStatus: window.tournamentAdapter ? window.tournamentAdapter.getStatus() : null
         };
 
-        Logger.log('🔍 System Status:', status);
         return status;
     }
 };
 
-Logger.log('🧪 Debug functions available at window.debugTournamentUI');

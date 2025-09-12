@@ -53,7 +53,6 @@ class WalletConnector {
             }
         ];
         
-        Logger.log('🔗 Creating WalletConnector...');
         this.init();
     }
     
@@ -62,7 +61,6 @@ class WalletConnector {
         this.createWalletModal();
         this.updateConnectionStatus();
         this.isInitialized = true;
-        Logger.log('✅ WalletConnector initialized');
     }
     
     createWalletButton() {
@@ -223,7 +221,6 @@ class WalletConnector {
         
         // УДАЛЕНО: Дублированная кнопка кошелька из wallet-connector.js
         // Используем только кнопку из tournament-lobby.html
-        Logger.log('🔧 Skipping wallet button creation - using existing button from tournament-lobby.html');
     }
     
     createWalletModal() {
@@ -251,7 +248,6 @@ class WalletConnector {
         `;
         
         document.body.appendChild(modal);
-        Logger.log('✅ Wallet modal created');
     }
     
     showWalletModal() {
@@ -327,7 +323,6 @@ class WalletConnector {
                 }, 1000);
             }
             
-            Logger.log('✅ Wallet connected:', this.account);
             
         } catch (error) {
             Logger.error('Connection error:', error);
@@ -342,7 +337,6 @@ class WalletConnector {
         this.connected = false;
         this.walletType = null;
         this.updateConnectionStatus();
-        Logger.log('💔 Wallet disconnected');
     }
     
     async switchNetwork() {
@@ -449,7 +443,6 @@ class WalletConnector {
                 throw new Error('Wallet not connected');
             }
             
-            Logger.log('💰 Paying game fee:', this.config.GAME_FEE, 'PHRS');
             
             const feeInWei = this.web3.utils.toWei(this.config.GAME_FEE, 'ether');
             
@@ -471,7 +464,6 @@ class WalletConnector {
                 gas: Math.round(gasEstimate * 1.2)
             });
 
-            Logger.log('✅ Game fee paid! TX:', tx.transactionHash);
             return true;
             
         } catch (error) {
@@ -520,7 +512,6 @@ class WalletConnector {
                 }
             }
             
-            Logger.log(`🔒 Validated score: ${score}, name: ${playerName}`);
             
             const gasEstimate = await this.contract.methods
                 .recordScore(score, playerName)
@@ -533,7 +524,6 @@ class WalletConnector {
                     gas: Math.round(gasEstimate * 1.2)
                 });
 
-            Logger.log('✅ Score saved! TX:', tx.transactionHash);
             return tx.transactionHash;
             
         } catch (error) {
@@ -562,7 +552,6 @@ class WalletConnector {
 }
 
 
-// Logger.log('🚀 Creating global WalletConnector...'); // Will be logged after init
 window.walletConnector = new WalletConnector();
 
 // Инициализируем кошелек после загрузки DOM

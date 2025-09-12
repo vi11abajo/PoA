@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharos Invaders Wiki - Boost System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0c1445 0%, #1a2980 25%, #26d0ce 100%);
+            background-attachment: fixed;
+            color: #e8f4f8;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .wiki-header {
+            background: linear-gradient(135deg, rgba(15, 32, 85, 0.95) 0%, rgba(26, 41, 128, 0.95) 100%);
+            border-bottom: 3px solid #26d0ce;
+            padding: 20px 0;
+            box-shadow: 0 4px 20px rgba(38, 208, 206, 0.3);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wiki-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .wiki-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .wiki-title h1 {
+            font-size: 2.5em;
+            color: #26d0ce;
+            font-weight: normal;
+            text-shadow: 0 0 20px rgba(38, 208, 206, 0.6);
+        }
+
+        .wiki-subtitle {
+            color: #a8d8ea;
+            font-size: 1.1em;
+            border-left: 4px solid #26d0ce;
+            padding-left: 15px;
+            margin-left: 10px;
+        }
+
+        .wiki-nav {
+            background: rgba(15, 32, 85, 0.8);
+            border: 1px solid #26d0ce;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .wiki-nav h3 {
+            color: #26d0ce;
+            font-size: 1em;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(38, 208, 206, 0.5);
+        }
+
+        .wiki-nav ul {
+            list-style: none;
+            font-size: 0.9em;
+        }
+
+        .wiki-nav li {
+            margin: 3px 0;
+        }
+
+        .wiki-nav a {
+            color: #a8d8ea;
+            text-decoration: none;
+            padding: 4px 0;
+            display: block;
+            transition: color 0.3s ease;
+        }
+
+        .wiki-nav a:hover {
+            color: #26d0ce;
+            text-shadow: 0 0 8px rgba(38, 208, 206, 0.4);
+        }
+
+        .wiki-content {
+            background: rgba(15, 32, 85, 0.85);
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #26d0ce;
+            border-radius: 12px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .wiki-section {
+            margin-bottom: 40px;
+        }
+
+        .wiki-section h2 {
+            color: #26d0ce;
+            font-size: 1.8em;
+            font-weight: normal;
+            border-bottom: 3px solid #26d0ce;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            text-shadow: 0 0 15px rgba(38, 208, 206, 0.5);
+        }
+
+        .wiki-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            height: 3px;
+            width: 100px;
+        }
+
+        .rarity-common h2::after { background: #a8d8ea; }
+        .rarity-rare h2::after { background: #4fb3d9; }
+        .rarity-epic h2::after { background: #6c5ce7; }
+        .rarity-legendary h2::after { background: #fdcb6e; }
+
+        .rarity-info {
+            background: rgba(38, 208, 206, 0.15);
+            border-left: 4px solid;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rarity-common .rarity-info { border-color: #a8d8ea; }
+        .rarity-rare .rarity-info { border-color: #4fb3d9; }
+        .rarity-epic .rarity-info { border-color: #6c5ce7; }
+        .rarity-legendary .rarity-info { border-color: #fdcb6e; }
+
+        .boosts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid #26d0ce;
+            background: rgba(26, 41, 128, 0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .boosts-table th {
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            border: 1px solid #26d0ce;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: bold;
+            color: #0c1445;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.2);
+        }
+
+        .boosts-table td {
+            border: 1px solid rgba(38, 208, 206, 0.3);
+            padding: 12px 15px;
+            vertical-align: top;
+            color: #e8f4f8;
+        }
+
+        .boosts-table td:first-child {
+            min-width: 200px;
+            max-width: 250px;
+            white-space: nowrap;
+        }
+
+        .boosts-table tr:nth-child(even) {
+            background: rgba(38, 208, 206, 0.1);
+        }
+
+        .boost-icon {
+            font-size: 1.8em;
+            margin-right: 8px;
+        }
+
+        .boost-name {
+            font-weight: bold;
+            color: #26d0ce;
+            font-size: 1.1em;
+            white-space: nowrap;
+            display: inline-block;
+            text-shadow: 0 0 10px rgba(38, 208, 206, 0.4);
+        }
+
+        .boost-duration {
+            color: #a8d8ea;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        .boost-effect {
+            background: rgba(38, 208, 206, 0.2);
+            border: 1px solid #26d0ce;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 8px 0;
+            font-size: 0.9em;
+            color: #e8f4f8;
+        }
+
+        .boost-stats {
+            font-family: 'Courier New', monospace;
+            background: rgba(15, 32, 85, 0.6);
+            border: 1px solid #26d0ce;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #a8d8ea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #a8d8ea;
+            font-style: italic;
+            font-size: 1.1em;
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .wiki-footer {
+            background: #f8f9fa;
+            border-top: 1px solid #a2a9b1;
+            padding: 20px;
+            margin-top: 40px;
+            text-align: center;
+            color: #72777d;
+            font-size: 0.9em;
+        }
+
+        /* Морские анимации */
+        @keyframes oceanWave {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-10px) rotate(2deg); opacity: 1; }
+        }
+
+        @keyframes bubbleFloat {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+
+        .wiki-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" fill="none"><path d="M0,96L48,80C96,64 192,32 288,42.7C384,53 480,107 576,128C672,149 768,139 864,128C960,117 1056,107 1152,101.3L1200,96L1200,0L1152,0C1056,0 960,0 864,0C768,0 672,0 576,0C480,0 384,0 288,0C192,0 96,0 48,0L0,0Z" fill="%2326d0ce" fill-opacity="0.1"/></svg>') no-repeat bottom;
+            background-size: cover;
+            animation: oceanWave 4s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        /* Пузырьки */
+        .bubble {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(38, 208, 206, 0.6) 0%, rgba(38, 208, 206, 0.1) 70%);
+            border-radius: 50%;
+            animation: bubbleFloat 8s linear infinite;
+            z-index: -1;
+        }
+
+        .bubble:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 8s; }
+        .bubble:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 10s; }
+        .bubble:nth-child(3) { left: 80%; animation-delay: 4s; animation-duration: 7s; }
+        .bubble:nth-child(4) { left: 90%; animation-delay: 6s; animation-duration: 9s; }
+
+        @media (max-width: 768px) {
+            .wiki-title h1 { font-size: 1.8em; }
+            .wiki-content { padding: 15px; }
+            .boosts-table { font-size: 0.9em; }
+            .boosts-table th, .boosts-table td { padding: 6px 8px; }
+            .boosts-table td:first-child { 
+                min-width: 160px; 
+                max-width: 200px; 
+            }
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin: 2px 4px 2px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .tag-common { background: linear-gradient(135deg, #a8d8ea, #74b9ff); color: #0c1445; }
+        .tag-rare { background: linear-gradient(135deg, #4fb3d9, #0984e3); color: #ffffff; }
+        .tag-epic { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #ffffff; }
+        .tag-legendary { background: linear-gradient(135deg, #fdcb6e, #e17055); color: #0c1445; }
+
+        .infobox {
+            float: right;
+            width: 280px;
+            background: #f8f9fa;
+            border: 1px solid #a2a9b1;
+            padding: 15px;
+            margin: 0 0 20px 20px;
+            font-size: 0.9em;
+        }
+
+        .infobox h3 {
+            text-align: center;
+            background: #eaecf0;
+            margin: -15px -15px 15px -15px;
+            padding: 10px;
+            border-bottom: 1px solid #a2a9b1;
+            font-size: 1.1em;
+            color: #000;
+        }
+
+        .infobox table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .infobox td {
+            padding: 4px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .infobox td:first-child {
+            font-weight: bold;
+            color: #333;
+            width: 40%;
+        }
+
+        @media (max-width: 768px) {
+            .infobox {
+                float: none;
+                width: 100%;
+                margin: 20px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Морские пузырьки -->
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+
+    <div class="wiki-header">
+        <div class="wiki-container">
+            <div class="wiki-title">
+                <h1><img src="images/boosts/boost.png" alt="Boost" style="width: 32px; height: 32px; margin-right: 10px; vertical-align: middle;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span style="display: none;">🎁</span> Boost System</h1>
+                <div class="wiki-subtitle">
+                    Pharos Invaders Wiki
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wiki-container">
+        <div class="wiki-nav">
+            <h3>Contents</h3>
+            <ul>
+                <li><a href="#overview">System Overview</a></li>
+                <li><a href="#common">Common Boosts</a></li>
+                <li><a href="#rare">Rare Boosts</a></li>
+                <li><a href="#epic">Epic Boosts</a></li>
+                <li><a href="#legendary">Legendary Boosts</a></li>
+            </ul>
+        </div>
+
+        <div class="wiki-content">
+            <div id="loading" class="loading">
+                Loading boost data...
+            </div>
+
+            <div id="error" class="error" style="display: none;">
+                Error loading boost data. Please check that boost-constants.js is available.
+            </div>
+
+            <div id="wiki-sections" style="display: none;">
+                <div class="wiki-section" id="overview">
+                    <h2>System Overview</h2>
+                    <p>The boost system in Pharos Invaders provides players with temporary or permanent upgrades that can dramatically change the course of the game. Boosts drop when destroying any enemy with a <strong id="drop-rate">-</strong> probability.</p>
+                    
+                    <p>To collect a boost, you need to touch it with Octo. After collection, the boost is instantly activated (for instant effects) or starts its action (for temporary effects).</p>
+                    
+                    <h3>Rarity Categories:</h3>
+                    <p>All boosts are divided into four rarity categories:</p>
+                    <ul>
+                        <li><span class="category-tag tag-common">COMMON</span> - basic effects with high drop chance, suitable for beginners</li>
+                        <li><span class="category-tag tag-rare">RARE</span> - powerful balanced effects with medium drop chance</li>
+                        <li><span class="category-tag tag-epic">EPIC</span> - game-changing effects with low drop chance</li>
+                        <li><span class="category-tag tag-legendary">LEGENDARY</span> - unique effects with special mechanics and extremely low drop chance</li>
+                    </ul>
+                    
+                    <h3>Boss Rewards:</h3>
+                    <div class="boost-effect">
+                        <strong>Special Drop:</strong> Every boss defeated guarantees a <span class="category-tag tag-legendary">Random Chaos</span> boost drop with 100% probability at the boss location.
+                    </div>
+                </div>
+
+                <!-- Разделы для каждой редкости будут динамически сгенерированы -->
+                <div class="wiki-section rarity-common" id="common">
+                    <h2>⚪ Common Boosts</h2>
+                    <div class="rarity-info">
+                        <strong>Drop chance:</strong> <span id="common-chance">-</span>% • 
+                        <strong>Count:</strong> <span id="common-count">-</span> boosts
+                    </div>
+                    <table class="boosts-table" id="common-table">
+                        <thead>
+                            <tr>
+                                <th>Boost</th>
+                                <th>Duration</th>
+                                <th>Description</th>
+                                <th>Effect</th>
+                            </tr>
+                        </thead>
+                        <tbody id="common-boosts"></tbody>
+                    </table>
+                </div>
+
+                <div class="wiki-section rarity-rare" id="rare">
+                    <h2>🔷 Rare Boosts</h2>
+                    <div class="rarity-info">
+                        <strong>Drop chance:</strong> <span id="rare-chance">-</span>% • 
+                        <strong>Count:</strong> <span id="rare-count">-</span> boosts
+                    </div>
+                    <table class="boosts-table" id="rare-table">
+                        <thead>
+                            <tr>
+                                <th>Boost</th>
+                                <th>Duration</th>
+                                <th>Description</th>
+                                <th>Effect</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rare-boosts"></tbody>
+                    </table>
+                </div>
+
+                <div class="wiki-section rarity-epic" id="epic">
+                    <h2>🔮 Epic Boosts</h2>
+                    <div class="rarity-info">
+                        <strong>Drop chance:</strong> <span id="epic-chance">-</span>% • 
+                        <strong>Count:</strong> <span id="epic-count">-</span> boosts
+                    </div>
+                    <table class="boosts-table" id="epic-table">
+                        <thead>
+                            <tr>
+                                <th>Boost</th>
+                                <th>Duration</th>
+                                <th>Description</th>
+                                <th>Effect</th>
+                            </tr>
+                        </thead>
+                        <tbody id="epic-boosts"></tbody>
+                    </table>
+                </div>
+
+                <div class="wiki-section rarity-legendary" id="legendary">
+                    <h2>👑 Legendary Boosts</h2>
+                    <div class="rarity-info">
+                        <strong>Drop chance:</strong> <span id="legendary-chance">-</span>% • 
+                        <strong>Count:</strong> <span id="legendary-count">-</span> boosts
+                    </div>
+                    <table class="boosts-table" id="legendary-table">
+                        <thead>
+                            <tr>
+                                <th>Boost</th>
+                                <th>Duration</th>
+                                <th>Description</th>
+                                <th>Effect</th>
+                            </tr>
+                        </thead>
+                        <tbody id="legendary-boosts"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Load boost constants -->
+    <script src="boosts/boost-constants.js"></script>
+    <script>
+        // Boost images mapping (from images/boosts folder)
+        const BOOST_IMAGES = {
+            'RAPID_FIRE': 'images/boosts/rapidFire.png',
+            'SHIELD_BARRIER': 'images/boosts/shieldBarrier.png', 
+            'SCORE_MULTIPLIER': 'images/boosts/scoreMultiplier.png',
+            'POINTS_FREEZE': 'images/boosts/pointsFreeze.png',
+            'MULTI_SHOT': 'images/boosts/multiShot.png',
+            'HEALTH_BOOST': 'images/boosts/healthBoost.png',
+            'PIERCING_BULLETS': 'images/boosts/piercingBullets.png',
+            'INVINCIBILITY': 'images/boosts/invincibility.png',
+            'GRAVITY_WELL': 'images/boosts/gravityWell.png',
+            'RICOCHET': 'images/boosts/ricochet.png',
+            'RANDOM_CHAOS': 'images/boosts/randomChaos.png',
+            'ICE_FREEZE': 'images/boosts/iceFreeze.png',
+            'AUTO_TARGET': 'images/boosts/auto-target.png',
+            'COIN_SHOWER': 'images/boosts/coinShower.png',
+            'WAVE_BLAST': 'images/boosts/waveBlast.png',
+            'SPEED_TAMER': 'images/boosts/speedTamer.png'
+        };
+
+        // Detailed boost descriptions
+        const BOOST_DESCRIPTIONS = {
+            'RAPID_FIRE': 'Significantly increases firing rate, allowing you to create a dense barrage of fire.',
+            'SHIELD_BARRIER': 'Creates a protective barrier around Octo that can absorb several hits from enemy projectiles.',
+            'SCORE_MULTIPLIER': 'Doubles all points earned for destroying enemies, significantly accelerating score progress.',
+            'POINTS_FREEZE': 'Freezes natural point decay, preventing their loss over time.',
+            'MULTI_SHOT': 'Each shot fires three bullets: one straight up and one angled left and right.',
+            'HEALTH_BOOST': 'Instantly restores one health unit, which can be critical in tense moments.',
+            'PIERCING_BULLETS': 'Bullets gain the ability to pass through enemies, hitting everyone in their path.',
+            'INVINCIBILITY': 'Provides complete invulnerability to any damage, allowing safe maneuvering among enemies.',
+            'GRAVITY_WELL': 'Creates a gravitational field that distorts the movement trajectories of enemy projectiles.',
+            'RICOCHET': 'Enemy bullets bounce off the arc shield in front of Octo and damage enemies.',
+            'RANDOM_CHAOS': 'Activates random effects and creates unpredictable changes in gameplay.',
+            'ICE_FREEZE': 'Significantly slows down all enemies, making them easier targets.',
+            'AUTO_TARGET': 'Bullets automatically target the nearest enemies, significantly improving shooting accuracy.',
+            'COIN_SHOWER': 'Instantly awards a significant amount of points based on the player\'s current score.',
+            'WAVE_BLAST': 'Creates a powerful energy wave that instantly destroys all enemies in the bottom row.',
+            'SPEED_TAMER': 'Permanently reduces the speed of all enemies. The effect stacks with each collected instance.'
+        };
+
+        // Get detailed effect description
+        function getDetailedEffect(boostType) {
+            const constants = window.BOOST_CONSTANTS;
+            if (!constants || !constants.EFFECTS[boostType]) return 'Special effect';
+
+            const effects = constants.EFFECTS[boostType];
+            const info = [];
+
+            // Specific effects for different types
+            switch(boostType) {
+                case 'RAPID_FIRE':
+                    info.push(`Fire rate ×${effects.multiplier}`);
+                    break;
+                case 'SHIELD_BARRIER':
+                    info.push(`Blocks ${effects.hits} hits`);
+                    break;
+                case 'SCORE_MULTIPLIER':
+                    info.push(`Score ×${effects.multiplier}`);
+                    break;
+                case 'MULTI_SHOT':
+                    info.push(`${effects.bullets} bullets per shot`);
+                    break;
+                case 'HEALTH_BOOST':
+                    info.push(`Health +${effects.heal}`);
+                    break;
+                case 'ICE_FREEZE':
+                    info.push(`Enemy speed ×${effects.slowdown}`);
+                    break;
+                case 'COIN_SHOWER':
+                    info.push(`+${effects.percentage * 100}% of current score`);
+                    break;
+                case 'SPEED_TAMER':
+                    info.push(`-${effects.reduction * 100}% enemy speed per stack`);
+                    break;
+                case 'WAVE_BLAST':
+                    info.push('Destroys bottom row enemies');
+                    break;
+                case 'PIERCING_BULLETS':
+                    info.push('Bullets pass through all enemies');
+                    break;
+                case 'INVINCIBILITY':
+                    info.push('Complete invulnerability');
+                    break;
+                case 'POINTS_FREEZE':
+                    info.push('Points don\'t decrease over time');
+                    break;
+                case 'AUTO_TARGET':
+                    info.push('Auto-targeting system');
+                    break;
+                case 'GRAVITY_WELL':
+                    info.push('Creates black hole');
+                    break;
+                case 'RICOCHET':
+                    info.push('Enemy bullet ricochet');
+                    break;
+                case 'RANDOM_CHAOS':
+                    info.push('Random effects and chaos');
+                    break;
+                default:
+                    info.push('Special effect');
+            }
+
+            return info.join(', ');
+        }
+
+        // Format duration
+        function formatDuration(duration) {
+            if (duration === 0) return '⚡ Instant';
+            if (duration === -1) return '♾️ Permanent';
+            if (Array.isArray(duration)) {
+                return `⏱️ ${duration[0]/1000}-${duration[1]/1000} sec`;
+            }
+            return `⏱️ ${duration/1000} sec`;
+        }
+
+        // Create boost table row
+        function createBoostRow(boostType) {
+            const constants = window.BOOST_CONSTANTS;
+            const info = constants.INFO[boostType];
+            const duration = constants.DURATIONS[boostType];
+            const imagePath = BOOST_IMAGES[boostType];
+            
+            return `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; white-space: nowrap;">
+                            <img src="${imagePath}" alt="${info.name}" style="width: 32px; height: 32px; margin-right: 10px; flex-shrink: 0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                            <span class="boost-icon" style="display: none; margin-right: 10px; flex-shrink: 0;">${info.icon}</span>
+                            <span class="boost-name">${info.name}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="boost-duration">${formatDuration(duration)}</span>
+                    </td>
+                    <td>
+                        ${BOOST_DESCRIPTIONS[boostType] || 'Description not found'}
+                    </td>
+                    <td>
+                        <div class="boost-effect">${getDetailedEffect(boostType)}</div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Load and display data
+        function loadBoostData() {
+            try {
+                if (!window.BOOST_CONSTANTS) {
+                    throw new Error('BOOST_CONSTANTS not loaded');
+                }
+
+                const constants = window.BOOST_CONSTANTS;
+                
+                // Fill mechanics
+                document.getElementById('drop-rate').textContent = (constants.SPAWN.DROP_CHANCE * 100).toFixed(2) + '%';
+
+                // Generate tables for each rarity
+                ['COMMON', 'RARE', 'EPIC', 'LEGENDARY'].forEach(rarity => {
+                    const rarityLower = rarity.toLowerCase();
+                    const boosts = constants.RARITY.DISTRIBUTION[rarity];
+                    const chance = constants.RARITY.CHANCES[rarity];
+                    
+                    // Update rarity information
+                    document.getElementById(`${rarityLower}-chance`).textContent = chance;
+                    document.getElementById(`${rarityLower}-count`).textContent = boosts.length;
+                    
+                    // Fill table
+                    const tbody = document.getElementById(`${rarityLower}-boosts`);
+                    tbody.innerHTML = boosts.map(boost => createBoostRow(boost)).join('');
+                });
+
+                
+                // Show content and hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('wiki-sections').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading boost data:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        // Start loading after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Give a small delay for boost-constants.js to load
+            setTimeout(loadBoostData, 100);
+        });
+
+        // Also try to load immediately if constants are already available
+        if (window.BOOST_CONSTANTS) {
+            loadBoostData();
+        }
+    </script>
+</body>
+</html>

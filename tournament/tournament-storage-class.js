@@ -13,7 +13,6 @@ class TournamentStorage {
 
         // Инициализация хранилища
         this.initStorage();
-        Logger.log('💾 Tournament Storage initialized for tournament:', tournamentId);
     }
 
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -34,7 +33,6 @@ class TournamentStorage {
                 this.saveTournamentStatus('not-started');
             }
 
-            Logger.log('💾 Storage initialized successfully');
         } catch (error) {
             Logger.error('❌ Error initializing storage:', error);
         }
@@ -63,7 +61,6 @@ class TournamentStorage {
             attempts[playerAddress.toLowerCase()] = newAttempts;
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
 
-            Logger.log(`💾 Player attempts incremented: ${currentAttempts} → ${newAttempts} for ${playerAddress}`);
             return newAttempts;
 
         } catch (error) {
@@ -83,7 +80,6 @@ class TournamentStorage {
         const playerAttempts = attempts[playerAddress.toLowerCase()] || 0;
         const canPlay = playerAttempts < 3;
 
-        Logger.log(`💾 Can player play: ${canPlay} (${playerAttempts}/3 attempts) for ${playerAddress}`);
         return canPlay;
     }
 
@@ -97,7 +93,6 @@ class TournamentStorage {
         try {
             const attempts = this.getStoredPlayerAttempts();
             const playerAttempts = attempts[playerAddress.toLowerCase()] || 0;
-            Logger.log(`💾 Player attempts: ${playerAttempts}/3 for ${playerAddress}`);
             return playerAttempts;
         } catch (error) {
             Logger.error('❌ Error getting player attempts:', error);
@@ -117,7 +112,6 @@ class TournamentStorage {
             attempts[playerAddress.toLowerCase()] = 0;
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
 
-            Logger.log(`💾 Player attempts reset to 0 for ${playerAddress}`);
             return true;
 
         } catch (error) {
@@ -134,7 +128,6 @@ class TournamentStorage {
         }
 
         try {
-            Logger.log(`💾 Clearing player data for registration: ${playerAddress}`);
 
             // 1. Сбрасываем попытки
             const attempts = this.getStoredPlayerAttempts();
@@ -146,7 +139,6 @@ class TournamentStorage {
             delete games[playerAddress.toLowerCase()];
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            Logger.log(`✅ Player data cleared for registration: ${playerAddress}`);
             return true;
 
         } catch (error) {
@@ -193,7 +185,6 @@ class TournamentStorage {
 
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            Logger.log(`💾 Game result saved for ${playerAddress}: score ${gameData.score}, total games: ${player.totalGames}`);
             return true;
 
         } catch (error) {
@@ -249,7 +240,6 @@ class TournamentStorage {
             };
 
             localStorage.setItem(this.tournamentStatusKey, JSON.stringify(tournamentData));
-            Logger.log(`💾 Tournament status saved: ${status}`);
             return true;
 
         } catch (error) {
@@ -296,7 +286,6 @@ class TournamentStorage {
             };
 
             localStorage.setItem(this.tournamentInfoKey, JSON.stringify(tournamentInfo));
-            Logger.log('💾 Tournament info saved');
             return true;
 
         } catch (error) {
@@ -327,7 +316,6 @@ class TournamentStorage {
             };
 
             localStorage.setItem(this.leaderboardKey, JSON.stringify(leaderboardData));
-            Logger.log(`💾 Leaderboard saved with ${leaderboard.length} entries`);
             return true;
 
         } catch (error) {
@@ -513,7 +501,6 @@ class TournamentStorage {
                 }
             });
 
-            Logger.log(`💾 Data validation: ${isValid ? '✅ Valid' : '❌ Issues found'}`, issues);
             return { isValid, issues };
 
         } catch (error) {
@@ -525,7 +512,6 @@ class TournamentStorage {
     // Починить поврежденные данные
     repairData() {
         try {
-            Logger.log('🔧 Starting data repair...');
 
             const attempts = this.getStoredPlayerAttempts();
             const games = this.getStoredPlayerGames();
@@ -568,7 +554,6 @@ class TournamentStorage {
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            Logger.log(`🔧 Data repair completed. Fixed ${repaired} issues.`);
             return repaired;
 
         } catch (error) {
@@ -605,7 +590,6 @@ class TournamentStorage {
                 version: '1.0'
             };
 
-            Logger.log('💾 Tournament data exported:', data);
             return data;
 
         } catch (error) {
@@ -648,7 +632,6 @@ class TournamentStorage {
                 imported++;
             }
 
-            Logger.log(`💾 Tournament data imported successfully. ${imported} sections imported.`);
             return true;
 
         } catch (error) {
@@ -674,7 +657,6 @@ class TournamentStorage {
                 localStorage.removeItem(key);
             });
 
-            Logger.log('💾 All tournament data cleared');
             return true;
 
         } catch (error) {
@@ -700,7 +682,6 @@ class TournamentStorage {
             localStorage.setItem(this.playerAttemptsKey, JSON.stringify(attempts));
             localStorage.setItem(this.playerGamesKey, JSON.stringify(games));
 
-            Logger.log(`💾 Player data cleared for ${playerAddress}`);
             return true;
 
         } catch (error) {
@@ -739,4 +720,3 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TournamentStorage = TournamentStorage;
 }
 
-Logger.log('💾 TournamentStorage class loaded');

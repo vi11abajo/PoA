@@ -14,7 +14,6 @@ class TournamentAdapter {
             onGameOver: null
         };
 
-        Logger.log('🏆 Tournament Adapter initialized');
     }
 
     // ========== ОСНОВНЫЕ МЕТОДЫ ==========
@@ -29,7 +28,6 @@ class TournamentAdapter {
         this.tournamentData = tournamentData;
         this.tournamentCallbacks = { ...this.tournamentCallbacks, ...callbacks };
 
-        Logger.log(`🏆 Activating tournament mode: ID=${tournamentData?.id || 'unknown'}`);
 
         // Сохраняем оригинальные функции
         this.saveOriginalFunctions();
@@ -42,7 +40,6 @@ class TournamentAdapter {
         this.setupTournamentUI();
 
         this.isActive = true;
-        Logger.log('✅ Tournament mode activated');
     }
 
     // Деактивация турнирного режима
@@ -51,7 +48,6 @@ class TournamentAdapter {
             return;
         }
 
-        Logger.log('🏆 Deactivating tournament mode...');
 
         // Восстанавливаем оригинальные функции
         this.restoreOriginalFunctions();
@@ -59,7 +55,6 @@ class TournamentAdapter {
         this.isActive = false;
         this.tournamentData = null;
 
-        Logger.log('✅ Tournament mode deactivated');
     }
 
     // ========== СОХРАНЕНИЕ ОРИГИНАЛЬНЫХ ФУНКЦИЙ ==========
@@ -82,7 +77,6 @@ class TournamentAdapter {
             this.originalFunctions.restartGame = window.restartGame;
         }
 
-        Logger.log('💾 Original functions saved');
     }
 
     restoreOriginalFunctions() {
@@ -94,7 +88,6 @@ class TournamentAdapter {
         });
 
         this.originalFunctions = {};
-        Logger.log('🔄 Original functions restored');
     }
 
     // ========== ПЕРЕХВАТЧИКИ ==========
@@ -104,7 +97,6 @@ class TournamentAdapter {
         if (!this.originalFunctions.startGame) return;
 
         window.startGame = () => {
-            Logger.log('🏆 Tournament: Bypassing payment system');
 
             // Принудительно устанавливаем оплаченный статус
             if (typeof window.hasPaidFee !== 'undefined') {
@@ -129,7 +121,6 @@ class TournamentAdapter {
             this.setupGameMonitoring();
         };
 
-        Logger.log('✅ Payment system intercepted');
     }
 
     // 2. Перехват Game Over
@@ -137,7 +128,6 @@ class TournamentAdapter {
         if (!this.originalFunctions.showGameOver) return;
 
         window.showGameOver = () => {
-            Logger.log('🏆 Tournament: Custom game over handling');
 
             // Получаем финальный счет
             const finalScore = typeof window.score !== 'undefined' ? window.score : 0;
@@ -156,7 +146,6 @@ class TournamentAdapter {
             };
 
             // Логируем результат
-            Logger.log(`🎮 Tournament game completed: score=${gameResult.score}, level=${gameResult.level}`);
 
             // Показываем турнирный экран завершения
             this.showTournamentGameOver(gameResult);
@@ -167,7 +156,6 @@ class TournamentAdapter {
             }
         };
 
-        Logger.log('✅ Game Over intercepted');
     }
 
     // 3. Перехват сохранения результата
@@ -175,7 +163,6 @@ class TournamentAdapter {
         if (!this.originalFunctions.saveScoreToBlockchain) return;
 
         window.saveScoreToBlockchain = (playerName, score) => {
-            Logger.log('🏆 Tournament: Redirecting score to tournament system');
 
             // Вместо блокчейна сохраняем в турнирную систему
             this.saveTournamentScore(score, playerName);
@@ -184,7 +171,6 @@ class TournamentAdapter {
             this.showTournamentScoreSubmitted(score, playerName);
         };
 
-        Logger.log('✅ Score saving intercepted');
     }
 
     // 4. Перехват игровых событий для коллбеков
@@ -198,7 +184,6 @@ class TournamentAdapter {
         // Мониторим изменения уровня
         this.setupLevelMonitoring();
 
-        Logger.log('✅ Game events intercepted');
     }
 
     // ========== МОНИТОРИНГ ИГРОВЫХ ПЕРЕМЕННЫХ ==========
@@ -443,7 +428,6 @@ class TournamentAdapter {
     }
 
     showTournamentScoreSubmitted(score, playerName) {
-        Logger.log(`✅ Tournament score submitted: ${score} for ${playerName}`);
 
         // Показываем уведомление через tournament UI если доступно
         if (window.tournamentUI && window.tournamentUI.showSuccess) {
@@ -454,12 +438,10 @@ class TournamentAdapter {
     // ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
 
     handleTournamentContinue() {
-        Logger.log('🏆 handleTournamentContinue called');
         
         // АГРЕССИВНО очищаем ВСЕ game over экраны
         const allGameOverScreens = document.querySelectorAll('#tournament-game-over, .tournament-game-over, [id*="game-over"], [class*="game-over"]');
         allGameOverScreens.forEach(screen => {
-            Logger.log('🧹 Removing game over screen:', screen.id || screen.className);
             screen.style.display = 'none';
             screen.remove();
         });
@@ -469,10 +451,8 @@ class TournamentAdapter {
 
         // Возвращаемся в турнирное лобби
         if (window.tournamentUI && window.tournamentUI.closeGame) {
-            Logger.log('🎮 Calling tournamentUI.closeGame()');
             window.tournamentUI.closeGame();
         } else {
-            Logger.log('⚠️ tournamentUI.closeGame not available, redirecting');
             // Альтернативно - перенаправляем на страницу лобби
             window.location.href = 'tournament-lobby.html';
         }
@@ -531,7 +511,6 @@ class TournamentAdapter {
         // Деактивируем адаптер
         this.deactivate();
 
-        Logger.log('🧹 Tournament Adapter cleanup completed');
     }
 }
 
@@ -561,5 +540,3 @@ window.debugTournamentAdapter = {
     cleanup: () => window.tournamentAdapter.cleanup()
 };
 
-Logger.log('🏆 Tournament Adapter loaded successfully');
-Logger.log('🔧 Debug functions available at window.debugTournamentAdapter');

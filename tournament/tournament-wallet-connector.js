@@ -14,7 +14,6 @@ class TournamentWalletConnector {
             CHAIN_ID: TOURNAMENT_CONSTANTS.BLOCKCHAIN.PHAROS_TESTNET_CHAIN_ID,
         };
 
-        Logger.log('💼 Tournament Wallet Connector initialized');
         this.createWalletModal();
     }
 
@@ -121,7 +120,6 @@ class TournamentWalletConnector {
         });
 
         document.body.appendChild(modal);
-        Logger.log('✅ Wallet modal created');
     }
 
     // Показать модалку кошелька
@@ -197,7 +195,6 @@ class TournamentWalletConnector {
                 window.tournamentLobby.onWalletConnected(this.account);
             }
 
-            Logger.log('✅ Wallet connected:', this.account);
 
         } catch (error) {
             Logger.error('Connection error:', error);
@@ -221,7 +218,6 @@ class TournamentWalletConnector {
             await window.tournamentLobby.onWalletDisconnected();
         }
 
-        Logger.log('💔 Wallet disconnected');
     }
 
     // Переключение сети
@@ -387,7 +383,6 @@ class TournamentWalletConnector {
 
     // Метод init для совместимости с основным коннектором
     init() {
-        Logger.log('✅ Tournament Wallet Connector init called (already initialized)');
         // Турнирный коннектор уже инициализирован в конструкторе
         return true;
     }
@@ -400,7 +395,6 @@ window.tournamentWalletConnector = new TournamentWalletConnector();
 // Используем setTimeout чтобы перезаписать основной коннектор после его загрузки
 setTimeout(() => {
     window.walletConnector = window.tournamentWalletConnector;
-    Logger.log('✅ Tournament wallet connector set as main walletConnector');
 }, 100);
 
 // Обновляем функцию handleWalletToggle
@@ -408,9 +402,7 @@ window.handleWalletToggle = async function() {
     if (window.tournamentWalletConnector) {
         await window.tournamentWalletConnector.showWalletModal();
     } else {
-        Logger.log('❌ Tournament wallet connector not available');
         alert('Wallet connector not ready. Please refresh the page.');
     }
 };
 
-Logger.log('💼 Tournament Wallet Connector loaded and ready');

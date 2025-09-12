@@ -27,6 +27,34 @@
             padding-top: 0;
         }
 
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            right: -100px;
+            width: 50%;
+            height: 100%;
+            background: url('images/pao.png') no-repeat center right;
+            background-size: contain;
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: -200px;
+            width: 50%;
+            height: 100%;
+            background: url('images/hero.png') no-repeat center left;
+            background-size: contain;
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
+        }
+
         .pharos-logo {
             position: absolute;
             top: 20px;
@@ -189,6 +217,18 @@
             transform: scale(1.05);
         }
 
+        button:disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+
+        button:disabled:hover {
+            background: linear-gradient(135deg, rgba(0, 221, 255, 0.2), rgba(102, 204, 255, 0.3));
+            box-shadow: 0 0 20px rgba(0, 221, 255, 0.4);
+            transform: none;
+        }
+
         .blockchain-section {
             margin-top: 20px;
             padding: 20px;
@@ -212,14 +252,25 @@
 
         .loading-indicator {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 17, 34, 0.95);
+            color: #00ddff;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-content {
             background: rgba(0, 17, 34, 0.95);
             color: #00ddff;
             padding: 30px;
             border-radius: 15px;
-            z-index: 1001;
             border: 2px solid #00ddff;
             box-shadow: 0 0 30px rgba(0, 221, 255, 0.8);
             text-align: center;
@@ -273,9 +324,244 @@
                 opacity: 0;
             }
         }
+
+        /* Панель активных бонусов */
+        .boost-panel {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            max-height: 70vh;
+            background: linear-gradient(135deg, rgba(0, 17, 34, 0.95) 0%, rgba(0, 51, 102, 0.85) 100%);
+            border: 2px solid #00ddff;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.4);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .boost-panel.show {
+            display: block;
+            animation: slideInFromLeft 0.3s ease;
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(-100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        .boost-panel-header {
+            padding: 15px 20px;
+            background: rgba(0, 221, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 221, 255, 0.3);
+        }
+
+        .boost-panel-header h3 {
+            margin: 0;
+            color: #00ddff;
+            font-size: 18px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 221, 255, 0.8);
+        }
+
+        .boost-panel-content {
+            max-height: calc(70vh - 80px);
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .boost-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.2s ease;
+        }
+
+        .boost-item:last-child {
+            border-bottom: none;
+        }
+
+        .boost-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .boost-icon {
+            font-size: 36px;
+            margin-right: 15px;
+            text-align: center;
+            min-width: 50px;
+        }
+
+        .boost-info {
+            flex: 1;
+        }
+
+        .boost-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+
+        .boost-rarity {
+            font-size: 12px;
+            opacity: 0.8;
+            margin: 0 0 5px 0;
+        }
+
+        .boost-timer {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .boost-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .boost-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ddff);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .boost-progress-bar.critical {
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+        }
+
+        .boost-blocks {
+            display: flex;
+            gap: 2px;
+            margin-top: 5px;
+        }
+
+        .boost-block {
+            width: 12px;
+            height: 12px;
+            background: #00ddff;
+            border-radius: 2px;
+            transition: background 0.2s ease;
+        }
+
+        .boost-block.used {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .boost-panel {
+                width: 250px;
+                left: 10px;
+                max-height: 60vh;
+            }
+            
+            .boost-panel-header h3 {
+                font-size: 16px;
+            }
+            
+            .boost-icon {
+                font-size: 28px;
+                margin-right: 10px;
+                min-width: 40px;
+            }
+            
+            .boost-name {
+                font-size: 14px;
+            }
+            
+            .boost-rarity, .boost-timer {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .boost-panel {
+                width: 220px;
+                left: 5px;
+            }
+            
+            .boost-item {
+                padding: 10px 15px;
+            }
+            
+            .boost-icon {
+                font-size: 24px;
+                margin-right: 8px;
+                min-width: 35px;
+            }
+            
+            .boost-name {
+                font-size: 13px;
+            }
+            
+            .boost-rarity, .boost-timer {
+                font-size: 10px;
+            }
+        }
     </style>
+    
+    <script>
+        // Немедленная защита паролем
+        const password = "turik";
+        let userInput = null;
+        
+        // Блокируем загрузку страницы
+        window.addEventListener('DOMContentLoaded', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            userInput = prompt("pswd:");
+            
+            if (userInput !== password || userInput === null || userInput === "") {
+                // Полностью очищаем страницу
+                document.documentElement.innerHTML = `
+                <html><head><title>LOCKED</title></head><body style="
+                    margin: 0;
+                    padding: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: url('images/bg1.png') center center / cover no-repeat;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: Arial, sans-serif;
+                ">
+                    <h1 style="
+                        color: #fff;
+                        font-size: 4rem;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                        background: rgba(0,0,0,0.5);
+                        padding: 30px 60px;
+                        border-radius: 20px;
+                        text-align: center;
+                    ">LOCKED</h1>
+                </body></html>
+                `;
+                
+                // Блокируем все события
+                window.stop();
+                return false;
+            }
+        });
+    </script>
 </head>
 <body>
+    
     <div class="pharos-logo">
         <a href="https://testnet.pharosnetwork.xyz/experience?inviteCode=8WEiXzSig6n7hrTH" target="_blank">
             <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png" alt="Pharos Network">
@@ -300,6 +586,16 @@
     
     <div class="bubbles"></div>
     
+    <!-- Active Boosts Panel -->
+    <div id="boostPanel" class="boost-panel">
+        <div class="boost-panel-header">
+            <h3><img src="images/boosts/boost.png" alt="Boost" style="width: 20px; height: 20px; margin-right: 6px; vertical-align: middle;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span style="display: none;">🎁</span> Active Boosts</h3>
+        </div>
+        <div id="boostPanelContent" class="boost-panel-content">
+            <!-- Boosts will be added dynamically -->
+        </div>
+    </div>
+
     <div class="game-container">
         <div class="ui">
             <div>🏆 Score: <span id="score">0</span></div>
@@ -345,9 +641,20 @@
     <script src="game-config.js"></script>
     <script src="performance-optimizer.js"></script>
     <script src="performance-monitor.js"></script>
-    <script src="boss-config.js"></script>
-    <script src="boss-system.js"></script>
-    <script src="boss-renderer.js"></script>
+    
+    <!-- BOSS SYSTEM -->
+    <script src="boss-system/boss-system.js"></script>
+    <script src="boss-system/boss-attacks.js"></script>
+    <script src="boss-system/boss-abilities.js"></script>
+    <script src="boss-system/boss-renderer.js"></script>
+    
+    <!-- BOOST SYSTEM -->
+    <script src="boosts/boost-constants.js"></script>
+    <script src="boosts/boost-manager.js"></script>
+    <script src="boosts/boost-effects.js"></script>
+    <script src="boosts/boost-integration.js"></script>
+    <script src="boosts/boost-system.js"></script>
+    
     <script src="wallet-connector.js"></script>
     <script src="game.js"></script>
 
