@@ -487,7 +487,7 @@ class WalletConnector {
             
             // 🔒 ВАЛИДАЦИЯ ДАННЫХ
             // Проверка счёта
-            if (!Number.isInteger(score) || score < 0 || score > 9999999) {
+            if (!Number.isInteger(score) || score < 0 || score > 445000) {
                 throw new Error('Invalid score value');
             }
             

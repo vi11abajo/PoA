@@ -207,7 +207,7 @@ class TournamentLobby {
             }
 
             // Валидация счета
-            if (typeof score !== 'number' || score < 0 || score > 9999999) {
+            if (typeof score !== 'number' || score < 0 || score > 445000) {
                 throw new Error('Invalid score');
             }
 

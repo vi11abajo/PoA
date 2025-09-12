@@ -1,25 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(git pull:*)",
-      "Bash(grep:*)",
-      "Bash(sed:*)",
-      "Bash(find:*)",
-      "Bash(node:*)",
-      "Bash(python:*)",
-      "Bash(git rm:*)",
-      "Bash(rm:*)",
-      "Bash(mkdir:*)",
-      "Bash(mv:*)",
-      "Bash(start test-boosts.html)",
-      "Bash(for file in *.js)",
-      "Bash(do echo \"Checking $file...\")",
-      "Bash(echo \"$file - OK\")",
-      "Bash(echo:*)",
-      "Bash(done)"
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
