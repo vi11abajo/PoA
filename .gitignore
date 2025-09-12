@@ -1,0 +1,25 @@
+# IDE files
+.idea/
+.vscode/
+
+# Virtual environment
+.venv/
+venv/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Claude settings
+.claude/
+
+# Node modules (if any)
+node_modules/
+
+# Log files
+*.log
