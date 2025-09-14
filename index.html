@@ -515,50 +515,7 @@
         }
     </style>
     
-    <script>
-        
-        const password = "turik";
-        let userInput = null;
-        
-        
-        window.addEventListener('DOMContentLoaded', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            userInput = prompt("pswd:");
-            
-            if (userInput !== password || userInput === null || userInput === "") {
-                
-                document.documentElement.innerHTML = `
-                <html><head><title>LOCKED</title></head><body style="
-                    margin: 0;
-                    padding: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: url('images/bg1.png') center center / cover no-repeat;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-family: Arial, sans-serif;
-                ">
-                    <h1 style="
-                        color: #fff;
-                        font-size: 4rem;
-                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                        background: rgba(0,0,0,0.5);
-                        padding: 30px 60px;
-                        border-radius: 20px;
-                        text-align: center;
-                    ">LOCKED</h1>
-                </body></html>
-                `;
-                
-                
-                window.stop();
-                return false;
-            }
-        });
-    </script>
+    
 </head>
 <body>
     
