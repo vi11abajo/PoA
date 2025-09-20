@@ -79,7 +79,7 @@ class TournamentWalletConnector {
                     transition: all 0.3s ease;
                     background: rgba(0, 221, 255, 0.05);
                 ">
-                    <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/mmicon.png"
+                    <img src="../images/mmicon.png"
                          alt="MetaMask" style="width: 32px; height: 32px; margin-right: 15px; border-radius: 6px;">
                     <span style="font-size: 16px; font-weight: bold;">MetaMask</span>
                 </div>
@@ -95,7 +95,7 @@ class TournamentWalletConnector {
                     transition: all 0.3s ease;
                     background: rgba(0, 221, 255, 0.05);
                 ">
-                    <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/okxicon.png"
+                    <img src="../images/okxicon.png"
                          alt="OKX" style="width: 32px; height: 32px; margin-right: 15px; border-radius: 6px;">
                     <span style="font-size: 16px; font-weight: bold;">OKX Wallet</span>
                 </div>

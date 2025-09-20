@@ -28,7 +28,13 @@ Object.assign(BossSystemV2.prototype, {
     // 🎭 РЕНДЕРИНГ БОСА
     renderBoss(ctx) {
         const boss = this.currentBoss;
-        if (!boss) return;
+        if (!boss) {
+            // Скрываем overlay если босса нет
+            if (this.bossGifOverlay) {
+                this.bossGifOverlay.style.display = 'none';
+            }
+            return;
+        }
         
         ctx.save();
         
@@ -74,10 +80,12 @@ Object.assign(BossSystemV2.prototype, {
         // Отрисовка изображения босса
         if (this.bossImagesLoaded[boss.bossNumber] && this.bossImages[boss.bossNumber]) {
             const img = this.bossImages[boss.bossNumber];
-            
-            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            const gifData = this.bossGifData && this.bossGifData[boss.bossNumber];
+
+            // Определяем размеры для отрисовки
+            const aspectRatio = img.naturalWidth / img.naturalHeight || 1;
             let renderWidth, renderHeight;
-            
+
             if (aspectRatio > 1) {
                 renderWidth = boss.width;
                 renderHeight = boss.width / aspectRatio;
@@ -85,11 +93,18 @@ Object.assign(BossSystemV2.prototype, {
                 renderHeight = boss.height;
                 renderWidth = boss.height * aspectRatio;
             }
-            
+
             const renderX = centerX - renderWidth / 2;
             const renderY = centerY - renderHeight / 2;
-            
-            ctx.drawImage(img, renderX, renderY, renderWidth, renderHeight);
+
+            // Если есть GIF, не рисуем статичную картинку
+            if (!gifData || !gifData.isGif) {
+                // Отрисовка PNG основы в Canvas только если нет GIF анимации
+                ctx.drawImage(img, renderX, renderY, renderWidth, renderHeight);
+            }
+
+            // Обновляем GIF overlay если есть анимация
+            this.updateGifOverlay(boss, gifData, renderX, renderY, renderWidth, renderHeight);
         } else {
             // Fallback - простой прямоугольник с эмодзи
             ctx.fillStyle = boss.color;
@@ -103,8 +118,79 @@ Object.assign(BossSystemV2.prototype, {
         
         // Специальные эффекты для разных босов
         this.renderBossSpecialEffects(ctx, boss);
-        
+
         ctx.restore();
+    },
+
+    // 🎬 ОБНОВЛЕНИЕ GIF OVERLAY
+    updateGifOverlay(boss, gifData, renderX, renderY, renderWidth, renderHeight) {
+        if (!this.bossGifOverlay) return;
+
+        // Если босса нет, скрываем overlay
+        if (!boss) {
+            this.bossGifOverlay.style.display = 'none';
+            return;
+        }
+
+        if (gifData && gifData.isGif && gifData.gifPath) {
+            // Получаем позицию canvas относительно страницы
+            const canvas = this.getCanvas();
+            if (!canvas) return;
+
+            const canvasRect = canvas.getBoundingClientRect();
+            const absoluteX = canvasRect.left + renderX;
+            const absoluteY = canvasRect.top + renderY;
+
+            // Показываем и позиционируем GIF overlay
+            this.bossGifOverlay.style.display = 'block';
+            this.bossGifOverlay.style.left = absoluteX + 'px';
+            this.bossGifOverlay.style.top = absoluteY + 'px';
+            this.bossGifOverlay.style.width = renderWidth + 'px';
+            this.bossGifOverlay.style.height = renderHeight + 'px';
+            this.bossGifOverlay.style.backgroundImage = `url('${gifData.gifPath}')`;
+            this.bossGifOverlay.style.backgroundSize = 'contain';
+            this.bossGifOverlay.style.backgroundRepeat = 'no-repeat';
+            this.bossGifOverlay.style.backgroundPosition = 'center';
+
+            // Применяем те же эффекты что и к canvas боссу
+            if (boss.damageFlash > 0) {
+                const flashIntensity = boss.damageFlash / 300;
+                this.bossGifOverlay.style.filter = `brightness(${1 + flashIntensity}) drop-shadow(0 0 ${20 * flashIntensity}px #ff6666)`;
+            } else if (boss.bossNumber === 4 && boss.uniqueData && boss.uniqueData.rageMode) {
+                const rageTime = Date.now() * 0.015;
+                const rageIntensity = 0.8 + Math.sin(rageTime) * 0.2;
+                this.bossGifOverlay.style.filter = `brightness(${rageIntensity}) drop-shadow(0 0 25px #ff3300)`;
+            } else {
+                this.bossGifOverlay.style.filter = 'none';
+            }
+
+            // Обрабатываем состояния босса
+            switch(boss.state) {
+                case 'appearing':
+                    const appearAlpha = Math.min(1, (boss.baseY - boss.y + boss.height) / boss.height);
+                    this.bossGifOverlay.style.opacity = appearAlpha;
+                    break;
+                case 'phase_transition':
+                    const transitionAlpha = 0.3 + Math.sin(Date.now() * 0.01) * 0.4;
+                    this.bossGifOverlay.style.opacity = transitionAlpha;
+                    break;
+                case 'dying':
+                    const dyingAlpha = Math.max(0.1, 1 - (Date.now() - (boss.deathStartTime || Date.now())) / 3000);
+                    this.bossGifOverlay.style.opacity = dyingAlpha;
+
+                    // Скрываем overlay если анимация смерти завершена
+                    if (dyingAlpha <= 0.1) {
+                        this.bossGifOverlay.style.display = 'none';
+                    }
+                    break;
+                default:
+                    this.bossGifOverlay.style.opacity = 1;
+                    break;
+            }
+        } else {
+            // Скрываем overlay если GIF нет
+            this.bossGifOverlay.style.display = 'none';
+        }
     },
 
     // ✨ СПЕЦИАЛЬНЫЕ ЭФФЕКТЫ БОСОВ

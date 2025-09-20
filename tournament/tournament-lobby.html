@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">
     <title>Pharos Invaders - Tournament</title>
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/favicon.png">
+    <link rel="icon" type="image/png" href="../images/favicon.png">
     <link rel="stylesheet" href="tournament-styles.css">
 </head>
 <body>
     <!-- Top Navigation -->
     <div class="top-nav">
         <a href="../index.html" class="nav-button">← Back to Single Player</a>
+
         <button class="nav-button" id="walletButton" onclick="handleWalletToggle()">
             <span id="walletStatus">Connect Wallet</span>
         </button>
@@ -188,6 +189,7 @@
         <!-- 1. ВНЕШНИЕ БИБЛИОТЕКИ (первыми) -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
         <script src="../logger.js"></script>
+        <script src="../sound-manager.js"></script>
         <script src="../performance-optimizer.js"></script>
         <script src="../performance-monitor.js"></script>
 
@@ -196,7 +198,6 @@
         <script src="tournament-config.js"></script>
         <script src="../game-constants.js"></script>
         <script src="../game-config.js"></script>
-        <script src="../boss-config.js"></script>
 
         <!-- 3. УТИЛИТЫ (используются везде) -->
         <script src="tournament-utils.js"></script>
@@ -535,6 +536,76 @@
                 }
             }, 3000);
         });
+
+        // 🎵 Функция управления музыкой турнирного лобби
+        window.toggleTournamentMusic = function() {
+            const button = document.getElementById('tournamentMusicBtn');
+
+            if (!window.soundManager) {
+                Logger.warn('🚫 Sound Manager не инициализирован');
+                return;
+            }
+
+            if (soundManager.currentMusic) {
+                // Музыка играет - останавливаем
+                soundManager.stopMusic(true);
+                button.innerHTML = '🎵 MUSIC: OFF';
+                button.style.background = 'rgba(255,100,100,0.2)';
+                button.style.borderColor = 'rgba(255,100,100,0.5)';
+                Logger.info('🔇 Музыка турнирного лобби остановлена');
+            } else {
+                // Музыка не играет - запускаем турнирную музыку
+                soundManager.playMusic('tournamentLobby', true);
+                button.innerHTML = '🎵 MUSIC: ON';
+                button.style.background = 'rgba(0,255,100,0.2)';
+                button.style.borderColor = 'rgba(0,255,100,0.5)';
+                Logger.info('🎵 Музыка турнирного лобби запущена');
+            }
+        }
+
+        // Проверяем статус музыки при загрузке турнирного лобби
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const button = document.getElementById('tournamentMusicBtn');
+                if (window.soundManager && soundManager.currentMusic) {
+                    // Если уже играет другая музыка, переключаем на турнирную
+                    if (soundManager.currentMusic.src && !soundManager.currentMusic.src.includes('tournamentLobby')) {
+                        soundManager.playMusic('tournamentLobby', true);
+                    }
+                    button.innerHTML = '🎵 MUSIC: ON';
+                    button.style.background = 'rgba(0,255,100,0.2)';
+                    button.style.borderColor = 'rgba(0,255,100,0.5)';
+                } else {
+                    button.innerHTML = '🎵 MUSIC: OFF';
+                    button.style.background = 'rgba(255,100,100,0.2)';
+                    button.style.borderColor = 'rgba(255,100,100,0.5)';
+                }
+            }, 1000);
+        });
     </script>
+
+    <!-- 🎵 Плавающая кнопка управления музыкой турнира
+    <button id="tournamentMusicBtn" onclick="toggleTournamentMusic()" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: rgba(0,221,255,0.2);
+        border: 2px solid rgba(0,221,255,0.5);
+        color: #00ddff;
+        font-size: 14px;
+        padding: 10px 15px;
+        border-radius: 50px;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0,221,255,0.3);
+        transition: all 0.3s ease;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        🎵 MUSIC: OFF
+    </button>
+    -->
+
 </body>
 </html>

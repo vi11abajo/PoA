@@ -84,21 +84,21 @@ const TOURNAMENT_CONFIG = {
 
     // 🖼️ РЕСУРСЫ
     IMAGES: {
-        OCTOPUS: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/octopus.png',
-        PHAROS_LOGO: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png',
+        OCTOPUS: '../images/octopus.png',
+        PHAROS_LOGO: '../images/pharos.png',
         CRABS: {
-            VIOLET: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabViolet.png',
-            RED: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabRed.png',
-            YELLOW: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabYellow.png',
-            BLUE: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBlue.png',
-            GREEN: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabGreen.png'
+            VIOLET: '../images/crabViolet.png',
+            RED: '../images/crabRed.png',
+            YELLOW: '../images/crabYellow.png',
+            BLUE: '../images/crabBlue.png',
+            GREEN: '../images/crabGreen.png'
         },
         BOSSES: {
-            1: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',
-            2: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossBlue.png',
-            3: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossYellow.png',
-            4: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossRed.png',
-            5: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossViolet.png'
+            1: '../images/crabBOSSGreen.png',
+            2: '../images/crabBossBlue.png',
+            3: '../images/crabBossYellow.png',
+            4: '../images/crabBossRed.png',
+            5: '../images/crabBossViolet.png'
         }
     },
 

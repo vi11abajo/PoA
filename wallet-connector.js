@@ -423,7 +423,7 @@ class WalletConnector {
                     <p style="margin: 15px 0;">Entry Fee: <strong>${this.config.GAME_FEE} PHRS</strong></p>
                     <p style="font-size: 14px; opacity: 0.8;">Your score will be recorded on the Pharos blockchain</p>
                     <button onclick="confirmGameStart(true)" style="margin: 10px; padding: 12px 20px; background: #00ddff; color: #001122; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Pay & Start</button>
-                    <button onclick="confirmGameStart(false)" style="margin: 10px; padding: 12px 20px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer;">Play Offline</button>
+                    <button onclick="confirmGameStart(false)" style="display: none; margin: 10px; padding: 12px 20px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer;">Play Offline</button>
                 </div>
             `;
             

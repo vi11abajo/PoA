@@ -9,6 +9,8 @@ class BossSystemV2 {
         this.bossParticles = [];
         this.bossImages = {};
         this.bossImagesLoaded = {};
+        this.bossGifData = {}; // Для хранения данных о GIF анимации
+        this.bossGifOverlay = null; // CSS overlay для GIF анимации
         this.canvas = null;
         this.ctx = null;
         
@@ -46,56 +48,111 @@ class BossSystemV2 {
                 1: {
                     name: 'Emerald Warlord',
                     color: '#33cc66',
-                    image: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBOSSGreen.png',
+                    image: 'images/crabBOSSGreen.png',
                     phases: 1
                 },
                 2: {
-                    name: 'Azure Leviathan', 
+                    name: 'Azure Leviathan',
                     color: '#3366ff',
-                    image: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossBlue.png',
+                    image: 'images/crabBossBlue.png',
                     phases: 2
                 },
                 3: {
                     name: 'Solar Kraken',
                     color: '#ffdd33',
-                    image: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossYellow.png',
+                    image: 'images/crabBossYellow.png',
                     phases: 3
                 },
                 4: {
                     name: 'Crimson Behemoth',
-                    color: '#ff3333', 
-                    image: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossRed.png',
+                    color: '#ff3333',
+                    image: 'images/crabBossRed.png',
                     phases: 4
                 },
                 5: {
                     name: 'Void Sovereign',
                     color: '#9966ff',
-                    image: 'https://raw.githubusercontent.com/vi11abajo/PoA/main/images/crabBossViolet.png',
+                    image: 'images/crabBossViolet.png',
                     phases: 5
                 }
             }
         };
     }
 
+    // 🎯 Определяем правильный путь к изображениям
+    detectImagesPath() {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/tournament/') || currentPath.includes('\\tournament\\')) {
+            console.log('🎯 Detected tournament page, using ../images path for bosses');
+            return '../images';
+        }
+        console.log('🎯 Detected main page, using images path for bosses');
+        return 'images';
+    }
+
     // 🖼️ ИНИЦИАЛИЗАЦИЯ ИЗОБРАЖЕНИЙ
     initBossImages() {
         const config = this.getBossConfig();
+        const imagesBasePath = this.detectImagesPath();
+
+        // Создаем overlay контейнер для GIF анимации
+        this.createGifOverlay();
+
         Object.keys(config.BOSSES).forEach(bossNumber => {
             const bossData = config.BOSSES[bossNumber];
-            const img = new Image();
-            
-            this.bossImages[bossNumber] = img;
+
+            // Определяем пути к GIF и PNG файлам с правильным базовым путем
+            const basePath = bossData.image.replace('images/', `${imagesBasePath}/`);
+            const gifPath = basePath.replace('.png', '.gif');
+            const pngPath = basePath;
+
+            this.bossImages[bossNumber] = null;
             this.bossImagesLoaded[bossNumber] = false;
-            
-            img.src = bossData.image;
-            img.onload = () => {
+
+            // Загружаем PNG для Canvas (основа)
+            const pngImg = new Image();
+            pngImg.onload = () => {
+                this.bossImages[bossNumber] = pngImg;
                 this.bossImagesLoaded[bossNumber] = true;
+
+                // Пытаемся загрузить GIF для overlay
+                const gifTest = new Image();
+                gifTest.onload = () => {
+                    this.bossGifData[bossNumber] = {
+                        isGif: true,
+                        gifPath: gifPath,
+                        pngImage: pngImg
+                    };
+                    Logger.info(`✅ Boss ${bossNumber} GIF+PNG loaded successfully`);
+                };
+                gifTest.onerror = () => {
+                    this.bossGifData[bossNumber] = {
+                        isGif: false,
+                        pngImage: pngImg
+                    };
+                    Logger.info(`✅ Boss ${bossNumber} PNG only loaded successfully`);
+                };
+                gifTest.src = gifPath;
             };
-            img.onerror = () => {
+            pngImg.onerror = () => {
                 this.bossImagesLoaded[bossNumber] = false;
-                Logger.error(`❌ Failed to load boss ${bossNumber} image`);
+                Logger.error(`❌ Failed to load boss ${bossNumber} PNG image`);
             };
+            pngImg.src = pngPath;
         });
+    }
+
+    // 🎨 СОЗДАНИЕ GIF OVERLAY
+    createGifOverlay() {
+        this.bossGifOverlay = document.createElement('div');
+        this.bossGifOverlay.id = 'bossGifOverlay';
+        this.bossGifOverlay.style.cssText = `
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        `;
+        document.body.appendChild(this.bossGifOverlay);
     }
 
     // 🎯 СОЗДАНИЕ БОСА
@@ -347,12 +404,17 @@ class BossSystemV2 {
     // 💀 СОСТОЯНИЕ СМЕРТИ
     updateDying(boss, deltaTime) {
         boss.y += 30 * deltaTime;
-        
+
+        // Скрываем overlay при начале анимации смерти
+        if (this.bossGifOverlay) {
+            this.bossGifOverlay.style.display = 'none';
+        }
+
         // Создаем частицы смерти
         if (Math.random() < 0.3) {
             this.createDeathParticles(boss);
         }
-        
+
         setTimeout(() => {
             this.currentBoss = null;
         }, 3000);
@@ -587,6 +649,7 @@ class BossSystemV2 {
         // Наносим урон
         boss.currentHP -= damage;
         boss.damageFlash = 300; // Эффект мигания на 300мс
+
         
         // Замедляем босса при получении урона (как в старой системе)
         boss.damageSlowdown = 2000; // Замедление на 2 секунды
@@ -600,7 +663,17 @@ class BossSystemV2 {
         if (boss.currentHP <= 0) {
             boss.currentHP = 0;
             boss.state = 'dying';
-            
+
+            // 🔊 Звук смерти босса
+            if (window.soundManager) {
+                soundManager.playSound('bossDeath', 0.8);
+            }
+
+            // Скрываем GIF overlay немедленно при смерти босса
+            if (this.bossGifOverlay) {
+                this.bossGifOverlay.style.display = 'none';
+            }
+
             // Очищаем все пули босса при его смерти
             this.bossBullets = [];
             
@@ -887,6 +960,23 @@ class BossSystemV2 {
         this.playerBlindness = 0;
         this.playerFrozenBullets = [];
         this.frozenBulletsTime = 0;
+
+        // Скрываем GIF overlay
+        if (this.bossGifOverlay) {
+            this.bossGifOverlay.style.display = 'none';
+        }
+    }
+
+    // 🧹 ОЧИСТКА РЕСУРСОВ GIF
+    cleanupGifElements() {
+        // Удаляем overlay
+        if (this.bossGifOverlay && this.bossGifOverlay.parentNode) {
+            this.bossGifOverlay.parentNode.removeChild(this.bossGifOverlay);
+            this.bossGifOverlay = null;
+        }
+
+        // Очищаем данные
+        this.bossGifData = {};
     }
 
     getBossStatus() {

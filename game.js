@@ -43,6 +43,11 @@ const renderCache = {
 
 // 🎯 Функция уничтожения врагов (для системы бонусов)
 function destroyInvader(invader, index) {
+    // 🔊 Звук смерти краба
+    if (window.soundManager) {
+        soundManager.playSound('crabDeath', 0.4, 0.8 + Math.random() * 0.4);
+    }
+
     // Получаем очки за уничтожение
     const points = getInvaderScore(invader.row);
     
@@ -54,7 +59,12 @@ function destroyInvader(invader, index) {
     
     score += points;
     window.score = score; // Синхронизируем с глобальной переменной
-    
+
+    // Уведомляем easterEggManager об убийстве моба
+    if (window.easterEggManager) {
+        window.easterEggManager.onMobKilled();
+    }
+
     // Шанс выпадения бонуса
     if (window.tryCreateBoost) {
         window.tryCreateBoost(
@@ -221,6 +231,226 @@ function clearShadow(ctx) {
 
 // 🔥 НОВАЯ ПЕРЕМЕННАЯ V2: состояние босса
 let bossActive = false;
+
+// 🥞 TOASTY SYSTEM (как в Mortal Kombat)
+let toastySystem = {
+    image: null,
+    element: null,
+    isShowing: false,
+
+    init() {
+        // Загружаем изображение
+        this.image = new Image();
+        this.image.src = 'images/pika.png';
+
+        // Создаем HTML элемент для отображения
+        this.element = document.createElement('div');
+        this.element.style.cssText = `
+            position: fixed;
+            left: -200px;
+            bottom: 20%;
+            z-index: 9998;
+            pointer-events: none;
+            transition: left 0.3s ease-out;
+        `;
+
+        const img = document.createElement('img');
+        img.src = 'images/pika.png';
+        img.style.cssText = `
+            width: 150px;
+            height: auto;
+            filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.7));
+        `;
+
+        this.element.appendChild(img);
+        document.body.appendChild(this.element);
+
+        Logger.info('🥞 Toasty system initialized!');
+    },
+
+    show() {
+        if (this.isShowing) return;
+
+        this.isShowing = true;
+
+        // Воспроизводим звук
+        if (window.soundManager) {
+            soundManager.playSound('toasty', 1.0, 1.0);
+        }
+
+        // Анимация появления
+        this.element.style.left = '20px';
+
+        // Автоматически скрываем через 3.33 секунды
+        setTimeout(() => {
+            this.hide();
+        }, 3330);
+
+        Logger.info('🥞 TOASTY!');
+    },
+
+    hide() {
+        this.element.style.left = '-200px';
+
+        setTimeout(() => {
+            this.isShowing = false;
+        }, 300); // Ждем завершения анимации
+    },
+
+    destroy() {
+        if (this.element && this.element.parentNode) {
+            this.element.parentNode.removeChild(this.element);
+        }
+    }
+};
+
+// 🚢 SAILOR SYSTEM (справа экрана)
+let sailorSystem = {
+    image: null,
+    element: null,
+    isShowing: false,
+
+    init() {
+        if (this.element) return; // Уже инициализирован
+
+        // Создаем контейнер
+        this.element = document.createElement('div');
+        this.element.style.cssText = `
+            position: fixed;
+            right: -200px;
+            bottom: 20%;
+            z-index: 9998;
+            pointer-events: none;
+            transition: right 0.3s ease-out;
+        `;
+
+        const img = document.createElement('img');
+        img.src = 'images/sailor.png';
+        img.style.cssText = `
+            width: 150px;
+            height: auto;
+            filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.7));
+        `;
+
+        this.element.appendChild(img);
+        document.body.appendChild(this.element);
+
+        Logger.info('🚢 Sailor system initialized!');
+    },
+
+    show() {
+        if (this.isShowing) return;
+
+        this.isShowing = true;
+
+        // Воспроизводим звук
+        if (window.soundManager) {
+            soundManager.playSound('cu', 1.0, 1.0);
+        }
+
+        // Анимация появления справа
+        this.element.style.right = '20px';
+
+        // Автоматически скрываем через 3.33 секунды
+        setTimeout(() => {
+            this.hide();
+        }, 3330);
+
+        Logger.info('🚢 Sailor appears!');
+    },
+
+    hide() {
+        if (!this.isShowing) return;
+
+        this.isShowing = false;
+        this.element.style.right = '-200px';
+
+        Logger.info('🚢 Sailor hidden');
+    },
+
+    destroy() {
+        if (this.element && this.element.parentNode) {
+            this.element.parentNode.removeChild(this.element);
+        }
+    }
+};
+
+// 🎲 EASTER EGG MANAGER (управляет редким появлением Toasty и Sailor по событиям)
+let easterEggManager = {
+    mobsKilledInRound: 0,
+    totalMobsInRound: 0,
+    milestone77Triggered: false,
+
+    init() {
+        this.resetRoundProgress();
+        Logger.info('🎲 Easter Egg Manager initialized with event-based triggers!');
+    },
+
+    resetRoundProgress() {
+        this.mobsKilledInRound = 0;
+        this.totalMobsInRound = 0;
+        this.milestone77Triggered = false;
+    },
+
+    setTotalMobsInRound(count) {
+        this.totalMobsInRound = count;
+        this.mobsKilledInRound = 0;
+        this.milestone77Triggered = false;
+        Logger.info(`🎲 Round started with ${count} mobs`);
+    },
+
+    onMobKilled() {
+        this.mobsKilledInRound++;
+        const percentage = (this.mobsKilledInRound / this.totalMobsInRound) * 100;
+
+        // Проверяем 77% порог
+        if (!this.milestone77Triggered && percentage >= 77) {
+            this.milestone77Triggered = true;
+            this.tryShowEasterEgg(0.20, 'mob_77_percent'); // 20% шанс
+        }
+    },
+
+    onBossDefeated() {
+        this.tryShowEasterEgg(0.12, 'boss_defeated'); // 12% шанс
+    },
+
+    onBoostPickup() {
+        this.tryShowEasterEgg(0.04, 'boost_pickup'); // 4% шанс
+    },
+
+    tryShowEasterEgg(chance, trigger) {
+        // Показываем только во время игры и если никто не показывается
+        if (gameState !== 'playing' || toastySystem.isShowing || sailorSystem.isShowing) {
+            return;
+        }
+
+        const random = Math.random();
+        if (random <= chance) {
+            this.showRandomEasterEgg(trigger);
+        }
+
+        Logger.info(`🎲 Easter egg chance: ${(chance * 100)}% for ${trigger}, rolled: ${(random * 100).toFixed(1)}%, ${random <= chance ? 'SUCCESS' : 'FAILED'}`);
+    },
+
+    showRandomEasterEgg(trigger) {
+        // Случайно выбираем какой easter egg показать
+        const random = Math.random();
+
+        if (random < 0.5) {
+            // 50% шанс для Toasty (слева)
+            toastySystem.show();
+            Logger.info(`🥞 Toasty triggered by: ${trigger}`);
+        } else {
+            // 50% шанс для Sailor (справа)
+            sailorSystem.show();
+            Logger.info(`🚢 Sailor triggered by: ${trigger}`);
+        }
+    },
+
+    destroy() {
+        this.resetRoundProgress();
+    }
+};
 
 // ПЕРЕМЕННАЯ ДЛЯ ЗАДЕРЖКИ МЕЖДУ УРОВНЯМИ
 let levelTransitionActive = false;
@@ -476,6 +706,11 @@ function createInvaders() {
             });
         }
     }
+
+    // Уведомляем easterEggManager о количестве мобов в раунде
+    if (easterEggManager) {
+        easterEggManager.setTotalMobsInRound(invaders.length);
+    }
 }
 
 // Create player bullet
@@ -488,6 +723,11 @@ function createBullet() {
         : currentCooldown;
 
     if (now - lastShotTime > adjustedCooldown) {
+        // 🔊 Звук выстрела игрока
+        if (window.soundManager) {
+            soundManager.playSound('playerShoot', 0.6, 1.0 + Math.random() * 0.2);
+        }
+
         const bulletSpeed = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.PLAYER_BULLET_SPEED)
             ? 8 * (GAME_CONFIG.PLAYER_BULLET_SPEED / 100)
             : 8;
@@ -691,6 +931,11 @@ function getInvaderScore(rowIndex) {
 function initLevelScoring() {
     levelStartTime = Date.now();
     currentScoreMultiplier = 1.0;
+
+    // Сбрасываем прогресс easterEggManager для нового уровня
+    if (window.easterEggManager) {
+        window.easterEggManager.resetRoundProgress();
+    }
 }
 
 // Update player
@@ -1026,8 +1271,18 @@ function checkCollisions() {
                 const centerY = boss.y + boss.height / 2;
                 window.createSpecificBoost(centerX, centerY, 'RANDOM_CHAOS');
             }
-            
+
             bossActive = false;
+
+            // Уведомляем easterEggManager о победе над боссом
+            if (window.easterEggManager) {
+                window.easterEggManager.onBossDefeated();
+            }
+
+            // 🎵 Возвращаемся к игровой музыке после победы над боссом с кроссфейдом
+            if (window.soundManager) {
+                soundManager.playMusic('gameplay', true, true);
+            }
         }
 
         // Проверяем коллизии пуль босса с игроком
@@ -1478,6 +1733,15 @@ function gameLoop(currentTime) {
             // Задержка 2 секунды перед появлением врагов следующего уровня
             createSafeTimeout(() => {
                 const nextLevel = level + 1;
+
+                // 🎵 Определяем нужную музыку для следующего уровня
+                const shouldPlayBossMusic = bossSystemV2 && bossSystemV2.isBossLevel(nextLevel);
+                const targetMusic = shouldPlayBossMusic ? 'boss' : 'gameplay';
+
+                // Плавный переход музыки при смене уровня
+                if (window.soundManager) {
+                    soundManager.playMusic(targetMusic, true, true);
+                }
                 
                 // Очищаем бонусы для нового уровня
                 if (window.boostManager) {
@@ -1503,6 +1767,7 @@ function gameLoop(currentTime) {
                     const boss = bossSystemV2.createBoss(level);
                     if (boss) {
                         bossActive = true;
+                        // Музыка босса уже была переключена на переходе уровня
                     } else {
                         Logger.error('Cannot create boss: initialization failed');
                         // Fallback: создаем обычный уровень
@@ -1678,13 +1943,11 @@ async function startGame() {
             return;
         }
 
-
         if (!walletConnector.connected) {
             window.pendingGameStart = true;
             walletConnector.showWalletModal();
             return;
         }
-
 
         hasPaidFee = false;
         scoreAlreadySaved = false;
@@ -1745,7 +2008,15 @@ async function startGame() {
 
 function actuallyStartGame() {
     // Actually starting game
-    
+
+    // 🎵 Запускаем игровую музыку
+    if (window.soundManager) {
+        soundManager.stopMusic(true); // Останавливаем музыку меню с fade out
+        setTimeout(() => {
+            soundManager.playMusic('gameplay', true, false); // Запускаем игровую музыку с fade in (без кроссфейда при старте)
+        }, 500);
+    }
+
     gameState = 'playing';
     score = 0;
     window.score = score; // Синхронизируем с глобальной переменной
@@ -1908,6 +2179,21 @@ function actuallyStartGame() {
 function showGameOver() {
     document.body.classList.add('game-over-active');
 
+    // Останавливаем систему Toasty!
+    if (typeof toastySystem !== 'undefined') {
+        toastySystem.destroy();
+    }
+
+    // Останавливаем систему Sailor!
+    if (typeof sailorSystem !== 'undefined') {
+        sailorSystem.destroy();
+    }
+
+    // Останавливаем менеджер easter egg'ов!
+    if (typeof easterEggManager !== 'undefined') {
+        easterEggManager.destroy();
+    }
+
     // 🚀 Сохраняем статистику игрока и обновляем рекорд если доступен
     if (performanceOptimizer) {
         const playerSettings = performanceOptimizer.loadPlayerSettings();
@@ -1952,7 +2238,8 @@ function showGameOver() {
         return;
     }
 
-    if (window.walletConnector && walletConnector.connected && hasPaidFee && currentGameSession) {
+    // 🔓 ОФЛАЙН ИЛИ БЛОКЧЕЙН РЕЖИМ
+    if (hasPaidFee && currentGameSession) {
         if (blockchainSection) {
             blockchainSection.style.display = 'block';
 
@@ -1960,7 +2247,21 @@ function showGameOver() {
             const playerName = document.getElementById('playerName');
             const saveStatus = document.getElementById('save-status');
 
-            if (saveButton) saveButton.style.display = 'inline-block';
+            if (saveButton) {
+                saveButton.style.display = 'inline-block';
+                // Меняем текст кнопки для офлайн режима
+                if (currentGameSession.startsWith('offline_')) {
+                    saveButton.textContent = 'Save Score Offline';
+                    saveButton.onclick = () => {
+                        const name = document.getElementById('playerName').value.trim();
+                        if (name) saveScoreOffline(name, score);
+                        else alert('Please enter your name');
+                    };
+                } else {
+                    saveButton.textContent = 'Save Score to Blockchain';
+                    saveButton.onclick = saveScoreToBlockchain;
+                }
+            }
             if (playerName) {
                 playerName.style.display = 'block';
                 playerName.value = '';
@@ -1974,6 +2275,21 @@ function showGameOver() {
 
 function restartGame() {
     document.body.classList.remove('game-over-active');
+
+    // Останавливаем систему Toasty!
+    if (typeof toastySystem !== 'undefined') {
+        toastySystem.destroy();
+    }
+
+    // Останавливаем систему Sailor!
+    if (typeof sailorSystem !== 'undefined') {
+        sailorSystem.destroy();
+    }
+
+    // Останавливаем менеджер easter egg'ов!
+    if (typeof easterEggManager !== 'undefined') {
+        easterEggManager.destroy();
+    }
 
     // ⭐ ОЧИСТКА СИСТЕМЫ БОНУСОВ
     if (window.clearAllBoosts) {
@@ -1997,6 +2313,21 @@ function restartGame() {
 
     gameState = 'start';
     scoreAlreadySaved = false;
+
+    // Переинициализируем систему Toasty!
+    if (typeof toastySystem !== 'undefined') {
+        toastySystem.init();
+    }
+
+    // Переинициализируем систему Sailor!
+    if (typeof sailorSystem !== 'undefined') {
+        sailorSystem.init();
+    }
+
+    // Переинициализируем менеджер easter egg'ов!
+    if (typeof easterEggManager !== 'undefined') {
+        easterEggManager.init();
+    }
 
     logGameEvent('game_restarted', {
         tournamentMode: tournamentMode,
@@ -2086,10 +2417,84 @@ function hideLoading() {
     }
 }
 
+
+// 🔓 ФУНКЦИЯ ЗАПУСКА ОФЛАЙН ИГРЫ
+async function startOfflineGame() {
+    try {
+        initCanvas();
+
+        hasPaidFee = true;
+        currentGameSession = `offline_${Date.now()}`;
+
+        logGameEvent('game_started', {
+            offlineMode: true,
+            timestamp: Date.now()
+        });
+
+        actuallyStartGame();
+    } catch (error) {
+        Logger.error('❌ Error starting offline game:', error);
+        alert('Error starting offline game. Please try again.');
+    }
+}
+
+// 🔓 ФУНКЦИЯ СОХРАНЕНИЯ ОЧКОВ В ОФЛАЙН РЕЖИМЕ
+function saveScoreOffline(playerName, playerScore) {
+    try {
+        const scoreData = {
+            name: playerName,
+            score: playerScore,
+            level: level,
+            timestamp: Date.now(),
+            session: currentGameSession
+        };
+
+        const existingScores = JSON.parse(localStorage.getItem('pharosInvadersScores') || '[]');
+        existingScores.push(scoreData);
+        existingScores.sort((a, b) => b.score - a.score);
+        const topScores = existingScores.slice(0, 100);
+        localStorage.setItem('pharosInvadersScores', JSON.stringify(topScores));
+
+        const saveStatus = document.getElementById('save-status');
+        if (saveStatus) {
+            saveStatus.innerHTML = `
+                <div style="color: #00ff88; margin-top: 15px;">
+                    ✅ Score saved offline! (${playerScore} points)
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
+                        Saved to local storage as ${playerName}
+                    </div>
+                </div>
+            `;
+        }
+
+        scoreAlreadySaved = true;
+        const saveButton = document.getElementById('saveScoreButton');
+        if (saveButton) saveButton.style.display = 'none';
+
+        Logger.info(`📊 Score saved offline: ${playerName} - ${playerScore} points`);
+    } catch (error) {
+        Logger.error('❌ Error saving score offline:', error);
+        const saveStatus = document.getElementById('save-status');
+        if (saveStatus) {
+            saveStatus.innerHTML = '<div style="color: #ff6666; margin-top: 15px;">❌ Error saving score offline</div>';
+        }
+    }
+}
+
+// 🔊 ЗВУКОВЫЕ ФУНКЦИИ
+function playButtonSound() {
+    if (window.soundManager) {
+        soundManager.playSound('buttonClick', 0.5);
+    }
+}
+
 // Экспорт функций
 window.startGame = startGame;
+window.startOfflineGame = startOfflineGame;
+window.playButtonSound = playButtonSound;
 window.restartGame = restartGame;
 window.saveScoreToBlockchain = saveScoreToBlockchain;
+window.saveScoreOffline = saveScoreOffline;
 window.submitTournamentScore = submitTournamentScore;
 window.backToTournamentLobby = backToTournamentLobby;
 window.calculateMaxScore = calculateMaxScore;
@@ -2111,15 +2516,35 @@ window.ctx = ctx;
 let bossSystemV2 = null;
 
 // Инициализация при загрузке страницы
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
 
     initCanvas();
+
+    // 🎵 Инициализируем звуковую систему
+    if (window.soundManager) {
+        await soundManager.preloadSounds();
+        // Запускаем музыку меню
+        soundManager.playMusic('menu', true);
+        Logger.info('🎵 Sound system initialized');
+    }
 
     // Инициализируем новую систему босов V2
     if (window.BossSystemV2) {
         bossSystemV2 = new BossSystemV2();
         window.bossSystemV2 = bossSystemV2; // Экспортируем для внешнего доступа
     }
+
+    // 🥞 Инициализируем Toasty систему
+    toastySystem.init();
+
+    // 🚢 Инициализируем Sailor систему
+    sailorSystem.init();
+
+    // 🎲 Инициализируем менеджер случайных easter egg'ов
+    easterEggManager.init();
+
+    // Экспортируем easterEggManager для внешнего доступа
+    window.easterEggManager = easterEggManager;
 
     // LEGACY: Старая система босов (закомментирована)
     /*

@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com https://raw.githubusercontent.com; object-src 'none'; base-uri 'self';">
     <title>Pharos Invaders - Ocean Battle</title>
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/favicon.png">
+    <link rel="icon" type="image/png" href="images/favicon.png">
     <style>
         * {
             margin: 0;
@@ -517,47 +516,47 @@
     
     <script>
         
-        const password = "turik";
-        let userInput = null;
-        
-        
-        window.addEventListener('DOMContentLoaded', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            userInput = prompt("pswd:");
-            
-            if (userInput !== password || userInput === null || userInput === "") {
-                
-                document.documentElement.innerHTML = `
-                <html><head><title>LOCKED</title></head><body style="
-                    margin: 0;
-                    padding: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: url('images/bg1.png') center center / cover no-repeat;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-family: Arial, sans-serif;
-                ">
-                    <h1 style="
-                        color: #fff;
-                        font-size: 4rem;
-                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                        background: rgba(0,0,0,0.5);
-                        padding: 30px 60px;
-                        border-radius: 20px;
-                        text-align: center;
-                    ">LOCKED</h1>
-                </body></html>
-                `;
-                
-                
-                window.stop();
-                return false;
-            }
-        });
+        // const password = "turik";
+        // let userInput = null;
+
+
+        // window.addEventListener('DOMContentLoaded', function(e) {
+        //     e.preventDefault();
+        //     e.stopPropagation();
+
+        //     userInput = prompt("pswd:");
+
+        //     if (userInput !== password || userInput === null || userInput === "") {
+
+        //         document.documentElement.innerHTML = `
+        //         <html><head><title>LOCKED</title></head><body style="
+        //             margin: 0;
+        //             padding: 0;
+        //             width: 100vw;
+        //             height: 100vh;
+        //             background: url('images/bg1.png') center center / cover no-repeat;
+        //             display: flex;
+        //             align-items: center;
+        //             justify-content: center;
+        //             font-family: Arial, sans-serif;
+        //         ">
+        //             <h1 style="
+        //                 color: #fff;
+        //                 font-size: 4rem;
+        //                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        //                 background: rgba(0,0,0,0.5);
+        //                 padding: 30px 60px;
+        //                 border-radius: 20px;
+        //                 text-align: center;
+        //             ">LOCKED</h1>
+        //         </body></html>
+        //         `;
+
+
+        //         window.stop();
+        //         return false;
+        //     }
+        // });
     </script>
 </head>
 <body>
@@ -609,7 +608,9 @@
             <h1>🐙 PHAROS INVADERS 🦀</h1>
             <p>Defend the ocean depths from the crab invasion!</p>
             <p style="font-size: 16px; margin: 15px 0;">Futuristic cyborg octopus vs army of crabs</p>
-            <button onclick="startGame()">START BATTLE</button>
+            <button onclick="playButtonSound(); startGame()">START BATTLE</button>
+            <!-- <button onclick="playButtonSound(); startOfflineGame()" style="margin-top: 10px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);">PLAY OFFLINE</button> -->
+
             <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
                 <p>Controls: ← → to move, SPACE to attack</p>
                 <p>Use plasma charges to win!</p>
@@ -630,13 +631,14 @@
                 <div id="save-status"></div>
             </div>
             
-            <button onclick="restartGame()">NEW BATTLE</button>
+            <button onclick="playButtonSound(); restartGame()">NEW BATTLE</button>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
     <script src="logger.js"></script>
+    <script src="sound-manager.js"></script>
     <script src="game-constants.js"></script>
     <script src="game-config.js"></script>
     <script src="performance-optimizer.js"></script>
@@ -695,6 +697,70 @@
         // Обновляем при загрузке страницы
         document.addEventListener('DOMContentLoaded', updateWalletStatus);
     </script>
+
+    <script>
+        // 🎵 Функция управления музыкой меню
+        window.toggleMenuMusic = function() {
+            const button = document.getElementById('musicToggleBtn');
+
+            if (!window.soundManager) {
+                Logger.warn('🚫 Sound Manager не инициализирован');
+                return;
+            }
+
+            if (soundManager.currentMusic) {
+                // Музыка играет - останавливаем
+                soundManager.stopMusic(true);
+                button.innerHTML = '🎵 MUSIC: OFF';
+                button.style.background = 'rgba(255,100,100,0.2)';
+                button.style.borderColor = 'rgba(255,100,100,0.5)';
+                Logger.info('🔇 Музыка меню остановлена пользователем');
+            } else {
+                // Музыка не играет - запускаем
+                playButtonSound(); // Звук клика кнопки
+                soundManager.playMusic('menu', true);
+                button.innerHTML = '🎵 MUSIC: ON';
+                button.style.background = 'rgba(0,255,100,0.2)';
+                button.style.borderColor = 'rgba(0,255,100,0.5)';
+                Logger.info('🎵 Музыка меню запущена пользователем');
+            }
+        }
+
+        // Проверяем статус музыки при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const button = document.getElementById('musicToggleBtn');
+                if (window.soundManager && soundManager.currentMusic) {
+                    button.innerHTML = '🎵 MUSIC: ON';
+                    button.style.background = 'rgba(0,255,100,0.2)';
+                    button.style.borderColor = 'rgba(0,255,100,0.5)';
+                }
+            }, 1000);
+        });
+    </script>
+
+    <!-- 🎵 Плавающая кнопка управления музыкой
+    <button id="musicToggleBtn" onclick="toggleMenuMusic()" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: rgba(0,221,255,0.2);
+        border: 2px solid rgba(0,221,255,0.5);
+        color: #00ddff;
+        font-size: 14px;
+        padding: 10px 15px;
+        border-radius: 50px;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0,221,255,0.3);
+        transition: all 0.3s ease;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        🎵 MUSIC: OFF
+    </button>
+    -->
 
 </body>
 <footer style="position: fixed; bottom: 0; width: 100%; background: #1e2a44; padding: 20px; text-align: center; z-index: 1000;">

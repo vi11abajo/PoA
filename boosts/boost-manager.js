@@ -17,8 +17,18 @@ class BoostManager {
         this.loadBoostImages();
     }
 
+    // 🎯 Определяем правильный путь к изображениям
+    detectImagesPath() {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/tournament/') || currentPath.includes('\\tournament\\')) {
+            return '../images';
+        }
+        return 'images';
+    }
+
     // 🖼️ Загрузка изображений бонусов
     loadBoostImages() {
+        const imagesBasePath = this.detectImagesPath();
         const boostImageMap = {
             'RAPID_FIRE': 'rapidFire.png',
             'SHIELD_BARRIER': 'shieldBarrier.png', 
@@ -48,7 +58,7 @@ class BoostManager {
                 console.warn(`❌ Failed to load boost image: ${boostType} (${filename}) - using emoji fallback`);
                 // Не добавляем в кэш при ошибке загрузки
             };
-            img.src = `images/boosts/${filename}`;
+            img.src = `${imagesBasePath}/boosts/${filename}`;
         }
     }
 
@@ -127,6 +137,16 @@ class BoostManager {
 
     // 🎯 Активация бонуса
     activateBoost(boostType) {
+        // 🔊 Воспроизводим звук усиления
+        if (window.soundManager) {
+            // Конвертируем тип усиления в camelCase для звука
+            const boostNameForSound = boostType.toLowerCase()
+                .split('_')
+                .map((word, index) => index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+                .join('');
+            soundManager.playBoostSound(boostNameForSound, 0.7);
+        }
+
         // Проверяем особые случаи
         if (boostType === 'SHIELD_BARRIER' && this.isBoostActive('SHIELD_BARRIER')) {
             return false; // Нельзя взять новый щит пока действует старый
@@ -423,6 +443,12 @@ class BoostManager {
                 if (this.activateBoost(boost.type)) {
                     // Создаем эффект подбора
                     this.createPickupEffect(boost);
+
+                    // Уведомляем easterEggManager о подборе бонуса
+                    if (window.easterEggManager) {
+                        window.easterEggManager.onBoostPickup();
+                    }
+
                     // Boost activated successfully
                 } else {
                     // Boost activation failed
