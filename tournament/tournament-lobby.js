@@ -1806,7 +1806,6 @@ showError(message) {
 }
 
 showWarning(message) {
-    Logger.warn('⚠️ Warning:', message);
 
     // Предупреждение с оранжевым цветом
     const notification = document.createElement('div');

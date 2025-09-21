@@ -25,7 +25,6 @@
             
             for (const [name, address] of Object.entries(CONTRACTS)) {
                 try {
-                    console.log(`Checking ${name} at ${address}...`);
                     const code = await web3.eth.getCode(address);
                     
                     const exists = code !== '0x' && code !== '0x0';

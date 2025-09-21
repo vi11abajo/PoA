@@ -389,10 +389,6 @@ class BatchRenderer {
                 const width = imageSize;
                 const height = imageSize;
                 
-                // Отладочная информация (только в debug режиме)
-                if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.DEBUG_MODE) {
-                    console.log('Batch rendering crab:', obj.imageKey, 'at', x, y);
-                }
                 
                 ctx.drawImage(image, x, y, width, height);
             });

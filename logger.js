@@ -129,18 +129,16 @@ class Logger {
     setLogLevel(level) {
         if (this.levelPriority.hasOwnProperty(level)) {
             this.logLevel = level;
-            this.info(`Log level changed to ${level}`);
         } else {
             this.error(`Invalid log level: ${level}. Available: DEBUG, INFO, WARN, ERROR`);
         }
     }
-    
+
     /**
      * Включение/отключение режима отладки
      */
     setDebugMode(enabled) {
         this.debugMode = enabled;
-        this.info(`Debug mode ${enabled ? 'enabled' : 'disabled'}`);
     }
 }
 
@@ -159,5 +157,3 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = Logger;
 }
 
-// Логируем успешную инициализацию системы логирования
-window.Logger.info('Logging system initialized successfully');

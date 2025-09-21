@@ -957,7 +957,6 @@ class TournamentUI {
     // Показать предупреждение
     showWarning(message) {
         this.showNotification(message, 'warning');
-        Logger.warn('⚠️ UI Warning:', message);
     }
 
     // ========== УТИЛИТЫ ==========

@@ -99,7 +99,6 @@
             const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
             logDiv.innerHTML += `<span class="${className}">${timestamp}: ${message}</span><br>`;
             logDiv.scrollTop = logDiv.scrollHeight;
-            console.log(message);
         }
 
         async function connectAdmin() {

@@ -210,17 +210,14 @@ class SoundManager {
                         audio.loop = true;
                         audio.volume = individualVolume;
                         this.loadedMusic.set(key, audio);
-                        // Logger.info(`🎵 Music loaded: ${key}, volume: ${(individualVolume * 100).toFixed(0)}%`);
                     } else {
                         audio.volume = individualVolume;
                         this.loadedSounds.set(key, audio);
-                        // Logger.info(`🔊 Sound loaded: ${key}, volume: ${(individualVolume * 100).toFixed(0)}%`);
                     }
                     resolve(audio);
                 };
 
                 audio.onerror = () => {
-                    // Logger.warn(`⚠️ Failed to load sound: ${path}`); // Убираем спам в консоль
                     resolve(null); // Не блокируем игру из-за отсутствующих звуков
                 };
 
