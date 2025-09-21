@@ -334,7 +334,7 @@ class TournamentWalletConnector {
 
         try {
             const balance = await this.web3.eth.getBalance(this.account);
-            return this.web3.utils.fromWei(balance, 'ether');
+            return this.web3.utils.fromWei(balance.toString(), 'ether');
         } catch (error) {
             Logger.error('Balance error:', error);
             return '0';

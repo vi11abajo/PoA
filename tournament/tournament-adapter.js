@@ -103,11 +103,9 @@ class TournamentAdapter {
                 window.hasPaidFee = true;
             }
 
-            // Устанавливаем турнирные переменные если они есть в основной игре
-            if (typeof window.tournamentMode !== 'undefined') {
-                window.tournamentMode = true;
-                window.tournamentData = this.tournamentData;
-            }
+            // Устанавливаем турнирные переменные
+            window.tournamentMode = true;
+            window.tournamentData = this.tournamentData;
 
             // Генерируем уникальную игровую сессию
             if (typeof window.currentGameSession !== 'undefined') {

@@ -173,7 +173,12 @@ class BoostIntegration {
                                 window.bullets.push(bullet);
                             }
                         }
-                        
+
+                        // 🔊 Звук выстрела мультишота
+                        if (window.soundManager) {
+                            window.soundManager.playSound('multiShot', 0.6, 1.0 + Math.random() * 0.2);
+                        }
+
                         // Multi-Shot: Created 3 bullets
                         if (typeof window.setLastShotTime === 'function') {
                             window.setLastShotTime(now);

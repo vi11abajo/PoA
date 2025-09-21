@@ -325,11 +325,7 @@ class TournamentLobby {
         const oldStatus = this.currentUserStatus;
         this.currentUserStatus = status;
 
-        console.log('User status changed:', {
-            from: oldStatus,
-            to: status,
-            currentTournamentStatus: this.currentTournamentStatus
-        });
+        // User status changed from oldStatus to status
 
         setTimeout(() => {
             this.updateButtonStates();
@@ -349,13 +345,7 @@ class TournamentLobby {
         const tournamentStarted = this.currentTournamentStatus === 'active';
         const isRegistered = this.currentUserStatus === 'registered';
 
-        console.log('Updating button states:', {
-            walletConnected,
-            tournamentStarted,
-            isRegistered,
-            currentUserStatus: this.currentUserStatus,
-            currentTournamentStatus: this.currentTournamentStatus
-        });
+        // Updating button states based on wallet, tournament and registration status
 
         // Логика кнопки регистрации
         if (isRegistered) {
@@ -401,11 +391,7 @@ class TournamentLobby {
         if (wasPlayButtonDisabled && !playButton.disabled) {
         }
 
-        console.log('Button states updated:', {
-            registerText: registerButton.textContent,
-            registerDisabled: registerButton.disabled,
-            playDisabled: playButton.disabled
-        });
+        // Button states updated successfully
     }
 
     // Сброс индикаторов попыток

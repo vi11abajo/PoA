@@ -447,7 +447,7 @@ class WalletConnector {
             const feeInWei = this.web3.utils.toWei(this.config.GAME_FEE, 'ether');
             
             const balance = await this.web3.eth.getBalance(this.account);
-            const balanceInEther = this.web3.utils.fromWei(balance, 'ether');
+            const balanceInEther = this.web3.utils.fromWei(balance.toString(), 'ether');
             
             if (parseFloat(balanceInEther) < parseFloat(this.config.GAME_FEE)) {
                 throw new Error(`Insufficient balance. You have ${balanceInEther} PHRS, but need ${this.config.GAME_FEE} PHRS`);

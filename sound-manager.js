@@ -8,21 +8,16 @@ class SoundManager {
 
         // Если мы в подпапке (например, tournament/), нужен относительный путь
         if (currentPath.includes('/tournament/') || currentPath.includes('\\tournament\\')) {
-            Logger.info('🎵 Detected tournament page, using ../sounds path');
             return '../sounds';
         }
 
         // Для основных страниц используем прямой путь
-        Logger.info('🎵 Detected main page, using sounds path');
         return 'sounds';
     }
 
     constructor() {
-        // 🔊 Основные настройки
-        this.masterVolume = 0.7;
-        this.musicVolume = 0.5; // 50% как запрошено
-        this.sfxVolume = 0.8;
-        this.ambientVolume = 0.3;
+        // 🔊 Основные настройки - теперь используем только индивидуальные громкости
+        this.musicEnabled = true;
 
         // 🎵 Музыкальные треки
         this.currentMusic = null;
@@ -31,42 +26,44 @@ class SoundManager {
 
         // 🎛️ Индивидуальные настройки громкости для каждого звука (0.0 - 1.0)
         this.soundVolumes = {
-            // Музыка - все треки на 6% (на 20% тише чем было)
-            menu: 0.06,
+            // Музыка
+            menu: 0.05,
             tournamentLobby: 0.06,
             gameplay: 0.06,
-            boss: 0.06,
+            boss: 0.1,
 
             // Игрок
-            playerShoot: 0.6,
-            player1: 0.7,
-            player3: 0.7,
-            player12: 0.7,
+            playerShoot: 0.4,
+            multiShot: 0.25,   // Звук мультишота (файл shoot2.wav)
+            player1: 0.7,     // Звук при попадании в цель (файл 1.wav)
+            player3: 0.7,     // Звук при получении урона (файл 3.wav)
+            player12: 0.7,    // Звук при получении жизни/усиления (файл 12.wav)
 
             // Враги
-            crabDeath: 0.8,
+            crabDeath: 0.75,
+            bossHit: 0.35,
 
             // UI
-            buttonClick: 0.8,
+            buttonClick: 0.6,
             toasty: 0.9, // Громко как в оригинале!
             cu: 0.9, // Громко как sailor!
 
-            // Усиления (на 20% тише)
+            // Усиления
             boostDefault: 0.56,
-            boostCoinShower: 0.48,
-            boostAutoTarget: 0.56,
-            boostGravityWell: 0.64,
-            boostHealthBoost: 0.48,
+            boostCoinShower: 0.55,
+            boostAutoTarget: 0.4,
+            boostGravityWell: 0.5,
+            boostHealthBoost: 0.55,
             boostIceFreeze: 0.56,
-            boostInvincibility: 0.64,
+            boostInvincibility: 0.45,
             boostMultiShot: 0.56,
             boostPiercingBullets: 0.56,
             boostPointsFreeze: 0.48,
             boostRapidFire: 0.64,
-            boostRicochet: 0.56,
+            boostRicochet: 0.63,
             boostScoreMultiplier: 0.48,
-            boostShieldBarrier: 0.64,
-            boostSpeedTamer: 0.56,
+            boostShieldBarrier: 0.55,
+            boostSpeedTamer: 0.5,
             boostWaveBlast: 0.72
         };
 
@@ -83,12 +80,14 @@ class SoundManager {
             sfx: {
                 // Игрок
                 playerShoot: `${soundsBasePath}/sfx/player/shoot.wav`,
+                multiShot: `${soundsBasePath}/sfx/player/shoot2.wav`,
                 player1: `${soundsBasePath}/sfx/player/1.wav`,
                 player3: `${soundsBasePath}/sfx/player/3.wav`,
                 player12: `${soundsBasePath}/sfx/player/12.wav`,
 
                 // Враги
                 crabDeath: `${soundsBasePath}/sfx/enemies/crab-death.wav`,
+                bossHit: `${soundsBasePath}/sfx/enemies/boss-hit.wav`,
 
                 // UI
                 buttonClick: `${soundsBasePath}/sfx/ui/button.wav`,
@@ -143,7 +142,6 @@ class SoundManager {
             // Подготавливаем обработку мобильных устройств
             this.setupMobileAudio();
 
-            Logger.info('🎵 Sound Manager initialized successfully');
         } catch (error) {
             Logger.error('❌ Sound Manager initialization failed:', error);
             this.enabled = false;
@@ -163,7 +161,6 @@ class SoundManager {
             source.start(0);
 
             this.unlocked = true;
-            Logger.info('📱 Mobile audio unlocked');
 
             // 🎵 Обновляем состояние кнопки музыки после разблокировки
             setTimeout(() => {
@@ -173,7 +170,12 @@ class SoundManager {
                     button.style.background = 'rgba(255,100,100,0.2)';
                     button.style.borderColor = 'rgba(255,100,100,0.5)';
                 }
-                Logger.info('🎵 Audio unlocked - user can now start music manually');
+                // В турнирном режиме автоматически запускаем музыку лобби
+                if ((window.tournamentMode || typeof tournamentMode !== 'undefined' && tournamentMode) && !this.currentMusic) {
+                    setTimeout(() => {
+                        this.playMusic('tournamentLobby', true);
+                    }, 200);
+                }
             }, 100);
 
             // Удаляем обработчики
@@ -206,11 +208,11 @@ class SoundManager {
 
                     if (isMusic) {
                         audio.loop = true;
-                        audio.volume = this.musicVolume * this.masterVolume * individualVolume;
+                        audio.volume = individualVolume;
                         this.loadedMusic.set(key, audio);
                         // Logger.info(`🎵 Music loaded: ${key}, volume: ${(individualVolume * 100).toFixed(0)}%`);
                     } else {
-                        audio.volume = this.sfxVolume * this.masterVolume * individualVolume;
+                        audio.volume = individualVolume;
                         this.loadedSounds.set(key, audio);
                         // Logger.info(`🔊 Sound loaded: ${key}, volume: ${(individualVolume * 100).toFixed(0)}%`);
                     }
@@ -257,7 +259,6 @@ class SoundManager {
             await Promise.all(loadPromises);
             const loadedMusic = this.loadedMusic.size;
             const loadedSounds = this.loadedSounds.size;
-            Logger.info(`🎵 Sound system ready: ${loadedMusic} music tracks, ${loadedSounds} sound effects`);
         } catch (error) {
             Logger.error('❌ Error preloading sounds:', error);
         }
@@ -266,7 +267,6 @@ class SoundManager {
     // 🎵 ВОСПРОИЗВЕДЕНИЕ МУЗЫКИ С КРОССФЕЙДОМ
     playMusic(track, fadeIn = false, crossfade = false) {
         if (!this.enabled || this.muted) {
-            Logger.warn(`⚠️ Music playback blocked: enabled=${this.enabled}, muted=${this.muted}`);
             return;
         }
 
@@ -278,7 +278,6 @@ class SoundManager {
 
         // Если уже играет этот же трек, ничего не делаем
         if (this.currentMusic === music && !music.paused) {
-            Logger.info(`🎵 Track ${track} already playing, continuing...`);
             return;
         }
 
@@ -290,7 +289,6 @@ class SoundManager {
                     currentTime: this.currentMusic.currentTime,
                     volume: this.currentMusic.volume
                 });
-                Logger.info(`💾 Saved state for ${currentTrackName}: ${this.currentMusic.currentTime.toFixed(2)}s`);
             }
         }
 
@@ -306,7 +304,6 @@ class SoundManager {
         const savedState = this.musicStates.get(track);
         if (savedState) {
             music.currentTime = savedState.currentTime;
-            Logger.info(`🔄 Restored ${track} from ${savedState.currentTime.toFixed(2)}s`);
         } else {
             music.currentTime = 0;
         }
@@ -315,19 +312,14 @@ class SoundManager {
 
         // Используем индивидуальную громкость для этого трека
         const individualVolume = this.getSoundVolume(track);
-        const finalVolume = this.musicVolume * this.masterVolume * individualVolume;
-        music.volume = fadeIn ? 0 : finalVolume;
-
-        Logger.info(`🎵 Playing music: ${track}, individual: ${individualVolume}, final: ${finalVolume.toFixed(2)}`);
+        music.volume = fadeIn ? 0 : individualVolume;
 
         music.play().then(() => {
             if (fadeIn) {
-                this.fadeIn(music, finalVolume, 1000);
+                this.fadeIn(music, individualVolume, 1000);
             }
-            Logger.info(`✅ Music playing successfully: ${track}`);
         }).catch(error => {
             Logger.error(`❌ Error playing music ${track}:`, error);
-            Logger.info(`Audio context state: ${this.audioContext?.state}, unlocked: ${this.unlocked}`);
         });
     }
 
@@ -354,7 +346,6 @@ class SoundManager {
 
         const sound = this.loadedSounds.get(effect);
         if (!sound) {
-            // Тихо игнорируем отсутствующие звуки - не спамим в консоль
             return;
         }
 
@@ -364,7 +355,7 @@ class SoundManager {
 
             // Используем индивидуальную громкость для этого звука
             const individualVolume = this.getSoundVolume(effect);
-            const finalVolume = Math.min(1.0, (this.sfxVolume * this.masterVolume * volume * individualVolume));
+            const finalVolume = Math.min(1.0, (volume * individualVolume));
             audioClone.volume = finalVolume;
 
             // Изменяем высоту тона если нужно
@@ -390,11 +381,9 @@ class SoundManager {
         // Проверяем есть ли специфичный звук для этого усиления
         if (this.loadedSounds.has(specificSoundKey)) {
             this.playSound(specificSoundKey, volume, pitch);
-            Logger.info(`🎵 Playing specific boost sound: ${specificSoundKey}`);
         } else {
             // Используем общий звук усиления
             this.playSound('boostDefault', volume, pitch);
-            Logger.info(`🎵 Playing default boost sound for: ${boostName} (${specificSoundKey} not found)`);
         }
     }
 
@@ -446,7 +435,6 @@ class SoundManager {
         }
 
         this.currentMusic = null;
-        Logger.info('🔇 Music stopped');
     }
 
     // ⏸️ ПАУЗА/ВОЗОБНОВЛЕНИЕ МУЗЫКИ
@@ -476,7 +464,8 @@ class SoundManager {
     unmute() {
         this.muted = false;
         if (this.currentMusic) {
-            this.currentMusic.volume = this.musicVolume * this.masterVolume;
+            const individualVolume = this.getSoundVolume(this.currentMusic.dataset?.track || 'menu');
+            this.currentMusic.volume = individualVolume;
         }
         this.saveSettings();
     }
@@ -489,35 +478,12 @@ class SoundManager {
         }
     }
 
-    // 🎛️ НАСТРОЙКА ГРОМКОСТИ
-    setMasterVolume(volume) {
-        this.masterVolume = Math.max(0, Math.min(1, volume));
-        this.updateAllVolumes();
-        this.saveSettings();
-    }
-
-    setMusicVolume(volume) {
-        this.musicVolume = Math.max(0, Math.min(1, volume));
+    // 🔄 ОБНОВЛЕНИЕ ГРОМКОСТИ ТЕКУЩЕЙ МУЗЫКИ
+    updateCurrentMusicVolume() {
         if (this.currentMusic) {
-            this.currentMusic.volume = this.musicVolume * this.masterVolume;
-        }
-        this.saveSettings();
-    }
-
-    setSfxVolume(volume) {
-        this.sfxVolume = Math.max(0, Math.min(1, volume));
-        this.saveSettings();
-    }
-
-    setAmbientVolume(volume) {
-        this.ambientVolume = Math.max(0, Math.min(1, volume));
-        this.saveSettings();
-    }
-
-    // 🔄 ОБНОВЛЕНИЕ ВСЕХ ГРОМКОСТЕЙ
-    updateAllVolumes() {
-        if (this.currentMusic) {
-            this.currentMusic.volume = this.musicVolume * this.masterVolume;
+            const track = this.currentMusic.dataset?.track || 'menu';
+            const individualVolume = this.getSoundVolume(track);
+            this.currentMusic.volume = individualVolume;
         }
     }
 
@@ -525,16 +491,13 @@ class SoundManager {
     setSoundVolume(soundName, volume) {
         this.soundVolumes[soundName] = Math.max(0, Math.min(1, volume));
         this.saveSettings();
-        Logger.info(`🎛️ Set ${soundName} volume to ${(volume * 100).toFixed(0)}%`);
+        this.updateCurrentMusicVolume(); // Обновляем громкость если меняем текущий трек
     }
 
     // 💾 СОХРАНЕНИЕ НАСТРОЕК
     saveSettings() {
         const settings = {
-            masterVolume: this.masterVolume,
-            musicVolume: this.musicVolume,
-            sfxVolume: this.sfxVolume,
-            ambientVolume: this.ambientVolume,
+            musicEnabled: this.musicEnabled,
             muted: this.muted,
             soundVolumes: this.soundVolumes // Сохраняем индивидуальные громкости
         };
@@ -547,10 +510,7 @@ class SoundManager {
             const saved = localStorage.getItem('pharosInvadersSoundSettings');
             if (saved) {
                 const settings = JSON.parse(saved);
-                this.masterVolume = settings.masterVolume || 0.7;
-                this.musicVolume = settings.musicVolume || 0.5;
-                this.sfxVolume = settings.sfxVolume || 0.8;
-                this.ambientVolume = settings.ambientVolume || 0.3;
+                this.musicEnabled = settings.musicEnabled !== false;
                 this.muted = settings.muted || false;
 
                 // Загружаем индивидуальные настройки громкости
@@ -568,14 +528,9 @@ class SoundManager {
     getStatus() {
         return {
             enabled: this.enabled,
+            musicEnabled: this.musicEnabled,
             muted: this.muted,
             currentMusic: this.currentMusic ? 'playing' : 'none',
-            volumes: {
-                master: this.masterVolume,
-                music: this.musicVolume,
-                sfx: this.sfxVolume,
-                ambient: this.ambientVolume
-            },
             individualVolumes: this.soundVolumes,
             loadedSounds: this.loadedSounds.size,
             loadedMusic: this.loadedMusic.size

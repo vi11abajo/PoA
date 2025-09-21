@@ -148,7 +148,7 @@ class TournamentUI {
          if (this.elements.entryFee && tournamentInfo.entryFee) {
             this.elements.entryFee.textContent =
                 `${TournamentUtils.formatCurrency(
-                    window.web3.utils.fromWei(tournamentInfo.entryFee, 'ether')
+                    window.web3.utils.fromWei(tournamentInfo.entryFee.toString(), 'ether')
                 )} PHRS`;
         }
 
@@ -408,11 +408,11 @@ class TournamentUI {
         // Конвертируем wei в ether
         let totalPrize;
         if (window.web3 && window.web3.utils) {
-            totalPrize = window.web3.utils.fromWei(totalPrizeWei, 'ether');
+            totalPrize = window.web3.utils.fromWei(totalPrizeWei.toString(), 'ether');
         } else if (window.Web3) {
             // Создаем временный экземпляр Web3 для конвертации
             const tempWeb3 = new window.Web3();
-            totalPrize = tempWeb3.utils.fromWei(totalPrizeWei, 'ether');
+            totalPrize = tempWeb3.utils.fromWei(totalPrizeWei.toString(), 'ether');
         } else {
             // Fallback: простое деление на 10^18
             totalPrize = (parseFloat(totalPrizeWei) / 1e18).toString();

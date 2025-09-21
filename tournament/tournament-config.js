@@ -160,8 +160,8 @@ TOURNAMENT_CONFIG.calculatePrizes = (totalPrizePool, web3) => {
             remaining.mul(web3.utils.toBN(TOURNAMENT_CONFIG.PRIZE_DISTRIBUTION.THIRD_PLACE))
                     .div(web3.utils.toBN(distributionSum)), 'ether'
         ),
-        ownerFee: web3.utils.fromWei(ownerFee, 'ether'),
-        total: web3.utils.fromWei(totalPrizePool, 'ether')
+        ownerFee: web3.utils.fromWei(ownerFee.toString(), 'ether'),
+        total: web3.utils.fromWei(totalPrizePool.toString(), 'ether')
     };
 };
 

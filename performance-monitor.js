@@ -274,11 +274,7 @@ class PerformanceMonitor {
     // Логирование отчета в консоль
     logReport() {
         const report = this.getReport();
-        console.group('🚀 Performance Report');
-        console.log('FPS:', report.fps);
-        console.log('Memory:', report.memory);
-        console.log('Optimization:', report.optimization);
-        console.groupEnd();
+        // Performance Report - FPS, Memory, Optimization metrics available
     }
 
     // Сброс метрик

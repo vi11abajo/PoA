@@ -1194,10 +1194,10 @@ class TournamentManager {
                 .call();
 
             return {
-                first: this.web3.utils.fromWei(result.first, 'ether'),
-                second: this.web3.utils.fromWei(result.second, 'ether'),
-                third: this.web3.utils.fromWei(result.third, 'ether'),
-                ownerFee: this.web3.utils.fromWei(result.ownerFee, 'ether')
+                first: this.web3.utils.fromWei(result.first.toString(), 'ether'),
+                second: this.web3.utils.fromWei(result.second.toString(), 'ether'),
+                third: this.web3.utils.fromWei(result.third.toString(), 'ether'),
+                ownerFee: this.web3.utils.fromWei(result.ownerFee.toString(), 'ether')
             };
         } catch (error) {
             Logger.error('❌ Failed to get prize distribution:', error);
@@ -1217,7 +1217,7 @@ class TournamentManager {
                 .getContractBalance()
                 .call();
 
-            return this.web3.utils.fromWei(balance, 'ether');
+            return this.web3.utils.fromWei(balance.toString(), 'ether');
         } catch (error) {
             Logger.error('❌ Failed to get contract balance:', error);
             return '0';

@@ -83,10 +83,10 @@ class BossSystemV2 {
     detectImagesPath() {
         const currentPath = window.location.pathname;
         if (currentPath.includes('/tournament/') || currentPath.includes('\\tournament\\')) {
-            console.log('🎯 Detected tournament page, using ../images path for bosses');
+            // Detected tournament page, using ../images path for bosses
             return '../images';
         }
-        console.log('🎯 Detected main page, using images path for bosses');
+        // Detected main page, using images path for bosses
         return 'images';
     }
 
@@ -149,10 +149,21 @@ class BossSystemV2 {
         this.bossGifOverlay.style.cssText = `
             position: absolute;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 10001;
             display: none;
         `;
-        document.body.appendChild(this.bossGifOverlay);
+
+        // В турнирном режиме добавляем в турнирный модал
+        if (window.tournamentMode || typeof tournamentMode !== 'undefined' && tournamentMode) {
+            const gameModal = document.querySelector('.tournament-game-modal');
+            if (gameModal) {
+                gameModal.appendChild(this.bossGifOverlay);
+            } else {
+                document.body.appendChild(this.bossGifOverlay);
+            }
+        } else {
+            document.body.appendChild(this.bossGifOverlay);
+        }
     }
 
     // 🎯 СОЗДАНИЕ БОСА
@@ -650,10 +661,14 @@ class BossSystemV2 {
         boss.currentHP -= damage;
         boss.damageFlash = 300; // Эффект мигания на 300мс
 
-        
+        // 🔊 Звук попадания по боссу
+        if (window.soundManager) {
+            soundManager.playSound('bossHit', 1.0);
+        }
+
         // Замедляем босса при получении урона (как в старой системе)
         boss.damageSlowdown = 2000; // Замедление на 2 секунды
-        
+
         // Создаем частицы попадания
         this.createHitParticles(boss);
         

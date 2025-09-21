@@ -317,10 +317,34 @@
         </div>
     </div>
 
+    <!-- 🎵 Плавающая кнопка управления музыкой -->
+    <button id="musicToggleBtn" onclick="toggleLeaderboardMusic()" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: rgba(0,221,255,0.2);
+        border: 2px solid rgba(0,221,255,0.5);
+        color: #00ddff;
+        font-size: 14px;
+        padding: 10px 15px;
+        border-radius: 50px;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0,221,255,0.3);
+        transition: all 0.3s ease;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        🎵 OFF
+    </button>
+
     <!-- Web3 Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
-    
-    
+
+    <!-- 🎵 Звуковая система -->
+    <script src="sound-manager.js"></script>
+
     <script src="game-config.js"></script>
 
     <script>
@@ -401,7 +425,7 @@
                     </div>
                     <div class="stat-box">
                         <h3>Total Fees Collected</h3>
-                        <div class="value">${walletConnector.web3.utils.fromWei(stats.totalFeesCollected, 'ether')} PHRS</div>
+                        <div class="value">${walletConnector.web3.utils.fromWei(stats.totalFeesCollected.toString(), 'ether')} PHRS</div>
                     </div>
                 `;
             } catch (error) {
@@ -484,7 +508,7 @@
 
         
         window.addEventListener('load', async () => {
-            console.log('Page loaded, GAME_CONFIG:', typeof GAME_CONFIG !== 'undefined' ? GAME_CONFIG : 'not loaded');
+            // Page loaded, checking GAME_CONFIG
             
             const initialized = await initWalletConnector();
             if (initialized) {
@@ -496,7 +520,7 @@
             }
         });
 
-        
+
         setInterval(async () => {
             if (walletConnector && walletConnector.contract) {
                 try {
@@ -506,6 +530,45 @@
                 }
             }
         }, 30000);
+
+        // 🎵 Функция переключения музыки
+        function toggleLeaderboardMusic() {
+            if (!window.soundManager) return;
+
+            const button = document.getElementById('musicToggleBtn');
+
+            if (soundManager.currentMusic) {
+                // Музыка играет - останавливаем
+                soundManager.stopMusic(true);
+                button.innerHTML = '🎵 OFF';
+                button.style.background = 'rgba(255,100,100,0.2)';
+                button.style.borderColor = 'rgba(255,100,100,0.5)';
+                button.style.color = '#00ddff';
+            } else {
+                // Музыка не играет - запускаем
+                soundManager.playMusic('menu', true);
+                button.innerHTML = '🎵 ON';
+                button.style.background = 'rgba(0,255,100,0.2)';
+                button.style.borderColor = 'rgba(0,255,100,0.5)';
+                button.style.color = '#00ddff';
+            }
+        }
+
+        // 🎵 Инициализация звуковой системы при загрузке страницы
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const button = document.getElementById('musicToggleBtn');
+                if (window.soundManager && soundManager.currentMusic) {
+                    button.innerHTML = '🎵 ON';
+                    button.style.background = 'rgba(0,255,100,0.2)';
+                    button.style.borderColor = 'rgba(0,255,100,0.5)';
+                } else {
+                    button.innerHTML = '🎵 OFF';
+                    button.style.background = 'rgba(255,100,100,0.2)';
+                    button.style.borderColor = 'rgba(255,100,100,0.5)';
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>
