@@ -263,7 +263,7 @@ class SoundManager {
 
     // 🎵 ВОСПРОИЗВЕДЕНИЕ МУЗЫКИ С КРОССФЕЙДОМ
     playMusic(track, fadeIn = false, crossfade = false) {
-        if (!this.enabled || this.muted) {
+        if (!this.enabled || this.muted || !this.musicEnabled) {
             return;
         }
 

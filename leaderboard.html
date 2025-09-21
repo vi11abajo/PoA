@@ -538,14 +538,18 @@
             const button = document.getElementById('musicToggleBtn');
 
             if (soundManager.currentMusic) {
-                // Музыка играет - останавливаем
+                // Музыка играет - останавливаем и отключаем
                 soundManager.stopMusic(true);
+                soundManager.musicEnabled = false;
+                soundManager.saveSettings();
                 button.innerHTML = '🎵 OFF';
                 button.style.background = 'rgba(255,100,100,0.2)';
                 button.style.borderColor = 'rgba(255,100,100,0.5)';
                 button.style.color = '#00ddff';
             } else {
-                // Музыка не играет - запускаем
+                // Музыка не играет - включаем и запускаем
+                soundManager.musicEnabled = true;
+                soundManager.saveSettings();
                 soundManager.playMusic('menu', true);
                 button.innerHTML = '🎵 ON';
                 button.style.background = 'rgba(0,255,100,0.2)';
