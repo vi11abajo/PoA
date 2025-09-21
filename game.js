@@ -1364,8 +1364,8 @@ function checkCollisions() {
                 window.easterEggManager.onBossDefeated();
             }
 
-            // 🎵 Возвращаемся к игровой музыке после победы над боссом с кроссфейдом
-            if (window.soundManager && !window.tournamentMode && !tournamentMode) {
+            // 🎵 Возвращаемся к игровой музыке после победы над боссом с кроссфейдом (только если музыка включена)
+            if (window.soundManager && !window.tournamentMode && !tournamentMode && soundManager.musicEnabled) {
                 soundManager.playMusic('gameplay', true, true);
             }
             // В турнирном режиме музыка не меняется
@@ -1829,8 +1829,8 @@ function gameLoop(currentTime) {
                 const shouldPlayBossMusic = bossSystemV2 && bossSystemV2.isBossLevel(nextLevel);
                 const targetMusic = shouldPlayBossMusic ? 'boss' : 'gameplay';
 
-                // Плавный переход музыки при смене уровня (кроме турнирного режима)
-                if (window.soundManager && !window.tournamentMode && !tournamentMode) {
+                // Плавный переход музыки при смене уровня (кроме турнирного режима, только если музыка включена)
+                if (window.soundManager && !window.tournamentMode && !tournamentMode && soundManager.musicEnabled) {
                     soundManager.playMusic(targetMusic, true, true);
                 }
                 // В турнирном режиме музыка не меняется
@@ -2104,8 +2104,8 @@ async function startGame() {
 function actuallyStartGame() {
     // Actually starting game
 
-    // 🎵 Запускаем игровую музыку (кроме турнирного режима)
-    if (window.soundManager && !window.tournamentMode && !tournamentMode) {
+    // 🎵 Запускаем игровую музыку (кроме турнирного режима, только если музыка включена)
+    if (window.soundManager && !window.tournamentMode && !tournamentMode && soundManager.musicEnabled) {
         soundManager.stopMusic(true); // Останавливаем музыку меню с fade out
         setTimeout(() => {
             soundManager.playMusic('gameplay', true, false); // Запускаем игровую музыку с fade in (без кроссфейда при старте)
@@ -2270,8 +2270,8 @@ function actuallyStartGame() {
 function showGameOver() {
     document.body.classList.add('game-over-active');
 
-    // 🎵 Переключаемся на музыку меню при проигрыше
-    if (window.soundManager && !window.tournamentMode && !tournamentMode) {
+    // 🎵 Переключаемся на музыку меню при проигрыше (только если музыка включена)
+    if (window.soundManager && !window.tournamentMode && !tournamentMode && soundManager.musicEnabled) {
         soundManager.stopMusic(true); // Останавливаем игровую музыку с fade out
         setTimeout(() => {
             soundManager.playMusic('menu', true, false); // Запускаем музыку меню
@@ -2441,8 +2441,8 @@ function restartGame() {
         easterEggManager.init();
     }
 
-    // 🎵 Возвращаемся к музыке меню при перезапуске
-    if (window.soundManager && !window.tournamentMode && !tournamentMode) {
+    // 🎵 Возвращаемся к музыке меню при перезапуске (только если музыка включена)
+    if (window.soundManager && !window.tournamentMode && !tournamentMode && soundManager.musicEnabled) {
         soundManager.stopMusic(true); // Останавливаем текущую музыку с fade out
         setTimeout(() => {
             soundManager.playMusic('menu', true, false); // Запускаем музыку меню
@@ -2643,11 +2643,13 @@ window.addEventListener('load', async () => {
     // 🎵 Инициализируем звуковую систему
     if (window.soundManager) {
         await soundManager.preloadSounds();
-        // Запускаем нужную музыку в зависимости от режима
-        if (window.tournamentMode || tournamentMode) {
-            soundManager.playMusic('tournamentLobby', true);
-        } else {
-            soundManager.playMusic('menu', true);
+        // Запускаем нужную музыку в зависимости от режима (только если музыка включена)
+        if (soundManager.musicEnabled) {
+            if (window.tournamentMode || tournamentMode) {
+                soundManager.playMusic('tournamentLobby', true);
+            } else {
+                soundManager.playMusic('menu', true);
+            }
         }
     }
 
