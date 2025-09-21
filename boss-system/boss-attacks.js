@@ -72,7 +72,12 @@ Object.assign(BossSystemV2.prototype, {
             
             this.bossBullets.push(bullet);
         }
-        
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
+
         // Создаем дополнительный эффект взрыва щита
         this.createShieldBreakEffect(boss);
         
@@ -188,8 +193,13 @@ Object.assign(BossSystemV2.prototype, {
             zigzagCounter: 0, // Счетчик смен направления
             trail: []
         };
-        
+
         this.bossBullets.push(bullet);
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
     },
 
     // 🌊 Приливная волна (для Azure Leviathan)
@@ -214,6 +224,11 @@ Object.assign(BossSystemV2.prototype, {
             
             this.bossBullets.push(bullet);
         }
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
     },
 
     // 🌊 Большая пуля для первой фазы
@@ -232,6 +247,11 @@ Object.assign(BossSystemV2.prototype, {
         };
         
         this.bossBullets.push(bullet);
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
     },
 
     // 🎯 Прямая пуля
@@ -250,6 +270,11 @@ Object.assign(BossSystemV2.prototype, {
         };
         
         this.bossBullets.push(bullet);
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
     },
 
     // ⭕ Круговая атака
@@ -272,6 +297,11 @@ Object.assign(BossSystemV2.prototype, {
             };
             
             this.bossBullets.push(bullet);
+        }
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
         }
     },
 
@@ -298,6 +328,11 @@ Object.assign(BossSystemV2.prototype, {
             
             this.bossBullets.push(bullet);
         }
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
     },
 
     // ☄️ Метеор (большая пуля с огненным следом)
@@ -316,6 +351,11 @@ Object.assign(BossSystemV2.prototype, {
         };
         
         this.bossBullets.push(bullet);
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
     },
 
     // 🌪️ Берсерк атака (много пуль во все стороны)
@@ -341,6 +381,11 @@ Object.assign(BossSystemV2.prototype, {
             
             this.bossBullets.push(bullet);
         }
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
+        }
     },
 
     // 🌀 Спиральная атака
@@ -364,6 +409,11 @@ Object.assign(BossSystemV2.prototype, {
             };
             
             this.bossBullets.push(bullet);
+        }
+
+        // 🔊 Звук выстрела босса
+        if (window.soundManager) {
+            window.soundManager.playSound('bossShoot');
         }
     },
 

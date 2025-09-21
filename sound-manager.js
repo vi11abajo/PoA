@@ -42,6 +42,7 @@ class SoundManager {
             // Враги
             crabDeath: 0.75,
             bossHit: 0.35,
+            bossShoot: 0.4,
 
             // UI
             buttonClick: 0.6,
@@ -88,6 +89,7 @@ class SoundManager {
                 // Враги
                 crabDeath: `${soundsBasePath}/sfx/enemies/crab-death.wav`,
                 bossHit: `${soundsBasePath}/sfx/enemies/boss-hit.wav`,
+                bossShoot: `${soundsBasePath}/sfx/enemies/boss-shoot.mp3`,
 
                 // UI
                 buttonClick: `${soundsBasePath}/sfx/ui/button.wav`,
