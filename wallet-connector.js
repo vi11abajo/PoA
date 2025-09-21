@@ -411,12 +411,24 @@ class WalletConnector {
             this.showWalletModal();
             return false;
         }
-        
+
+        // Проверяем, не открыто ли уже модальное окно
+        const existingModal = document.querySelector('.wallet-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Очищаем предыдущую функцию confirmGameStart если она существует
+        if (window.confirmGameStart) {
+            delete window.confirmGameStart;
+        }
+
         return new Promise((resolve) => {
             const modal = document.createElement('div');
             modal.className = 'wallet-modal';
             modal.style.display = 'flex';
-            
+            modal.id = 'game-start-modal'; // Добавляем ID для лучшего контроля
+
             modal.innerHTML = `
                 <div class="wallet-modal-content">
                     <h3>🚀 Start Blockchain Game</h3>
@@ -426,11 +438,24 @@ class WalletConnector {
                     <button onclick="confirmGameStart(false)" style="display: none; margin: 10px; padding: 12px 20px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer;">Play Offline</button>
                 </div>
             `;
-            
+
             document.body.appendChild(modal);
-            
+
             window.confirmGameStart = (withBlockchain) => {
-                document.body.removeChild(modal);
+                // Более надежное удаление модального окна
+                const modalToRemove = document.getElementById('game-start-modal');
+                if (modalToRemove && modalToRemove.parentNode) {
+                    modalToRemove.parentNode.removeChild(modalToRemove);
+                }
+
+                // Также удаляем по классу на всякий случай
+                const allModals = document.querySelectorAll('.wallet-modal');
+                allModals.forEach(modal => {
+                    if (modal.parentNode) {
+                        modal.parentNode.removeChild(modal);
+                    }
+                });
+
                 delete window.confirmGameStart;
                 resolve(withBlockchain);
             };

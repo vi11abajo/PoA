@@ -142,12 +142,17 @@ window.moveInvaders = moveInvaders;
 // 💔 Функция получения урона игроком (для системы бонусов)
 function damagePlayer(damage = 1) {
     lives -= damage;
-    
+
+    // 🔊 Случайный звук боли при получении урона
+    if (window.soundManager) {
+        soundManager.playRandomHurtSound(0.6);
+    }
+
     if (lives <= 0) {
         gameState = 'gameOver';
         return true; // Игрок умер
     }
-    
+
     return false; // Игрок жив
 }
 
@@ -2044,6 +2049,12 @@ async function startGame() {
             return;
         }
 
+        // Проверяем, не запущена ли уже игра
+        if (gameState === 'playing') {
+            console.log('Game is already running, not showing modal');
+            return;
+        }
+
         hasPaidFee = false;
         scoreAlreadySaved = false;
         currentGameSession = null;
@@ -2103,6 +2114,19 @@ async function startGame() {
 
 function actuallyStartGame() {
     // Actually starting game
+
+    // 🚫 Закрываем все модальные окна перед началом игры
+    const allModals = document.querySelectorAll('.wallet-modal');
+    allModals.forEach(modal => {
+        if (modal.parentNode) {
+            modal.parentNode.removeChild(modal);
+        }
+    });
+
+    // Очищаем функцию confirmGameStart если она еще существует
+    if (window.confirmGameStart) {
+        delete window.confirmGameStart;
+    }
 
     // 🎵 Запускаем игровую музыку (кроме турнирного режима, только если музыка включена)
     if (window.soundManager && !window.tournamentMode && !tournamentMode && soundManager.musicEnabled) {

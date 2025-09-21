@@ -38,6 +38,10 @@ class SoundManager {
             player1: 0.7,     // Звук при попадании в цель (файл 1.wav)
             player3: 0.7,     // Звук при получении урона (файл 3.wav)
             player12: 0.7,    // Звук при получении жизни/усиления (файл 12.wav)
+            playerOuch1: 0.6, // Звук боли при получении урона (файл ouch_1.mp3)
+            playerOuch2: 0.6, // Звук боли при получении урона (файл ouch_2.mp3)
+            playerOof: 0.6,   // Звук боли при получении урона (файл oof.mp3)
+            playerOogh: 0.6,  // Звук боли при получении урона (файл oogh.mp3)
 
             // Враги
             crabDeath: 0.75,
@@ -85,6 +89,10 @@ class SoundManager {
                 player1: `${soundsBasePath}/sfx/player/1.wav`,
                 player3: `${soundsBasePath}/sfx/player/3.wav`,
                 player12: `${soundsBasePath}/sfx/player/12.wav`,
+                playerOuch1: `${soundsBasePath}/sfx/player/ouch_1.mp3`,
+                playerOuch2: `${soundsBasePath}/sfx/player/ouch_2.mp3`,
+                playerOof: `${soundsBasePath}/sfx/player/oof.mp3`,
+                playerOogh: `${soundsBasePath}/sfx/player/oogh.mp3`,
 
                 // Враги
                 crabDeath: `${soundsBasePath}/sfx/enemies/crab-death.wav`,
@@ -384,6 +392,20 @@ class SoundManager {
             // Используем общий звук усиления
             this.playSound('boostDefault', volume, pitch);
         }
+    }
+
+    // 💔 СЛУЧАЙНОЕ ВОСПРОИЗВЕДЕНИЕ ЗВУКА БОЛИ ИГРОКА
+    playRandomHurtSound(volume = 0.6, pitch = 1.0) {
+        if (!this.enabled || this.muted) return;
+
+        // Массив всех звуков боли
+        const hurtSounds = ['playerOuch1', 'playerOuch2', 'playerOof', 'playerOogh'];
+
+        // Выбираем случайный звук
+        const randomSound = hurtSounds[Math.floor(Math.random() * hurtSounds.length)];
+
+        // Воспроизводим выбранный звук
+        this.playSound(randomSound, volume, pitch);
     }
 
     // 🎚️ ПЛАВНОЕ ПОЯВЛЕНИЕ ЗВУКА
