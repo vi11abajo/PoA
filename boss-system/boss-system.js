@@ -123,14 +123,12 @@ class BossSystemV2 {
                         gifPath: gifPath,
                         pngImage: pngImg
                     };
-                    Logger.info(`✅ Boss ${bossNumber} GIF+PNG loaded successfully`);
                 };
                 gifTest.onerror = () => {
                     this.bossGifData[bossNumber] = {
                         isGif: false,
                         pngImage: pngImg
                     };
-                    Logger.info(`✅ Boss ${bossNumber} PNG only loaded successfully`);
                 };
                 gifTest.src = gifPath;
             };
