@@ -452,7 +452,7 @@ class TournamentAdapter {
             window.tournamentUI.closeGame();
         } else {
             // Альтернативно - перенаправляем на страницу лобби
-            window.location.href = 'tournament-lobby.html';
+            window.location.href = '/tournament';
         }
     }
 

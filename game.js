@@ -1997,7 +1997,7 @@ async function submitTournamentScore() {
         alert(`✅ Score submitted successfully!\nTransaction: ${txHash.slice(0, 10)}...`);
 
         localStorage.removeItem('tournamentMode');
-        window.location.href = 'tournament-lobby.html';
+        window.location.href = '/tournament';
 
     } catch (error) {
         hideLoading();
