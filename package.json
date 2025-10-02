@@ -1,0 +1,35 @@
+{
+  "name": "poaclaud",
+  "version": "1.0.0",
+  "description": "",
+  "main": "game-config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run build:main && npm run build:tournament",
+    "build:main": "cross-env vite build",
+    "build:tournament": "cross-env BUILD_TARGET=tournament vite build",
+    "build:watch": "vite build --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vi11abajo/PoA.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/vi11abajo/PoA/issues"
+  },
+  "homepage": "https://github.com/vi11abajo/PoA#readme",
+  "dependencies": {
+    "@wagmi/connectors": "^5.11.2",
+    "@wagmi/core": "^2.21.2",
+    "viem": "^2.37.11"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-legacy": "^7.2.1",
+    "cross-env": "^10.1.0",
+    "vite": "^7.1.8"
+  }
+}

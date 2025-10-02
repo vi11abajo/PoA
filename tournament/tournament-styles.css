@@ -85,33 +85,41 @@ body::after {
 }
 
 .nav-button {
-    background: linear-gradient(135deg, #005BBB, #66ccff);
-    color: #005BBB;
-    border: 2px solid #005BBB;
-    padding: 6px;
-    font-family: 'Arial', sans-serif;
-    font-size: 16px; /* 14px + 15% = 16.1px */
-    font-weight: bold;
+    background: rgb(0, 122, 255);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 20px rgb(0, 91, 187);
-    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    transition: all 0.125s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     text-decoration: none;
     display: inline-block;
+    min-height: 40px;
+    line-height: 1.2;
 }
 
 .nav-button:hover {
-    background: linear-gradient(135deg, rgba(0, 91, 187, 0.4), rgba(102, 204, 255, 0.5));
-    box-shadow: 0 0 30px rgb(0, 91, 187);
-    transform: translateY(-2px);
+    background: rgb(0, 112, 240);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.nav-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .nav-button.connected {
-    background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(102, 255, 179, 0.3));
-    border-color: #00ff88;
-    color: #00ff88;
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    background: rgb(0, 163, 92);
+    color: white;
+}
+
+.nav-button.connected:hover {
+    background: rgb(0, 145, 82);
 }
 
 /* ===== УКРАИНСКИЕ ЭЛЕМЕНТЫ ===== */
