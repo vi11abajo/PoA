@@ -12,16 +12,34 @@
 
     <title>Pharos Invaders - Tournament</title>
     <link rel="icon" type="image/png" href="/images/favicon.png?v=1758490362">
-    <link rel="stylesheet" href="/tournament/tournament-styles.css?v=1759438521">
+    <link rel="stylesheet" href="/tournament/tournament-styles.css?v=1759441403">
 </head>
 <body>
     <!-- Top Navigation -->
     <div class="top-nav">
         <a href="/" class="nav-button">← Back to Single Player</a>
 
-        <button class="nav-button" id="walletButton" onclick="handleWalletToggle()">
-            <span id="walletStatus">Connect Wallet</span>
-        </button>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <button class="nav-button menu-button" id="menuButton" onclick="toggleMenu()">
+                <img src="/images/menu.png" alt="Menu" style="width: 20px; height: 20px; margin-right: 6px; vertical-align: middle;">
+                <span>MENU</span>
+            </button>
+            <button class="nav-button" id="walletButton" onclick="handleWalletToggle()">
+                <span id="walletStatus">Connect Wallet</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Dropdown Menu -->
+    <div id="dropdownMenu" class="dropdown-menu" style="display: none;">
+        <a href="/" class="menu-item">🎮 Main Game</a>
+        <a href="/tournament" class="menu-item active">⚔️ Tournament</a>
+        <div class="menu-item disabled" style="cursor: not-allowed; position: relative; pointer-events: none;">
+            🛒 Shop
+            <img src="/images/soon2.png" alt="Coming Soon" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 0;">
+        </div>
+        <a href="/leaderboard" class="menu-item">🏆 Leaderboard</a>
+        <a href="/wiki" class="menu-item">📖 Wiki</a>
     </div>
 
     <div class="main-container">
@@ -194,49 +212,49 @@
 
         <!-- 1. ВНЕШНИЕ БИБЛИОТЕКИ (первыми) -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
-        <script src="/logger.js?v=1759438521"></script>
-        <script src="/sound-manager.js?v=1759438521"></script>
-        <script src="/performance-optimizer.js?v=1759438521"></script>
-        <script src="/performance-monitor.js?v=1759438521"></script>
+        <script src="/logger.js?v=1759441403"></script>
+        <script src="/sound-manager.js?v=1759441403"></script>
+        <script src="/performance-optimizer.js?v=1759441403"></script>
+        <script src="/performance-monitor.js?v=1759441403"></script>
 
         <!-- 2. КОНФИГУРАЦИИ (основа для всех остальных) -->
-        <script src="/tournament/tournament-constants.js?v=1759438521"></script>
-        <script src="/tournament/tournament-config.js?v=1759438521"></script>
-        <script src="/game-constants.js?v=1759438521"></script>
-        <script src="/game-config.js?v=1759438521"></script>
+        <script src="/tournament/tournament-constants.js?v=1759441403"></script>
+        <script src="/tournament/tournament-config.js?v=1759441403"></script>
+        <script src="/game-constants.js?v=1759441403"></script>
+        <script src="/game-config.js?v=1759441403"></script>
 
         <!-- 3. УТИЛИТЫ (используются везде) -->
-        <script src="/tournament/tournament-utils.js?v=1759438521"></script>
+        <script src="/tournament/tournament-utils.js?v=1759441403"></script>
 
         <!-- 4. ОСНОВНЫЕ СИСТЕМЫ ИГРЫ (в порядке зависимостей) -->
-<script src="/boss-system/boss-system.js?v=1759438521"></script>
-<script src="/boss-system/boss-attacks.js?v=1759438521"></script>
-<script src="/boss-system/boss-abilities.js?v=1759438521"></script>
-<script src="/boss-system/boss-renderer.js?v=1759438521"></script>
+<script src="/boss-system/boss-system.js?v=1759441403"></script>
+<script src="/boss-system/boss-attacks.js?v=1759441403"></script>
+<script src="/boss-system/boss-abilities.js?v=1759441403"></script>
+<script src="/boss-system/boss-renderer.js?v=1759441403"></script>
 
 <!-- 4.5. СИСТЕМА БОНУСОВ -->
-<script src="/boosts/boost-constants.js?v=1759438521"></script>
-<script src="/boosts/boost-manager.js?v=1759438521"></script>
-<script src="/boosts/boost-effects.js?v=1759438521"></script>
-<script src="/boosts/boost-integration.js?v=1759438521"></script>
-<script src="/boosts/boost-system.js?v=1759438521"></script>
+<script src="/boosts/boost-constants.js?v=1759441403"></script>
+<script src="/boosts/boost-manager.js?v=1759441403"></script>
+<script src="/boosts/boost-effects.js?v=1759441403"></script>
+<script src="/boosts/boost-integration.js?v=1759441403"></script>
+<script src="/boosts/boost-system.js?v=1759441403"></script>
 
-<script src="/dist/tournament-wallet-connector-wagmi.bundle.js?v=1759438521"></script>
-<script src="/game.js?v=1759438521"></script>
+<script src="/dist/tournament-wallet-connector-wagmi.bundle.js?v=1759441403"></script>
+<script src="/game.js?v=1759441403"></script>
 
         <!-- 5. ТУРНИРНАЯ ИНФРАСТРУКТУРА (классы и хранилище) -->
-        <script src="/tournament/tournament-storage-class.js?v=1759438521"></script>
-        <script src="/tournament/tournament-leaderboard.js?v=1759438521"></script>
-        <script src="/tournament/tournament-manager.js?v=1759438521"></script>
+        <script src="/tournament/tournament-storage-class.js?v=1759441403"></script>
+        <script src="/tournament/tournament-leaderboard.js?v=1759441403"></script>
+        <script src="/tournament/tournament-manager.js?v=1759441403"></script>
 
         <!-- 6. АДАПТЕР (перехватывает функции game.js) -->
-        <script src="/tournament/tournament-adapter.js?v=1759438521"></script>
-        <script src="/tournament/tournament-game.js?v=1759438521"></script>
+        <script src="/tournament/tournament-adapter.js?v=1759441403"></script>
+        <script src="/tournament/tournament-game.js?v=1759441403"></script>
         <!-- 7. UI КОМПОНЕНТЫ (используют все вышеперечисленное) -->
-        <script src="/tournament/tournament-ui.js?v=1759438521"></script>
+        <script src="/tournament/tournament-ui.js?v=1759441403"></script>
 
         <!-- 8. ОСНОВНОЙ ФАЙЛ ЛОББИ (последним - использует ВСЁ) -->
-        <script src="/tournament/tournament-lobby.js?v=1759438521"></script>
+        <script src="/tournament/tournament-lobby.js?v=1759441403"></script>
 
     <style>
         /* Дополнительные стили для исправления проблем */
@@ -507,6 +525,55 @@
                 margin-bottom: 8px;
             }
         }
+
+        /* Dropdown Menu Styles */
+        .dropdown-menu {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(0, 17, 34, 0.98) 0%, rgba(0, 51, 102, 0.95) 100%);
+            border: 2px solid rgba(0, 221, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            min-width: 200px;
+            overflow: hidden;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .menu-item {
+            display: block;
+            padding: 12px 20px;
+            color: #00ddff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0, 221, 255, 0.2);
+            transition: all 0.2s ease;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 221, 255, 0.1);
+            padding-left: 25px;
+        }
+
+        .menu-item.active {
+            background: rgba(0, 221, 255, 0.2);
+            border-left: 3px solid #00ddff;
+        }
     </style>
 
     <!-- 🔥 ОТЛАДОЧНАЯ ИНФОРМАЦИЯ -->
@@ -531,6 +598,33 @@
                     console.error('❌ Some modules failed to load');
                 }
             }, 3000);
+        });
+
+        // Функция переключения выпадающего меню
+        window.toggleMenu = function() {
+            const menu = document.getElementById('dropdownMenu');
+            const menuButton = document.getElementById('menuButton');
+
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                // Вычисляем позицию меню относительно кнопки
+                const rect = menuButton.getBoundingClientRect();
+                menu.style.left = rect.left + 'px';
+                menu.style.top = (rect.bottom + 2) + 'px';
+                menu.style.right = 'auto';
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+        };
+
+        // Закрытие меню при клике вне его
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('dropdownMenu');
+            const menuButton = document.getElementById('menuButton');
+
+            if (menu && menuButton && !menu.contains(event.target) && !menuButton.contains(event.target)) {
+                menu.style.display = 'none';
+            }
         });
 
         // 🎵 Функция управления музыкой турнирного лобби

@@ -519,6 +519,55 @@
                 font-size: 10px;
             }
         }
+
+        /* Dropdown Menu Styles */
+        .dropdown-menu {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(0, 17, 34, 0.98) 0%, rgba(0, 51, 102, 0.95) 100%);
+            border: 2px solid rgba(0, 221, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 221, 255, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            min-width: 200px;
+            overflow: hidden;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .menu-item {
+            display: block;
+            padding: 12px 20px;
+            color: #00ddff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0, 221, 255, 0.2);
+            transition: all 0.2s ease;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 221, 255, 0.1);
+            padding-left: 25px;
+        }
+
+        .menu-item.active {
+            background: rgba(0, 221, 255, 0.2);
+            border-left: 3px solid #00ddff;
+        }
     </style>
 
     <script>
@@ -573,23 +622,43 @@
             <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/pharos.png" alt="Pharos Network">
         </a>
     </div>
-    
+
     <div class="main-leaderboard-button">
-        <button onclick="window.location.href='leaderboard.html';" style="padding: 10px 20px; font-size: 14px; margin: 0;">
+        <button disabled style="padding: 10px 20px; font-size: 14px; margin: 0; margin-right: 10px; position: relative; cursor: not-allowed; width: 160px;">
+            🛒 Shop
+            <img src="/images/soon2.png" alt="Coming Soon" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; border-radius: 8px;">
+        </button>
+        <button onclick="window.location.href='/leaderboard';" style="padding: 10px 20px; font-size: 14px; margin: 0; width: 160px;">
             🏆 Leaderboard
         </button>
-        <button onclick="window.location.href='/tournament';" style="padding: 10px 30px 10px 20px; font-size: 14px; margin: 0 0 0 10px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.3)); border-color: #ffd700; color: #ffd700; position: relative;">
+        <button onclick="window.location.href='/tournament';" style="padding: 10px 20px; font-size: 14px; margin: 0 0 0 10px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.3)); border-color: #ffd700; color: #ffd700; position: relative; width: 160px;">
             ⚔️ Tournament
             <img src="images/UA.png" alt="UA" style="position: absolute; top: -2px; right: -5px; height: 24px; width: auto; border-radius: 2px; transition: all 0.3s ease; filter: drop-shadow(0 0 5px rgba(0, 221, 255, 0.3));">
         </button>
     </div>
-    
-    <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1000; display: flex; gap: 5px; align-items: center;">
+        <button class="nav-button menu-button" id="menuButton" onclick="toggleMenu()">
+            <img src="images/menu.png" alt="Menu" style="width: 20px; height: 20px; margin-right: 6px; vertical-align: middle;">
+            <span>MENU</span>
+        </button>
         <button class="nav-button" id="walletButton" onclick="handleWalletToggle()">
             <span id="walletStatus">💼 Connect Wallet</span>
         </button>
     </div>
-    
+
+    <!-- Dropdown Menu -->
+    <div id="dropdownMenu" class="dropdown-menu" style="display: none;">
+        <a href="/" class="menu-item active">🎮 Main Game</a>
+        <a href="/tournament" class="menu-item">⚔️ Tournament</a>
+        <div class="menu-item disabled" style="cursor: not-allowed; position: relative; pointer-events: none;">
+            🛒 Shop
+            <img src="/images/soon2.png" alt="Coming Soon" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 0;">
+        </div>
+        <a href="/leaderboard" class="menu-item">🏆 Leaderboard</a>
+        <a href="/wiki" class="menu-item">📖 Wiki</a>
+    </div>
+
     <div class="bubbles"></div>
     
     <!-- Active Boosts Panel -->
@@ -643,30 +712,30 @@
     </div>
 
     <!-- Scripts -->
-    <script src="logger.js?v=1759438521"></script>
-    <script src="sound-manager.js?v=1759438521"></script>
-    <script src="game-constants.js?v=1759438521"></script>
-    <script src="game-config.js?v=1759438521"></script>
-    <script src="performance-optimizer.js?v=1759438521"></script>
-    <script src="performance-monitor.js?v=1759438521"></script>
+    <script src="logger.js?v=1759441403"></script>
+    <script src="sound-manager.js?v=1759441403"></script>
+    <script src="game-constants.js?v=1759441403"></script>
+    <script src="game-config.js?v=1759441403"></script>
+    <script src="performance-optimizer.js?v=1759441403"></script>
+    <script src="performance-monitor.js?v=1759441403"></script>
 
     <!-- BOSS SYSTEM -->
-    <script src="boss-system/boss-system.js?v=1759438521"></script>
-    <script src="boss-system/boss-attacks.js?v=1759438521"></script>
-    <script src="boss-system/boss-abilities.js?v=1759438521"></script>
-    <script src="boss-system/boss-renderer.js?v=1759438521"></script>
+    <script src="boss-system/boss-system.js?v=1759441403"></script>
+    <script src="boss-system/boss-attacks.js?v=1759441403"></script>
+    <script src="boss-system/boss-abilities.js?v=1759441403"></script>
+    <script src="boss-system/boss-renderer.js?v=1759441403"></script>
 
     <!-- BOOST SYSTEM -->
-    <script src="boosts/boost-constants.js?v=1759438521"></script>
-    <script src="boosts/boost-manager.js?v=1759438521"></script>
-    <script src="boosts/boost-effects.js?v=1759438521"></script>
-    <script src="boosts/boost-integration.js?v=1759438521"></script>
-    <script src="boosts/boost-system.js?v=1759438521"></script>
+    <script src="boosts/boost-constants.js?v=1759441403"></script>
+    <script src="boosts/boost-manager.js?v=1759441403"></script>
+    <script src="boosts/boost-effects.js?v=1759441403"></script>
+    <script src="boosts/boost-integration.js?v=1759441403"></script>
+    <script src="boosts/boost-system.js?v=1759441403"></script>
 
     <!-- 🔥 НОВЫЙ Wagmi Wallet Connector -->
-    <script src="/dist/wallet-connector-wagmi.bundle.js?v=1759438521"></script>
+    <script src="/dist/wallet-connector-wagmi.bundle.js?v=1759441403"></script>
 
-    <script src="/game.js?v=1759438521"></script>
+    <script src="/game.js?v=1759441403"></script>
 
     <script>
         // Функция для переключения кошелька
@@ -701,9 +770,36 @@
 
         // Проверяем статус кошелька каждые 2 секунды
         setInterval(updateWalletStatus, 2000);
-        
+
         // Обновляем при загрузке страницы
         document.addEventListener('DOMContentLoaded', updateWalletStatus);
+
+        // Функция переключения выпадающего меню
+        window.toggleMenu = function() {
+            const menu = document.getElementById('dropdownMenu');
+            const menuButton = document.getElementById('menuButton');
+
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                // Вычисляем позицию меню относительно кнопки
+                const rect = menuButton.getBoundingClientRect();
+                menu.style.left = rect.left + 'px';
+                menu.style.top = (rect.bottom + 2) + 'px';
+                menu.style.right = 'auto';
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+        };
+
+        // Закрытие меню при клике вне его
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('dropdownMenu');
+            const menuButton = document.getElementById('menuButton');
+
+            if (menu && menuButton && !menu.contains(event.target) && !menuButton.contains(event.target)) {
+                menu.style.display = 'none';
+            }
+        });
     </script>
 
     <script>

@@ -301,13 +301,6 @@ class TournamentWalletConnectorWagmi {
                         </div>
                     </div>
                 </div>
-
-                <div class="wallet-info">
-                    <div class="wallet-info-title">What is a wallet?</div>
-                    <div class="wallet-info-text">
-                        A wallet is used to send, receive, and store digital assets, as well as connect to applications.
-                    </div>
-                </div>
             </div>
         `;
 
