@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/tournament/">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">
 
     <!-- 🚫 Anti-Cache Meta Tags -->
@@ -12,7 +13,7 @@
 
     <title>Pharos Invaders - Tournament</title>
     <link rel="icon" type="image/png" href="../images/favicon.png?v=1758490362">
-    <link rel="stylesheet" href="./tournament-styles.css?v=1759435513">
+    <link rel="stylesheet" href="./tournament-styles.css?v=1759435707">
 </head>
 <body>
     <!-- Top Navigation -->
@@ -194,49 +195,49 @@
 
         <!-- 1. ВНЕШНИЕ БИБЛИОТЕКИ (первыми) -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
-        <script src="../logger.js?v=1759435513"></script>
-        <script src="../sound-manager.js?v=1759435513"></script>
-        <script src="../performance-optimizer.js?v=1759435513"></script>
-        <script src="../performance-monitor.js?v=1759435513"></script>
+        <script src="../logger.js?v=1759435707"></script>
+        <script src="../sound-manager.js?v=1759435707"></script>
+        <script src="../performance-optimizer.js?v=1759435707"></script>
+        <script src="../performance-monitor.js?v=1759435707"></script>
 
         <!-- 2. КОНФИГУРАЦИИ (основа для всех остальных) -->
-        <script src="./tournament-constants.js?v=1759435513"></script>
-        <script src="./tournament-config.js?v=1759435513"></script>
-        <script src="../game-constants.js?v=1759435513"></script>
-        <script src="../game-config.js?v=1759435513"></script>
+        <script src="./tournament-constants.js?v=1759435707"></script>
+        <script src="./tournament-config.js?v=1759435707"></script>
+        <script src="../game-constants.js?v=1759435707"></script>
+        <script src="../game-config.js?v=1759435707"></script>
 
         <!-- 3. УТИЛИТЫ (используются везде) -->
-        <script src="./tournament-utils.js?v=1759435513"></script>
+        <script src="./tournament-utils.js?v=1759435707"></script>
 
         <!-- 4. ОСНОВНЫЕ СИСТЕМЫ ИГРЫ (в порядке зависимостей) -->
-<script src="../boss-system/boss-system.js?v=1759435513"></script>
-<script src="../boss-system/boss-attacks.js?v=1759435513"></script>
-<script src="../boss-system/boss-abilities.js?v=1759435513"></script>
-<script src="../boss-system/boss-renderer.js?v=1759435513"></script>
+<script src="../boss-system/boss-system.js?v=1759435707"></script>
+<script src="../boss-system/boss-attacks.js?v=1759435707"></script>
+<script src="../boss-system/boss-abilities.js?v=1759435707"></script>
+<script src="../boss-system/boss-renderer.js?v=1759435707"></script>
 
 <!-- 4.5. СИСТЕМА БОНУСОВ -->
-<script src="../boosts/boost-constants.js?v=1759435513"></script>
-<script src="../boosts/boost-manager.js?v=1759435513"></script>
-<script src="../boosts/boost-effects.js?v=1759435513"></script>
-<script src="../boosts/boost-integration.js?v=1759435513"></script>
-<script src="../boosts/boost-system.js?v=1759435513"></script>
+<script src="../boosts/boost-constants.js?v=1759435707"></script>
+<script src="../boosts/boost-manager.js?v=1759435707"></script>
+<script src="../boosts/boost-effects.js?v=1759435707"></script>
+<script src="../boosts/boost-integration.js?v=1759435707"></script>
+<script src="../boosts/boost-system.js?v=1759435707"></script>
 
-<script src="../dist/tournament-wallet-connector-wagmi.bundle.js?v=1759435513"></script>
-<script src="../game.js?v=1759435513"></script>
+<script src="../dist/tournament-wallet-connector-wagmi.bundle.js?v=1759435707"></script>
+<script src="../game.js?v=1759435707"></script>
 
         <!-- 5. ТУРНИРНАЯ ИНФРАСТРУКТУРА (классы и хранилище) -->
-        <script src="./tournament-storage-class.js?v=1759435513"></script>
-        <script src="./tournament-leaderboard.js?v=1759435513"></script>
-        <script src="./tournament-manager.js?v=1759435513"></script>
+        <script src="./tournament-storage-class.js?v=1759435707"></script>
+        <script src="./tournament-leaderboard.js?v=1759435707"></script>
+        <script src="./tournament-manager.js?v=1759435707"></script>
 
         <!-- 6. АДАПТЕР (перехватывает функции game.js) -->
-        <script src="./tournament-adapter.js?v=1759435513"></script>
-        <script src="./tournament-game.js?v=1759435513"></script>
+        <script src="./tournament-adapter.js?v=1759435707"></script>
+        <script src="./tournament-game.js?v=1759435707"></script>
         <!-- 7. UI КОМПОНЕНТЫ (используют все вышеперечисленное) -->
-        <script src="./tournament-ui.js?v=1759435513"></script>
+        <script src="./tournament-ui.js?v=1759435707"></script>
 
         <!-- 8. ОСНОВНОЙ ФАЙЛ ЛОББИ (последним - использует ВСЁ) -->
-        <script src="./tournament-lobby.js?v=1759435513"></script>
+        <script src="./tournament-lobby.js?v=1759435707"></script>
 
     <style>
         /* Дополнительные стили для исправления проблем */
