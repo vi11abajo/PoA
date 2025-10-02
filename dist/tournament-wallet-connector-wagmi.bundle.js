@@ -219,7 +219,7 @@ ${yi(h)}`),super(t.shortMessage,{cause:t,docsPath:r,metaMessages:[...t.metaMessa
         `,document.head.appendChild(t);const n=document.createElement("div");n.id="wallet-modal",n.className="wallet-modal",n.innerHTML=`
             <div class="wallet-modal-content">
                 <div class="wallet-modal-header">
-                    <h3>Подключить кошелек</h3>
+                    <h3>Connect Wallet</h3>
                     <button class="close-modal" onclick="tournamentWalletConnector.hideWalletModal()">✕</button>
                 </div>
 
@@ -227,7 +227,7 @@ ${yi(h)}`),super(t.shortMessage,{cause:t,docsPath:r,metaMessages:[...t.metaMessa
                     <div id="wallet-message" class="wallet-message"></div>
 
                     <div class="wallet-category">
-                        <div class="wallet-category-title">Популярные</div>
+                        <div class="wallet-category-title">Popular</div>
 
                         <div class="wallet-option" onclick="tournamentWalletConnector.connectWallet('metamask')">
                             <div class="wallet-option-left">
@@ -246,9 +246,9 @@ ${yi(h)}`),super(t.shortMessage,{cause:t,docsPath:r,metaMessages:[...t.metaMessa
                 </div>
 
                 <div class="wallet-info">
-                    <div class="wallet-info-title">Что такое кошелек?</div>
+                    <div class="wallet-info-title">What is a wallet?</div>
                     <div class="wallet-info-text">
-                        Кошелек используется для отправки, получения и хранения цифровых активов, а также для подключения к приложениям.
+                        A wallet is used to send, receive, and store digital assets, as well as connect to applications.
                     </div>
                 </div>
             </div>
