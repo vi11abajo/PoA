@@ -444,6 +444,9 @@
     <!-- Web3 Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
 
+    <!-- Утилиты -->
+    <script src="utils.js"></script>
+
     <!-- 🎵 Звуковая система -->
     <script src="sound-manager.js"></script>
 
@@ -595,18 +598,7 @@
             }
         }
 
-        
-        function maskAddress(address) {
-            if (!address || address.length < 10) return address;
-            return `${address.slice(0, 6)}***${address.slice(-6)}`;
-        }
-
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        // Функции maskAddress и escapeHtml загружены из utils.js
 
         
         window.addEventListener('load', async () => {
@@ -676,32 +668,7 @@
             }, 1000);
         });
 
-        // Функция переключения выпадающего меню
-        window.toggleMenu = function() {
-            const menu = document.getElementById('dropdownMenu');
-            const menuButton = document.getElementById('menuButton');
-
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                // Вычисляем позицию меню относительно кнопки
-                const rect = menuButton.getBoundingClientRect();
-                menu.style.left = rect.left + 'px';
-                menu.style.top = (rect.bottom + 2) + 'px';
-                menu.style.right = 'auto';
-                menu.style.display = 'block';
-            } else {
-                menu.style.display = 'none';
-            }
-        };
-
-        // Закрытие меню при клике вне его
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('dropdownMenu');
-            const menuButton = document.getElementById('menuButton');
-
-            if (menu && menuButton && !menu.contains(event.target) && !menuButton.contains(event.target)) {
-                menu.style.display = 'none';
-            }
-        });
+        // Функции меню загружены из utils.js
     </script>
 </body>
 </html>

@@ -86,21 +86,11 @@ class BoostManager {
             console.error(`⚠️ No boosts available for rarity ${selectedRarity}, falling back to COMMON`);
             const commonBoosts = BOOST_CONSTANTS.RARITY.DISTRIBUTION['COMMON'];
             const randomIndex = Math.floor(Math.random() * commonBoosts.length);
-            const selectedBoost = commonBoosts[randomIndex];
-            
-            if (BOOST_CONSTANTS.DEBUG_MODE) {
-                // Fallback to COMMON rarity
-            }
-            return selectedBoost;
+            return commonBoosts[randomIndex];
         }
-        
+
         const randomIndex = Math.floor(Math.random() * availableBoosts.length);
-        const selectedBoost = availableBoosts[randomIndex];
-        
-        if (BOOST_CONSTANTS.DEBUG_MODE) {
-            // Boost selected by rarity system
-        }
-        return selectedBoost;
+        return availableBoosts[randomIndex];
     }
 
     // 📦 Создание падающего бонуса
@@ -237,9 +227,6 @@ class BoostManager {
             
             this.activeBoosts.set(boostType, boostData);
             
-            if (BOOST_CONSTANTS.DEBUG_MODE) {
-                // Boost activated successfully
-            }
             return true;
         }
 

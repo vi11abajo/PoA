@@ -2051,7 +2051,6 @@ async function startGame() {
 
         // Проверяем, не запущена ли уже игра
         if (gameState === 'playing') {
-            console.log('Game is already running, not showing modal');
             return;
         }
 

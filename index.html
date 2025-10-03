@@ -570,50 +570,6 @@
         }
     </style>
 
-    <script>
-
-        // const password = "turik";
-        // let userInput = null;
-
-
-        // window.addEventListener('DOMContentLoaded', function(e) {
-        //     e.preventDefault();
-        //     e.stopPropagation();
-
-        //     userInput = prompt("pswd:");
-
-        //     if (userInput !== password || userInput === null || userInput === "") {
-
-        //         document.documentElement.innerHTML = `
-        //         <html><head><title>LOCKED</title></head><body style="
-        //             margin: 0;
-        //             padding: 0;
-        //             width: 100vw;
-        //             height: 100vh;
-        //             background: url('images/bg1.png') center center / cover no-repeat;
-        //             display: flex;
-        //             align-items: center;
-        //             justify-content: center;
-        //             font-family: Arial, sans-serif;
-        //         ">
-        //             <h1 style="
-        //                 color: #fff;
-        //                 font-size: 4rem;
-        //                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        //                 background: rgba(0,0,0,0.5);
-        //                 padding: 30px 60px;
-        //                 border-radius: 20px;
-        //                 text-align: center;
-        //             ">LOCKED</h1>
-        //         </body></html>
-        //         `;
-
-
-        //         window.stop();
-        //         return false;
-        //     }
-        // });
-    </script>
 </head>
 <body>
     
@@ -685,7 +641,6 @@
             <p>Defend the ocean depths from the crab invasion!</p>
             <p style="font-size: 16px; margin: 15px 0;">Futuristic cyborg octopus vs army of crabs</p>
             <button onclick="playButtonSound(); startGame()">START BATTLE</button>
-            <!-- <button onclick="playButtonSound(); startOfflineGame()" style="margin-top: 10px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);">PLAY OFFLINE</button> -->
 
             <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
                 <p>Controls: ← → to move, SPACE to attack</p>
@@ -712,30 +667,38 @@
     </div>
 
     <!-- Scripts -->
-    <script src="logger.js?v=1759441403"></script>
-    <script src="sound-manager.js?v=1759441403"></script>
-    <script src="game-constants.js?v=1759441403"></script>
-    <script src="game-config.js?v=1759441403"></script>
-    <script src="performance-optimizer.js?v=1759441403"></script>
-    <script src="performance-monitor.js?v=1759441403"></script>
+    <!-- Core utilities (load first) -->
+    <script src="state-manager.js?v=1759453713"></script>
+    <script src="error-boundary.js?v=1759453713"></script>
+    <script src="service-container.js?v=1759453713"></script>
+    <script src="utils.js?v=1759453713"></script>
+    <script src="validation.js?v=1759453713"></script>
+    <script src="time-utils.js?v=1759453713"></script>
+    <script src="blockchain-utils.js?v=1759453713"></script>
+    <script src="logger.js?v=1759453713"></script>
+    <script src="sound-manager.js?v=1759453713"></script>
+    <script src="game-constants.js?v=1759453713"></script>
+    <script src="game-config.js?v=1759453713"></script>
+    <script src="performance-optimizer.js?v=1759453713"></script>
+    <script src="performance-monitor.js?v=1759453713"></script>
 
     <!-- BOSS SYSTEM -->
-    <script src="boss-system/boss-system.js?v=1759441403"></script>
-    <script src="boss-system/boss-attacks.js?v=1759441403"></script>
-    <script src="boss-system/boss-abilities.js?v=1759441403"></script>
-    <script src="boss-system/boss-renderer.js?v=1759441403"></script>
+    <script src="boss-system/boss-system.js?v=1759453713"></script>
+    <script src="boss-system/boss-attacks.js?v=1759453713"></script>
+    <script src="boss-system/boss-abilities.js?v=1759453713"></script>
+    <script src="boss-system/boss-renderer.js?v=1759453713"></script>
 
     <!-- BOOST SYSTEM -->
-    <script src="boosts/boost-constants.js?v=1759441403"></script>
-    <script src="boosts/boost-manager.js?v=1759441403"></script>
-    <script src="boosts/boost-effects.js?v=1759441403"></script>
-    <script src="boosts/boost-integration.js?v=1759441403"></script>
-    <script src="boosts/boost-system.js?v=1759441403"></script>
+    <script src="boosts/boost-constants.js?v=1759453713"></script>
+    <script src="boosts/boost-manager.js?v=1759453713"></script>
+    <script src="boosts/boost-effects.js?v=1759453713"></script>
+    <script src="boosts/boost-integration.js?v=1759453713"></script>
+    <script src="boosts/boost-system.js?v=1759453713"></script>
 
     <!-- 🔥 НОВЫЙ Wagmi Wallet Connector -->
-    <script src="/dist/wallet-connector-wagmi.bundle.js?v=1759441403"></script>
+    <script src="/dist/wallet-connector-wagmi.bundle.js?v=1759453713"></script>
 
-    <script src="/game.js?v=1759441403"></script>
+    <script src="/game.js?v=1759453713"></script>
 
     <script>
         // Функция для переключения кошелька
@@ -753,53 +716,18 @@
             }
         };
 
-        // Обновление статуса кошелька
-        function updateWalletStatus() {
-            const walletButton = document.getElementById('walletButton');
-            const walletStatus = document.getElementById('walletStatus');
-            
-            if (window.walletConnector && window.walletConnector.connected && window.walletConnector.account) {
-                walletButton.classList.add('connected');
-                const shortAddress = `${window.walletConnector.account.slice(0, 6)}...${window.walletConnector.account.slice(-4)}`;
-                walletStatus.textContent = shortAddress;
-            } else {
-                walletButton.classList.remove('connected');
-                walletStatus.textContent = '💼 Connect Wallet';
-            }
-        }
-
-        // Проверяем статус кошелька каждые 2 секунды
-        setInterval(updateWalletStatus, 2000);
-
-        // Обновляем при загрузке страницы
-        document.addEventListener('DOMContentLoaded', updateWalletStatus);
-
-        // Функция переключения выпадающего меню
-        window.toggleMenu = function() {
-            const menu = document.getElementById('dropdownMenu');
-            const menuButton = document.getElementById('menuButton');
-
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                // Вычисляем позицию меню относительно кнопки
-                const rect = menuButton.getBoundingClientRect();
-                menu.style.left = rect.left + 'px';
-                menu.style.top = (rect.bottom + 2) + 'px';
-                menu.style.right = 'auto';
-                menu.style.display = 'block';
-            } else {
-                menu.style.display = 'none';
+        // Обновление статуса кошелька (использует utils.js)
+        const updateWalletStatusInterval = () => {
+            if (window.updateWalletStatus && window.walletConnector) {
+                window.updateWalletStatus(window.walletConnector);
             }
         };
 
-        // Закрытие меню при клике вне его
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('dropdownMenu');
-            const menuButton = document.getElementById('menuButton');
+        // Проверяем статус кошелька каждые 2 секунды
+        setInterval(updateWalletStatusInterval, 2000);
 
-            if (menu && menuButton && !menu.contains(event.target) && !menuButton.contains(event.target)) {
-                menu.style.display = 'none';
-            }
-        });
+        // Обновляем при загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateWalletStatusInterval);
     </script>
 
     <script>

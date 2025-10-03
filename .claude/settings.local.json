@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rm:*)",
+      "Bash(git ls-tree:*)",
+      "WebFetch(domain:rainbowkit.com)",
+      "WebFetch(domain:wagmi.sh)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run build:main:*)",
+      "Bash(set BUILD_TARGET=tournament)",
+      "Bash(npm run build:tournament:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(git reset:*)",
+      "Bash(git push:*)",
+      "Bash(grep:*)",
+      "Bash(tree:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -413,6 +413,13 @@ class WagmiWalletConnector {
                                 <span class="wallet-option-name">OKX Wallet</span>
                             </div>
                         </div>
+
+                        <div class="wallet-option" onclick="walletConnector.connectWallet('rabby')">
+                            <div class="wallet-option-left">
+                                <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/rabbyicon.png" alt="Rabby">
+                                <span class="wallet-option-name">Rabby Wallet</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -445,17 +452,73 @@ class WagmiWalletConnector {
             let connector;
 
             if (walletType === 'metamask') {
-                connector = connectors.find(c => c.id === 'injected' || c.name.includes('MetaMask'));
+                // Ищем коннектор для MetaMask
+                connector = connectors.find(c =>
+                    c.id === 'injected' ||
+                    c.id === 'io.metamask' ||
+                    c.name?.toLowerCase().includes('metamask')
+                );
+
+                // Если не нашли коннектор, пробуем injected (первый в списке)
+                if (!connector) {
+                    connector = connectors.find(c => c.id === 'injected');
+                }
+
+                // Проверяем наличие MetaMask
                 if (!connector && typeof window.ethereum === 'undefined') {
                     throw new Error('MetaMask not detected. Please install MetaMask extension.');
                 }
+
+                // Если коннектор всё ещё не найден, но ethereum есть - берём первый injected
+                if (!connector && window.ethereum) {
+                    connector = connectors[0]; // Fallback на первый коннектор
+                }
             } else if (walletType === 'okx') {
-                connector = connectors.find(c => c.id === 'okx' || c.name.includes('OKX'));
+                // Ищем коннектор для OKX
+                connector = connectors.find(c =>
+                    c.id === 'okx' ||
+                    c.id === 'com.okex.wallet' ||
+                    c.name?.toLowerCase().includes('okx')
+                );
+
+                // Если не нашли, пробуем через injected
+                if (!connector && (window.okexchain || window.ethereum?.isOkxWallet)) {
+                    connector = connectors.find(c => c.id === 'injected');
+                }
+
+                // Проверяем наличие OKX
                 if (!connector && typeof window.okexchain === 'undefined' && !window.ethereum?.isOkxWallet) {
                     throw new Error('OKX Wallet not detected. Please install OKX Wallet extension.');
                 }
+            } else if (walletType === 'rabby') {
+                // Ищем коннектор для Rabby
+                connector = connectors.find(c =>
+                    c.id === 'rabby' ||
+                    c.id === 'io.rabby' ||
+                    c.name?.toLowerCase().includes('rabby')
+                );
+
+                // Если не нашли, пробуем через injected
+                if (!connector && window.ethereum?.isRabby) {
+                    connector = connectors.find(c => c.id === 'injected');
+                }
+
+                // Проверяем наличие Rabby
+                if (!connector && !window.ethereum?.isRabby) {
+                    throw new Error('Rabby Wallet not detected. Please install Rabby Wallet extension.');
+                }
+
+                // Fallback на первый коннектор если ethereum присутствует
+                if (!connector && window.ethereum) {
+                    connector = connectors[0];
+                }
             } else {
                 throw new Error('Unsupported wallet type');
+            }
+
+            // Финальная проверка - есть ли коннектор
+            if (!connector) {
+                throw new Error('Wallet connector not found. Please make sure your wallet extension is installed and enabled.');
             }
 
             // Подключаемся через Wagmi
@@ -663,9 +726,16 @@ class WagmiWalletConnector {
         } catch (error) {
             Logger.error('❌ Payment error:', error);
 
-            if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
+            // Обработка ошибки pending транзакции
+            if (error.message.includes('already pending') ||
+                error.message.includes('still signing') ||
+                error.message.includes('Previous transaction')) {
+                throw new Error('Previous transaction is still pending. Please cancel it in MetaMask (click pending transaction → Reject), then try again.');
+            } else if (error.message.includes('nonce too low')) {
+                throw new Error('Transaction nonce error. Reset MetaMask: Settings → Advanced → Clear activity tab data');
+            } else if (error.message.includes('insufficient funds') || error.message.includes('Insufficient balance')) {
                 throw new Error(error.message || 'Insufficient funds in wallet');
-            } else if (error.message.includes('User denied') || error.message.includes('rejected')) {
+            } else if (error.message.includes('User denied') || error.message.includes('rejected') || error.message.includes('denied transaction')) {
                 throw new Error('Transaction cancelled by user');
             } else {
                 throw new Error(`Payment failed: ${error.message || 'Unknown error'}`);
@@ -714,6 +784,18 @@ class WagmiWalletConnector {
 
         } catch (error) {
             Logger.error('❌ Save score error:', error);
+
+            // Обработка ошибки pending транзакции
+            if (error.message.includes('already pending') ||
+                error.message.includes('still signing') ||
+                error.message.includes('Previous transaction')) {
+                throw new Error('Previous transaction is still pending. Please cancel it in MetaMask (click pending transaction → Reject), then try again.');
+            } else if (error.message.includes('nonce too low')) {
+                throw new Error('Transaction nonce error. Reset MetaMask: Settings → Advanced → Clear activity tab data');
+            } else if (error.message.includes('User denied') || error.message.includes('rejected') || error.message.includes('denied transaction')) {
+                throw new Error('Transaction cancelled by user');
+            }
+
             throw error;
         }
     }
@@ -763,6 +845,59 @@ class WagmiWalletConnector {
         } catch (error) {
             Logger.error('❌ Get balance error:', error);
             return '0';
+        }
+    }
+
+    // 🔍 Проверка pending транзакций
+    // Эта функция помогает определить, есть ли застрявшие транзакции
+    // Если MetaMask показывает ошибку "Previous transaction still signing",
+    // пользователь может:
+    // 1. Подождать завершения транзакции
+    // 2. Отменить её в MetaMask (кнопка "Reject")
+    // 3. Сбросить данные активности: Settings → Advanced → Clear activity tab data
+    async checkPendingTransactions() {
+        try {
+            if (!this.account || !window.ethereum) {
+                return { hasPending: false, count: 0 };
+            }
+
+            // Получаем текущий nonce из сети
+            const networkNonce = await window.ethereum.request({
+                method: 'eth_getTransactionCount',
+                params: [this.account, 'latest']
+            });
+
+            // Получаем pending nonce
+            const pendingNonce = await window.ethereum.request({
+                method: 'eth_getTransactionCount',
+                params: [this.account, 'pending']
+            });
+
+            // Конвертируем в числа
+            const networkNonceNum = parseInt(networkNonce, 16);
+            const pendingNonceNum = parseInt(pendingNonce, 16);
+
+            // Проверка на валидность
+            if (isNaN(networkNonceNum) || isNaN(pendingNonceNum)) {
+                Logger.warn('Invalid nonce values:', { networkNonce, pendingNonce });
+                return { hasPending: false, count: 0 };
+            }
+
+            // Проверка на разумные значения (защита от бага)
+            const count = pendingNonceNum - networkNonceNum;
+            if (count < 0 || count > 100) {
+                Logger.warn('Suspicious nonce difference:', { networkNonceNum, pendingNonceNum, count });
+                return { hasPending: false, count: 0 };
+            }
+
+            const hasPending = count > 0;
+
+            Logger.debug('Pending check:', { networkNonceNum, pendingNonceNum, hasPending, count });
+
+            return { hasPending, count, networkNonce: networkNonceNum, pendingNonce: pendingNonceNum };
+        } catch (error) {
+            Logger.error('Check pending transactions error:', error);
+            return { hasPending: false, count: 0 };
         }
     }
 

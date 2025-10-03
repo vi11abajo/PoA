@@ -4,7 +4,6 @@ node_modules/
 # IDE
 .idea/
 .vscode/
-.claude/
 
 # Logs
 *.log
@@ -14,5 +13,11 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Lock files
-package-lock.json
+# Build
+dist/
+*.bundle.js
+
+# Temporary
+*.tmp
+*.bak
+*.old

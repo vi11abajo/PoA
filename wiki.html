@@ -615,7 +615,8 @@
     </div>
 
 
-    <!-- Load boost constants -->
+    <!-- Load utilities and boost constants -->
+    <script src="utils.js"></script>
     <script src="boosts/boost-constants.js"></script>
     <script>
         // Boost images mapping (from images/boosts folder)
@@ -812,32 +813,7 @@
             loadBoostData();
         }
 
-        // Функция переключения выпадающего меню
-        window.toggleMenu = function() {
-            const menu = document.getElementById('dropdownMenu');
-            const menuButton = document.getElementById('menuButton');
-
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                // Вычисляем позицию меню относительно кнопки
-                const rect = menuButton.getBoundingClientRect();
-                menu.style.left = rect.left + 'px';
-                menu.style.top = (rect.bottom + 2) + 'px';
-                menu.style.right = 'auto';
-                menu.style.display = 'block';
-            } else {
-                menu.style.display = 'none';
-            }
-        };
-
-        // Закрытие меню при клике вне его
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('dropdownMenu');
-            const menuButton = document.getElementById('menuButton');
-
-            if (menu && menuButton && !menu.contains(event.target) && !menuButton.contains(event.target)) {
-                menu.style.display = 'none';
-            }
-        });
+        // Функции меню загружены из utils.js
     </script>
 </body>
 </html>
