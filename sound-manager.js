@@ -49,7 +49,8 @@ class SoundManager {
             bossShoot: 0.4,
 
             // UI
-            buttonClick: 0.6,
+            buttonClick: 0.7, // Звук нажатия кнопки
+            chooseWallet: 0.6, // Звук выбора кошелька
             toasty: 0.9, // Громко как в оригинале!
             cu: 0.9, // Громко как sailor!
 
@@ -100,7 +101,8 @@ class SoundManager {
                 bossShoot: `${soundsBasePath}/sfx/enemies/boss-shoot.mp3`,
 
                 // UI
-                buttonClick: `${soundsBasePath}/sfx/ui/button.wav`,
+                buttonClick: `${soundsBasePath}/sfx/ui/button1.wav`,
+                chooseWallet: `${soundsBasePath}/sfx/ui/chooseWallet.mp3`,
                 toasty: `${soundsBasePath}/sfx/ui/toasty.wav`,
                 cu: `${soundsBasePath}/sfx/ui/CU.wav`,
 

@@ -95,6 +95,12 @@ class WagmiWalletConnector {
                 if (account.isConnected && account.address) {
                     this.account = account.address;
                     this.connected = true;
+
+                    // Создаем Web3 экземпляр для совместимости
+                    if (window.ethereum && window.Web3) {
+                        this.web3 = new window.Web3(window.ethereum);
+                    }
+
                     this.updateConnectionStatus();
                     Logger.info('Auto-reconnected to wallet:', this.account);
                 }
@@ -112,9 +118,15 @@ class WagmiWalletConnector {
                 if (account.address) {
                     this.account = account.address;
                     this.connected = account.isConnected;
+
+                    // Создаем Web3 экземпляр для совместимости при подключении
+                    if (account.isConnected && window.ethereum && window.Web3) {
+                        this.web3 = new window.Web3(window.ethereum);
+                    }
                 } else {
                     this.account = null;
                     this.connected = false;
+                    this.web3 = null;
                 }
                 this.updateConnectionStatus();
             }
@@ -398,12 +410,12 @@ class WagmiWalletConnector {
                     <div id="wallet-message" class="wallet-message"></div>
 
                     <div class="wallet-category">
-                        <div class="wallet-category-title">Popular</div>
+                        <div class="wallet-category-title">Choose Wallet</div>
 
-                        <div class="wallet-option" onclick="walletConnector.connectWallet('metamask')">
+                        <div class="wallet-option" onclick="walletConnector.connectWallet('rabby')">
                             <div class="wallet-option-left">
-                                <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/mmicon.png" alt="MetaMask">
-                                <span class="wallet-option-name">MetaMask</span>
+                                <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/rabbyicon.png" alt="Rabby">
+                                <span class="wallet-option-name">Rabby Wallet</span>
                             </div>
                         </div>
 
@@ -414,10 +426,10 @@ class WagmiWalletConnector {
                             </div>
                         </div>
 
-                        <div class="wallet-option" onclick="walletConnector.connectWallet('rabby')">
+                        <div class="wallet-option" onclick="walletConnector.connectWallet('metamask')">
                             <div class="wallet-option-left">
-                                <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/rabbyicon.png" alt="Rabby">
-                                <span class="wallet-option-name">Rabby Wallet</span>
+                                <img src="https://raw.githubusercontent.com/vi11abajo/PoA/main/images/mmicon.png" alt="MetaMask">
+                                <span class="wallet-option-name">MetaMask</span>
                             </div>
                         </div>
                     </div>
@@ -432,6 +444,11 @@ class WagmiWalletConnector {
         if (this.connected) {
             this.disconnect();
         } else {
+            // Воспроизводим звук выбора кошелька
+            if (window.soundManager && window.soundManager.playSound) {
+                window.soundManager.playSound('chooseWallet');
+            }
+
             document.getElementById('wallet-modal').style.display = 'flex';
         }
     }
@@ -544,8 +561,11 @@ class WagmiWalletConnector {
             this.hideWalletModal();
             this.showSuccess('Wallet connected successfully!');
 
-            // Обратная совместимость с Web3
-            if (window.ethereum) {
+            // Обратная совместимость с Web3 (для TournamentManager)
+            if (window.ethereum && window.Web3) {
+                this.web3 = new window.Web3(window.ethereum);
+            } else if (window.ethereum) {
+                // Fallback если Web3 не загружен
                 this.web3 = { eth: { getChainId: async () => chainId } };
             }
 

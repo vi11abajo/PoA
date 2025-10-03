@@ -18,7 +18,9 @@
       "Bash(git reset:*)",
       "Bash(git push:*)",
       "Bash(grep:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(git log:*)",
+      "Bash(ping github.com -n 4)"
     ],
     "deny": [],
     "ask": []
