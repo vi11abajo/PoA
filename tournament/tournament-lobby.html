@@ -248,8 +248,40 @@
 <script src="/boosts/boost-integration.js?v=1759458643"></script>
 <script src="/boosts/boost-system.js?v=1759458643"></script>
 
-<script src="/dist/tournament-wallet-connector-wagmi.bundle.js?v=1759458643"></script>
+<!-- 🔥 НОВЫЙ Wagmi Wallet Connector (как в основной игре) -->
+<script src="/dist/wallet-connector-wagmi.bundle.js?v=1759458643"></script>
+
 <script src="/game.js?v=1759458643"></script>
+
+<script>
+    // Функция для переключения кошелька
+    window.handleWalletToggle = async function() {
+        if (window.walletConnector) {
+            if (window.walletConnector.connected) {
+                // Если кошелек подключен, отключаем его
+                window.walletConnector.disconnect();
+            } else {
+                // Если кошелек не подключен, показываем модал
+                await window.walletConnector.showWalletModal();
+            }
+        } else {
+            console.error('Wallet connector not available');
+        }
+    };
+
+    // Обновление статуса кошелька (использует utils.js)
+    const updateWalletStatusInterval = () => {
+        if (window.updateWalletStatus && window.walletConnector) {
+            window.updateWalletStatus(window.walletConnector);
+        }
+    };
+
+    // Проверяем статус кошелька каждые 2 секунды
+    setInterval(updateWalletStatusInterval, 2000);
+
+    // Обновляем при загрузке страницы
+    document.addEventListener('DOMContentLoaded', updateWalletStatusInterval);
+</script>
 
         <!-- 5. ТУРНИРНАЯ ИНФРАСТРУКТУРА (классы и хранилище) -->
         <script src="/tournament/tournament-storage-class.js?v=1759458643"></script>
